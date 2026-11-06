@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { AppError } from '@shared/errors'
@@ -8,9 +8,11 @@ import type { PerformancePackService, UserModsService } from '../types'
 import {
   downloadModFiles,
   getProjects,
+  httpsIcon,
   latestFabricVersion,
   latestShaderVersion,
   primaryFile,
+  removeRecordedFile,
   searchMods,
   type ModrinthFile
 } from './modrinth'
@@ -60,7 +62,7 @@ export class ModrinthUserModsService implements UserModsService {
         title: h.title,
         description: h.description,
         author: h.author,
-        iconUrl: h.icon_url || null,
+        iconUrl: httpsIcon(h.icon_url),
         downloads: h.downloads,
         serverSide: (SIDES.includes(h.server_side) ? h.server_side : 'unknown') as ModSide
       }))
@@ -142,7 +144,7 @@ export class ModrinthUserModsService implements UserModsService {
     const projects = new Map((await getProjects(plan.map((p) => p.projectId))).map((p) => [p.id, p]))
     for (const p of plan) {
       const old = state.mods[p.projectId]
-      if (old && old.file !== p.file.filename) await rm(join(this.dir(server, old.kind), old.file), { force: true })
+      if (old && old.file !== p.file.filename) await removeRecordedFile(this.dir(server, old.kind), old.file)
       const info = projects.get(p.projectId)
       state.mods[p.projectId] = {
         projectId: p.projectId,
@@ -150,7 +152,7 @@ export class ModrinthUserModsService implements UserModsService {
         title: info?.title ?? p.file.filename,
         version: p.version,
         file: p.file.filename,
-        iconUrl: info?.icon_url ?? null,
+        iconUrl: httpsIcon(info?.icon_url),
         kind: p.kind,
         // Daha önce elle kurulmuş bir mod bağımlılık olarak güncellenirse "elle kurulmuş" kalır.
         dependency: p.dependency && (old ? old.dependency : true),
@@ -175,14 +177,14 @@ export class ModrinthUserModsService implements UserModsService {
     const state = await this.read(server)
     const mod = state.mods[projectId]
     if (mod) {
-      await rm(join(this.dir(server, mod.kind), mod.file), { force: true })
+      await removeRecordedFile(this.dir(server, mod.kind), mod.file)
       delete state.mods[projectId]
       // Yalnızca bu mod için kurulmuş bağımlılıklar sahipsiz kaldıysa onları da kaldır.
       for (const dep of Object.values(state.mods)) {
         if (!dep.dependency || !dep.requiredBy?.includes(projectId)) continue
         dep.requiredBy = dep.requiredBy.filter((id) => id !== projectId)
         if (dep.requiredBy.length === 0) {
-          await rm(join(this.dir(server, dep.kind), dep.file), { force: true })
+          await removeRecordedFile(this.dir(server, dep.kind), dep.file)
           delete state.mods[dep.projectId]
         }
       }

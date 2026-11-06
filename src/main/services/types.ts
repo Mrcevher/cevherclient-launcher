@@ -46,6 +46,14 @@ export interface LaunchCredentials {
   userType: 'legacy'
 }
 
+/** Hesap sunucusundan alınan giriş bileti (yalnızca main process'te ve oyunun kendisinde kalır). */
+export interface JoinTicket {
+  /** Hesabın sunucudaki yazılışı. */
+  username: string
+  /** Bilete özel sır; eski sunucu sürümleri göndermez. */
+  secret: string | null
+}
+
 export interface AuthService {
   getState(): Promise<AuthState>
   /** Oturum açmış hesap; yoksa AUTH_FAILED fırlatır. */
@@ -54,9 +62,10 @@ export interface AuthService {
   getLaunchCredentials(): Promise<LaunchCredentials>
   /**
    * Sunucuya bağlanmadan hemen önce: hesap sunucusundan tek kullanımlık giriş bileti alır,
-   * böylece oyuncu oyunda şifre yazmadan içeri girer. Hesap sunucusu yoksa bir şey yapmaz.
+   * böylece oyuncu oyunda şifre yazmadan içeri girer. Bilete özel sır, oyunun bileti
+   * kendisinin aldığını kanıtlaması için oyuna verilir. Hesap sunucusu yoksa null döner.
    */
-  prepareServerJoin(): Promise<void>
+  prepareServerJoin(): Promise<JoinTicket | null>
   /** Giriş: hesap sunucusu varsa şifre zorunlu; ad Minecraft kuralına (3–16, harf/rakam/_) uymalı. */
   login(username: string, password?: string): Promise<AuthState>
   /** Hesap sunucusunda yeni hesap açar ve giriş yapar. */

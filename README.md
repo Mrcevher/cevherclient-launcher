@@ -177,10 +177,14 @@ Bunu sunucudaki küçük **CevherAuth** eklentisi sağlar ([`server-plugins/cevh
    kullanıcı adı + şifre gönderir. Eklenti şifreyi PBKDF2-SHA256 ile saklar ve launcher'a uzun ömürlü
    bir oturum belirteci verir. Launcher belirteci `safeStorage` ile şifreleyip saklar; şifre hiçbir yere yazılmaz.
 2. **Oyna**'ya basınca launcher, oyunu başlatmadan hemen önce bu oturumla tek kullanımlık, 5 dakikalık bir
-   **giriş bileti** alır (`/api/join`). Bilet, isteği yapan IP'ye bağlıdır.
-3. Oyuncu bağlanırken eklenti bileti kontrol eder: geçerliyse oyuncu hiçbir şey yazmadan girer; bileti
-   olmayan (launcher kullanmayan) bağlantı "Bu sunucuya yalnızca Cevherclient ile girilebilir" ile reddedilir.
-   Böylece lisanssız sunucuda kimse başkasının adıyla giremez.
+   **giriş bileti** alır (`/api/join`). Sunucu bilete özel rastgele bir **sır** üretir ve launcher'a verir.
+   Launcher sırrı oyun klasöründeki `.cevher/join-ticket.json` dosyasına yazar; oturum modu
+   (`cevher-session`) oyun açılırken okuyup hemen siler. Sır komut satırında taşınmaz.
+3. Oyuncu bağlanırken eklenti login aşamasında oyundan `cevherauth:proof/<nonce>` cookie'sini ister; mod
+   HMAC-SHA256(sır, nonce + ad) ile yanıt verir. Kanıt doğruysa bilet tüketilir ve oyuncu hiçbir şey
+   yazmadan girer. Bileti olmayan, kanıt göndermeyen ya da yanlış kanıt gönderen bağlantı reddedilir.
+   Sır Minecraft bağlantısından hiç geçmez ve nonce her bağlanışta yenidir; bu yüzden adı bilen ya da
+   oyuncuyla aynı IP'yi paylaşan biri de bileti kullanamaz. (`require-proof: true`, varsayılan.)
 
 Ayrıntılar:
 - Adlar büyük/küçük harf duyarsız tekildir (`arda` = `Arda`); oyunda kayıtlı yazım kullanılır.
@@ -194,7 +198,15 @@ Ayrıntılar:
 **Yayına almadan önce:** API düz HTTP'dir. Oyuncular internetten bağlanacaksa 25580 portunu da
 yönlendirin ve şifrelerin açık ağda gitmemesi için API'yi HTTPS arkasına alın (ör. Caddy/nginx reverse
 proxy + `http.trust-proxy-headers: true`, ya da Cloudflare Tunnel); `authServerUrl`'i `https://…` yapın.
-Tünel/proxy oyuncunun IP'sini değiştiriyorsa `check-ip: false` gerekir.
+Tünel/proxy oyuncunun IP'sini değiştiriyorsa `check-ip: false` gerekir; `require-proof` açık kaldıkça
+bilet yine yalnızca onu alan oyunda geçerlidir.
+
+**Bilet kanıtına geçiş sırası:** `require-proof` açık eklenti, kanıtı gönderen yeni oturum modunu
+(`resources/mods/cevher-session-<mc>.jar`, `npm run build:mod`) içeren launcher sürümüyle birlikte
+çalışır. Önce yeni launcher'ı yayınlayıp oyuncuların güncellemesini bekleyin, sonra eklentiyi güncelleyin;
+eski launcher'la girmeye çalışan oyuncu "launcher'ı güncelle" mesajı alır. Geçiş döneminde gerekirse
+`require-proof: false` yapılabilir (o süre boyunca eski, yalnızca IP'ye dayalı koruma geçerlidir).
+Oturum modu yalnızca Fabric/Quilt profillerinde çalışır; vanilla profilli sunucuya `require-proof` ile girilemez.
 
 Eklentiyi derlemek (JDK 21; jar: `server-plugins/cevher-auth/build/libs/CevherAuth-1.0.0.jar`):
 

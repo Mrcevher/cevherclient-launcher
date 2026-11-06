@@ -38,9 +38,21 @@ interface SyncState {
 
 const STATE_FILE = join('.cevher', 'modpack.json')
 
+/**
+ * Yolu dosya sisteminin göreceği biçime indirger: Windows/macOS büyük-küçük harf ayırmaz ve NTFS
+ * bölüm sonundaki nokta/boşlukları atar (".CEVHER." ile ".cevher" aynı klasördür).
+ */
+function canonical(rel: string): string {
+  return rel
+    .split('/')
+    .map((seg) => seg.toLowerCase().replace(/[. ]+$/, ''))
+    .join('/')
+}
+
 /** Kullanıcı ayarları: ilk kurulumda override'dan gelir, sonra asla ezilmez veya silinmez. */
 function isProtected(rel: string): boolean {
-  return rel === 'options.txt' || rel === 'config' || rel.startsWith('config/')
+  const c = canonical(rel)
+  return c === 'options.txt' || c === 'config' || c.startsWith('config/')
 }
 
 /** Paket içinden gelen yolu doğrular; instance dışına çıkan yolları reddeder. */
@@ -52,7 +64,7 @@ function safeRelative(path: string): string | undefined {
     normalized.startsWith('../') ||
     normalized === '..' ||
     /^[A-Za-z]:/.test(normalized) ||
-    normalized.split('/').includes('.cevher')
+    canonical(normalized).split('/').includes('.cevher')
   ) {
     return undefined
   }

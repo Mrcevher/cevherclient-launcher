@@ -3,7 +3,8 @@
  * Modrinth, istemciyi tanımlayan bir User-Agent ister.
  */
 
-import { basename } from 'node:path'
+import { rm } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import { app } from 'electron'
 import { AppError } from '@shared/errors'
 import type { ModKind } from '@shared/types'
@@ -117,6 +118,23 @@ export function isSafeFilename(name: unknown): name is string {
     !name.endsWith('.') &&
     !name.endsWith(' ')
   )
+}
+
+/**
+ * Launcher'ın .cevher durum dosyasında kayıtlı bir mod/shader dosyasını siler. Ad yeniden doğrulanır:
+ * durum dosyası bir modpack override'ı ile değiştirilmiş olsa bile klasör dışında bir şey silinemez.
+ */
+export async function removeRecordedFile(dir: string, file: unknown): Promise<void> {
+  if (!isSafeFilename(file)) {
+    console.warn('[mods] güvensiz dosya adı kayıtta, silinmedi:', JSON.stringify(file))
+    return
+  }
+  await rm(join(dir, file), { force: true })
+}
+
+/** Arayüzde <img src> olarak gösterilecek ikon: yalnızca https (file://host gibi adresler UNC isteğine dönüşebilir). */
+export function httpsIcon(url: unknown): string | null {
+  return typeof url === 'string' && /^https:\/\//i.test(url) ? url : null
 }
 
 /** İndirme adresi Modrinth CDN'inde bir https adresi olmalı. */

@@ -46,6 +46,8 @@ final class AuthHttpServer {
 	private static final Pattern IP_LITERAL = Pattern.compile("^[0-9a-fA-F:.]{2,45}$");
 	private static final int MAX_BODY = 8 * 1024;
 	private static final long WINDOW_MS = 10 * 60_000L;
+	/** Başarılı (IP, hesap) çiftinin hesap kilidinden muaf kaldığı süre. */
+	private static final long KNOWN_PAIR_MS = 30L * 24 * 60 * 60_000L;
 	private static final String DUMMY_HASH = Passwords.hash("cevher-dummy");
 
 	/** İstemci IP anahtarı ve isteğin güvenilir biçimde sunucu makinesinden (aracısız) gelip gelmediği. */
@@ -59,6 +61,11 @@ final class AuthHttpServer {
 	private final Throttle loginIp = new Throttle(WINDOW_MS);
 	/** Hesap başına toplam hatalı giriş (dağıtık tahmine karşı). */
 	private final Throttle loginAccount = new Throttle(WINDOW_MS);
+	/**
+	 * Daha önce başarıyla kimlik doğrulamış (IP, hesap) çiftleri. Yalnızca hesap çapındaki kilitten
+	 * muaftır: başkalarının hatalı denemeleri hesabın sahibini bilinen cihazından kilitleyemez.
+	 */
+	private final Throttle loginKnown = new Throttle(KNOWN_PAIR_MS);
 	private final Throttle registerIp = new Throttle(WINDOW_MS);
 	private final Map<String, AtomicInteger> connections = new ConcurrentHashMap<>();
 	private HttpServer server;
@@ -110,6 +117,7 @@ final class AuthHttpServer {
 		loginPair.cleanup();
 		loginIp.cleanup();
 		loginAccount.cleanup();
+		loginKnown.cleanup();
 		registerIp.cleanup();
 		bridge.cleanup();
 	}
@@ -245,6 +253,7 @@ final class AuthHttpServer {
 			return;
 		}
 		plugin.getLogger().info(username + " launcher'dan kayıt oldu (" + client.ip() + ")" + (siteSynced ? " — sitede de hesap açıldı" : ""));
+		markKnown(client.ip(), AccountStore.key(account.username));
 		sendSession(ex, account, account.credVersion);
 	}
 
@@ -283,6 +292,7 @@ final class AuthHttpServer {
 		}
 		// Yalnızca bu (IP, hesap) çiftinin sayacı sıfırlanır; başkalarının bütçesine dokunulmaz.
 		loginPair.clear(client.ip() + "|" + ukey);
+		markKnown(client.ip(), ukey);
 		if (!account.siteSynced && plugin.site() != null) {
 			// Senkrondan önce açılmış hesap: site hesabı arka planda aynı şifreyle açılır.
 			plugin.site().backfillAsync(account.username, password, client.ip());
@@ -332,15 +342,17 @@ final class AuthHttpServer {
 
 	private void join(HttpExchange ex, JsonObject body, Client client) throws IOException {
 		String token = str(body, "token");
-		String username = token == null ? null
+		SessionStore.IssuedTicket ticket = token == null ? null
 			: plugin.sessions().issueTicket(token, plugin.sessionLifetimeMs(), client.ip(), plugin.ticketLifetimeMs());
-		if (username == null) {
+		if (ticket == null) {
 			send(ex, 401, error("SESSION_EXPIRED"));
 			return;
 		}
 		JsonObject o = ok();
-		o.addProperty("username", username);
+		o.addProperty("username", ticket.username());
 		o.addProperty("expiresIn", plugin.ticketLifetimeMs() / 1000);
+		// Bilete özel sır: launcher oyuna verir, oyun bağlanırken bununla kanıt üretir (TicketProof).
+		o.addProperty("secret", ticket.secret());
 		send(ex, 200, o);
 	}
 
@@ -375,6 +387,7 @@ final class AuthHttpServer {
 			return;
 		}
 		loginPair.clear(client.ip() + "|" + ukey);
+		markKnown(client.ip(), ukey);
 		try {
 			plugin.accounts().setPassword(account.username, Passwords.hash(next));
 		} finally {
@@ -422,7 +435,20 @@ final class AuthHttpServer {
 		if (ukey == null) {
 			return false;
 		}
-		return loginPair.count(ip + "|" + ukey) >= max || loginAccount.count(ukey) >= max * 3;
+		String pairKey = ip + "|" + ukey;
+		if (loginPair.count(pairKey) >= max) {
+			return true;
+		}
+		// Hesap çapındaki tavan, daha önce kimlik doğrulamamış her çifte uygulanır (dağıtık tahmin ve
+		// çalınmış oturumla currentPassword tahmini dahil). Bilinen çift, başkalarının hatalarıyla kilitlenmez.
+		return loginAccount.count(ukey) >= max * 3 && loginKnown.count(pairKey) == 0;
+	}
+
+	/** (IP, hesap) çiftini başarıyla kimlik doğrulamış olarak işaretler; pencere her başarıda yenilenir. */
+	private void markKnown(String ip, String ukey) {
+		String pairKey = ip + "|" + ukey;
+		loginKnown.clear(pairKey);
+		loginKnown.record(pairKey);
 	}
 
 	private void recordFailure(String ip, String ukey) {

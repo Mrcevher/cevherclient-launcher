@@ -13,6 +13,14 @@ type Obj = Record<string, unknown>
 /** Sunucu kimliği instance klasör adı olarak kullanılır: yalnızca güvenli, kısa bir ad. */
 const SERVER_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
 
+/** Minecraft ve loader sürümleri dosya yollarına girer: ayırıcı veya ".." içeremez. */
+const VERSION_PATTERN = /^[A-Za-z0-9_+-][A-Za-z0-9._+-]{0,63}$/
+
+function versionString(value: string, path: string): string {
+  if (!VERSION_PATTERN.test(value) || value.includes('..')) fail(path, 'geçersiz sürüm (yalnızca harf, rakam, . _ + -)')
+  return value
+}
+
 function isLoopbackHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, '')
   return h === 'localhost' || h === '::1' || /^127(\.\d{1,3}){3}$/.test(h)
@@ -78,6 +86,7 @@ function parseServer(value: unknown, index: number): ServerProfile {
   const o = asObject(value, p)
   const loader = asObject(o.loader ?? { type: 'vanilla' }, `${p}.loader`)
   const loaderType = asString(loader.type, `${p}.loader.type`)
+  const loaderVersion = asOptionalString(loader.version, `${p}.loader.version`)
   if (!(LOADER_TYPES as readonly string[]).includes(loaderType)) {
     fail(`${p}.loader.type`, `şunlardan biri olmalı: ${LOADER_TYPES.join(', ')}`)
   }
@@ -93,10 +102,10 @@ function parseServer(value: unknown, index: number): ServerProfile {
     description: asLocalized(o.description ?? '', `${p}.description`),
     address: asString(o.address, `${p}.address`),
     port,
-    minecraftVersion: asString(o.minecraftVersion, `${p}.minecraftVersion`),
+    minecraftVersion: versionString(asString(o.minecraftVersion, `${p}.minecraftVersion`), `${p}.minecraftVersion`),
     loader: {
       type: loaderType as LoaderType,
-      version: asOptionalString(loader.version, `${p}.loader.version`)
+      version: loaderVersion === undefined ? undefined : versionString(loaderVersion, `${p}.loader.version`)
     },
     modpackManifestUrl: secureUrl(o.modpackManifestUrl, `${p}.modpackManifestUrl`),
     modpackSha256: sha256(o.modpackSha256, `${p}.modpackSha256`),

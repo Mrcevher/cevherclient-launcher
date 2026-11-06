@@ -3,10 +3,13 @@
   "id": "cevher_session",
   "version": "${version}",
   "name": "Cevherclient Session",
-  "description": "Cevherclient ile açılan oyunda, oyuncu sunucudan ayrılınca oyunu kapatır.",
+  "description": "Cevherclient ile açılan oyunda, oyuncu sunucudan ayrılınca oyunu kapatır ve sunucuya launcher biletinin kanıtını gönderir.",
   "authors": ["Cevherclient"],
   "license": "UNLICENSED",
   "environment": "client",
+  "entrypoints": {
+    "client": ["net.cevherclient.session.CevherSessionInit"]
+  },
   "mixins": ["cevher_session.mixins.json"],
   "depends": {
     "fabricloader": ">=0.16.0",

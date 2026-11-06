@@ -13,7 +13,7 @@ import { JsonStore } from '../../utils/json-store'
 import { gameDirs, instanceDir } from '../minecraft/paths'
 import { versionKey } from '../minecraft/version-key'
 import type { LaunchCredentials, LaunchService, Services } from '../types'
-import { prepareSessionMod } from './session-mod'
+import { clearJoinTicket, prepareSessionMod, writeJoinTicket } from './session-mod'
 import { prepareUiMod } from './ui-mod'
 import { removeGifCapeMod } from './gifcape-mod'
 import { prepareClientMod } from './client-mod'
@@ -169,7 +169,15 @@ export class MinecraftLaunchService implements LaunchService {
 
     // Hesap sunucusundan tek kullanımlık giriş bileti: oyuncu oyunda şifre yazmadan girer.
     // Oyun açılıp bağlanana kadar geçen süre kısa olsun diye process'ten hemen önce alınır.
-    if (server) await this.deps.auth.prepareServerJoin()
+    // Bilete özel sır oyun moduna verilir; oyun bağlanırken bileti kendisinin aldığını kanıtlar.
+    if (server) {
+      await clearJoinTicket(gamePath)
+      const ticket = await this.deps.auth.prepareServerJoin()
+      if (ticket?.secret) {
+        if (sessionArgs.length > 0) await writeJoinTicket(gamePath, ticket.username, ticket.secret)
+        else console.warn(`[launch] ${server.id}: oturum modu yok; oyun bilet kanıtı gönderemeyecek`)
+      }
+    }
 
     const serverAddress = server ? `${server.address}:${server.port}` : undefined
     // Pencereli modda oyun penceresi ekrandan taşmasın (ör. 1440p ekranda 2560×1440 seçiliyse).
@@ -201,8 +209,11 @@ export class MinecraftLaunchService implements LaunchService {
           : {})
       })
     } catch (err) {
+      if (server) await clearJoinTicket(gamePath)
       throw new AppError('LAUNCH_FAILED', (err as Error).message)
     }
+    // Mod sırrı açılışta okuyup siler; okuyamadan kapanırsa launcher siler.
+    if (server) child.once('exit', () => void clearJoinTicket(gamePath))
     this.report('starting', 0.3)
 
     const session: LaunchSession = {

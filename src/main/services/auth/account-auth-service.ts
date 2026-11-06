@@ -4,7 +4,7 @@ import { AppError } from '@shared/errors'
 import { USERNAME_PATTERN } from '@shared/constants'
 import type { Account, AuthState } from '@shared/types'
 import { JsonStore } from '../../utils/json-store'
-import type { AuthService, LaunchCredentials, RemoteConfigService } from '../types'
+import type { AuthService, JoinTicket, LaunchCredentials, RemoteConfigService } from '../types'
 import { offlineUuid } from './offline-uuid'
 
 interface AuthFile {
@@ -99,20 +99,25 @@ export class AccountAuthService implements AuthService {
     return { account, accessToken: randomUUID().replace(/-/g, ''), userType: 'legacy' }
   }
 
-  async prepareServerJoin(): Promise<void> {
-    if (!(await this.authUrl())) return
+  async prepareServerJoin(): Promise<JoinTicket | null> {
+    if (!(await this.authUrl())) return null
     const file = await this.store.read()
     const token = this.readToken(file)
     if (!file.account || !token) {
       await this.clear()
       throw new AppError('AUTH_FAILED', 'Oturum belirteci yok', { reason: 'sessionExpired' })
     }
+    let res: Record<string, unknown>
     try {
-      await this.api('/api/join', { token })
+      res = await this.api('/api/join', { token })
     } catch (err) {
       if (err instanceof AppError && err.meta?.reason === 'sessionExpired') await this.clear()
       throw err
     }
+    const username = typeof res.username === 'string' ? res.username : file.account.username
+    // Sır yalnızca base64url karakterleri içerir (sunucu 32 rastgele bayttan üretir); başka bir şey kabul edilmez.
+    const secret = typeof res.secret === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(res.secret) ? res.secret : null
+    return { username, secret }
   }
 
   async login(username: string, password?: string): Promise<AuthState> {

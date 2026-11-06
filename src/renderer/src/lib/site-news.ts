@@ -137,8 +137,9 @@ async function loadPost(url: string, hint: Partial<SitePost>): Promise<SitePost>
   const title = textOf(heading) || (ogTitle && ogTitle !== siteName ? ogTitle : '') || hint.title || url
   if (heading && textOf(heading) === title) heading.remove()
 
+  // Diğer uzak görsellerle aynı kural: yalnızca https (file://host gibi adresler UNC/SMB isteğine dönüşebilir).
   const ogImage = abs(meta('og:image'), url)
-  const image = hint.image ?? (ogImage && !/logo/i.test(ogImage) ? ogImage : undefined)
+  const image = hint.image ?? (ogImage && /^https:/i.test(ogImage) && !/logo/i.test(ogImage) ? ogImage : undefined)
 
   let isoDate: string | undefined
   if (date && Number.isFinite(Date.parse(date))) isoDate = new Date(date).toISOString()

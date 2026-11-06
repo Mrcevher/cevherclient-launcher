@@ -1,12 +1,12 @@
 import { totalmem } from 'node:os'
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { AppError } from '@shared/errors'
 import { LEGACY_JVM_ARGS, OPTIMIZED_JVM_ARGS } from '@shared/types'
 import type { DeviceTier, QualityResult, ServerProfile } from '@shared/types'
 import { instanceDir } from '../minecraft/paths'
-import { downloadModFiles, getProjects, latestShaderVersion, primaryFile } from '../mods/modrinth'
+import { downloadModFiles, getProjects, latestShaderVersion, primaryFile, removeRecordedFile } from '../mods/modrinth'
 import type { PerformancePackService, ProgressCallback, QualityService, SettingsService } from '../types'
 
 /**
@@ -102,7 +102,7 @@ export class ModrinthQualityService implements QualityService {
     // 3) Eski seviyenin shader'ını kaldır, ayarları yaz (%90–100).
     const state = await this.read(server)
     if (state.shaderFile && state.shaderFile !== file.filename) {
-      await rm(join(shaderDir, state.shaderFile), { force: true })
+      await removeRecordedFile(shaderDir, state.shaderFile)
     }
     await this.writeIris(dir, file.filename)
     await this.writeSodium(dir)

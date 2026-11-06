@@ -1,10 +1,18 @@
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { PerformancePackState, ServerProfile } from '@shared/types'
 import { instanceDir } from '../minecraft/paths'
 import type { PerformancePackService, ProgressCallback } from '../types'
-import { downloadModFiles, latestFabricVersion, primaryFile, versionById, type ModrinthFile, type ModrinthVersion } from './modrinth'
+import {
+  downloadModFiles,
+  latestFabricVersion,
+  primaryFile,
+  removeRecordedFile,
+  versionById,
+  type ModrinthFile,
+  type ModrinthVersion
+} from './modrinth'
 
 /**
  * Paketteki modlar. `id` sabit Modrinth proje kimliğidir: slug yeniden atansa bile başka bir
@@ -156,7 +164,7 @@ export class ModrinthPerformancePackService implements PerformancePackService {
     // 4) Güncellenen modların eski dosyalarını kaldır, kaydı yaz.
     // Eski dosya silinemezse (kilitli vb.) kurulum yarıda kalıp kayıt yazılmamasın diye hata yutulur.
     const removeOld = (file: string): Promise<void> =>
-      rm(join(modsDir, file), { force: true }).catch((err: Error) => {
+      removeRecordedFile(modsDir, file).catch((err: Error) => {
         console.warn(`[performance-pack] ${file} silinemedi:`, err.message)
       })
     const previous = await this.read(server)
@@ -184,7 +192,7 @@ export class ModrinthPerformancePackService implements PerformancePackService {
   async remove(server: ServerProfile): Promise<PerformancePackState> {
     const pack = await this.read(server)
     for (const { file } of [...Object.values(pack.mods), ...Object.values(pack.deps)]) {
-      await rm(join(this.modsDir(server), file), { force: true })
+      await removeRecordedFile(this.modsDir(server), file)
     }
     await this.write(server, { minecraftVersion: server.minecraftVersion, mods: {}, deps: {}, unavailable: [] })
     return this.getState(server)

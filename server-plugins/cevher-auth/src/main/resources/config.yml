@@ -24,7 +24,13 @@ http:
 
 # Launcher'dan gelmeyen (bileti olmayan) oyuncuları sunucuya alma.
 require-launcher: true
-# Bileti alan IP ile oyuna bağlanan IP aynı olmalı mı? (playit.gg gibi tünel kullanıyorsanız false.)
+# Oyuna bağlanan istemci, bileti alan launcher olduğunu kanıtlamalı mı? Launcher her bilet için
+# bir sır alır ve oyuna (Cevherclient oturum modu) verir; oyun bağlanırken bu sırla kanıt üretir.
+# Kapatılırsa adı bilen ve aynı IP'yi paylaşan (check-ip: false ise herhangi biri) bilet
+# penceresinde başkasının adıyla girebilir. Yalnızca eski launcher'larla geçiş döneminde kapatın.
+require-proof: true
+# Bileti alan IP ile oyuna bağlanan IP aynı olmalı mı? Ek bir kontroldür; asıl bağ require-proof'tur.
+# (playit.gg gibi IP'yi değiştiren bir tünel kullanıyorsanız false yapın; require-proof açık kalsın.)
 check-ip: true
 
 # Launcher oturumu kaç gün geçerli (her Oyna'da yenilenir). Süre dolunca launcher şifre sorar.
@@ -83,3 +89,4 @@ messages:
   lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
   no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."
   wrong-name: "&cOyuncu adı launcher hesabınla uyuşmuyor.\n&7Launcher'dan çıkış yapıp tekrar giriş yap."
+  outdated-launcher: "&cOyun, launcher bileti için kimlik kanıtı göndermedi.\n&7Cevherclient'i güncelleyip &fOyna&7'ya tekrar bas."

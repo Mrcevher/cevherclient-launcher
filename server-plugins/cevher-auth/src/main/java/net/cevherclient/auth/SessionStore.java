@@ -30,11 +30,26 @@ final class SessionStore {
 		}
 	}
 
-	record Ticket(String username, String ip, long expiresAt) {
+	/** {@code secret}: bilete özel sır; yalnızca launcher'a verilir, oyun istemcisi bununla kanıt üretir. */
+	record Ticket(String username, String ip, long expiresAt, String secret) {
+	}
+
+	/** /api/join yanıtı: doğrulanan hesap adı ve bilete özel sır. */
+	record IssuedTicket(String username, String secret) {
 	}
 
 	enum TicketCheck {
 		OK, MISSING, WRONG_IP, WRONG_NAME
+	}
+
+	/**
+	 * {@link #findTicket} sonucu. {@code ticket} yalnızca {@code check == OK} iken doludur;
+	 * {@code grace} true ise yeniden bağlanma payından gelen kayıttır.
+	 */
+	record TicketLookup(TicketCheck check, Ticket ticket, boolean grace) {
+		static TicketLookup of(TicketCheck check) {
+			return new TicketLookup(check, null, false);
+		}
 	}
 
 	private final Path file;
@@ -122,13 +137,14 @@ final class SessionStore {
 	 * Oturumu doğrular ve aynı kilit altında bilet üretir; böylece iptalden sonra bilet çıkmaz.
 	 * Oturum geçersizse veya hesap yoksa null döner.
 	 */
-	synchronized String issueTicket(String token, long sessionLifetimeMs, String ip, long ticketLifetimeMs) {
+	synchronized IssuedTicket issueTicket(String token, long sessionLifetimeMs, String ip, long ticketLifetimeMs) {
 		Session session = touch(token, sessionLifetimeMs);
 		if (session == null || accounts.get(session.username) == null) {
 			return null;
 		}
-		tickets.put(AccountStore.key(session.username), new Ticket(session.username, ip, System.currentTimeMillis() + ticketLifetimeMs));
-		return session.username;
+		String secret = Passwords.randomToken();
+		tickets.put(AccountStore.key(session.username), new Ticket(session.username, ip, System.currentTimeMillis() + ticketLifetimeMs, secret));
+		return new IssuedTicket(session.username, secret);
 	}
 
 	synchronized void revoke(String token) throws IOException {
@@ -152,14 +168,16 @@ final class SessionStore {
 	}
 
 	/**
-	 * Bağlanan oyuncunun biletini doğrular. Bilet yalnızca başarılı eşleşmede tüketilir;
-	 * yanlış IP'den gelen biri gerçek oyuncunun biletini yakamaz.
+	 * Bağlanan oyuncunun biletini bulur ama tüketmez: önce istemcinin bilet sırrını bildiği
+	 * kanıtlanır ({@link TicketProof}), sonra {@link #confirm} ile tüketilir. Böylece adı bilen
+	 * ya da aynı IP'yi paylaşan biri gerçek oyuncunun biletini ne kullanabilir ne de yakabilir.
 	 *
-	 * Bilet tüketildikten sonra {@code graceMs} süresince aynı oyuncu (ve IP) yeniden
+	 * Canlı bilet yoksa yeniden bağlanma payına bakılır: bilet tüketildikten sonra
+	 * {@code graceMs} süresince aynı oyuncu (aynı sırla, gerekirse aynı IP'den) yeniden
 	 * bağlanabilir; böylece bağlantı koptuğunda "Yeniden Bağlan" çalışır. Pay sabit süreli
 	 * olup her bağlanışta uzamaz.
 	 */
-	TicketCheck consumeTicket(String name, String ip, boolean checkIp, long graceMs) {
+	TicketLookup findTicket(String name, String ip, boolean checkIp) {
 		String key = AccountStore.key(name);
 		long now = System.currentTimeMillis();
 		Ticket t = tickets.get(key);
@@ -167,33 +185,49 @@ final class SessionStore {
 			tickets.remove(key, t);
 			t = null;
 		}
+		boolean grace = false;
 		if (t == null) {
-			Ticket r = recent.get(key);
-			if (r == null) {
-				return TicketCheck.MISSING;
+			t = recent.get(key);
+			if (t == null) {
+				return TicketLookup.of(TicketCheck.MISSING);
 			}
-			if (r.expiresAt() <= now) {
-				recent.remove(key, r);
-				return TicketCheck.MISSING;
+			if (t.expiresAt() <= now) {
+				recent.remove(key, t);
+				return TicketLookup.of(TicketCheck.MISSING);
 			}
-			if (checkIp && !r.ip().equals(ip)) {
-				return TicketCheck.WRONG_IP;
-			}
-			return r.username().equals(name) ? TicketCheck.OK : TicketCheck.WRONG_NAME;
+			grace = true;
 		}
 		if (checkIp && !t.ip().equals(ip)) {
-			return TicketCheck.WRONG_IP;
+			return TicketLookup.of(TicketCheck.WRONG_IP);
 		}
 		if (!t.username().equals(name)) {
-			return TicketCheck.WRONG_NAME;
+			return TicketLookup.of(TicketCheck.WRONG_NAME);
+		}
+		return new TicketLookup(TicketCheck.OK, t, grace);
+	}
+
+	/**
+	 * Kanıtı doğrulanmış bileti tüketir. Canlı bilet atomik olarak silinir (aynı bileti iki
+	 * bağlantı kullanamaz) ve yerine aynı sırla yeniden bağlanma payı açılır. Bu arada bilet
+	 * değiştiyse, iptal edildiyse veya süresi dolduysa false döner.
+	 */
+	boolean confirm(TicketLookup found, String ip, long graceMs) {
+		Ticket t = found.ticket();
+		if (found.check() != TicketCheck.OK || t == null) {
+			return false;
+		}
+		String key = AccountStore.key(t.username());
+		long now = System.currentTimeMillis();
+		if (found.grace()) {
+			return recent.get(key) == t && t.expiresAt() > now;
 		}
 		if (!tickets.remove(key, t)) {
-			return TicketCheck.MISSING;
+			return false;
 		}
 		if (graceMs > 0) {
-			recent.put(key, new Ticket(t.username(), ip, now + graceMs));
+			recent.put(key, new Ticket(t.username(), ip, now + graceMs, t.secret()));
 		}
-		return TicketCheck.OK;
+		return true;
 	}
 
 	/** Süresi dolmuş oturum ve biletleri temizler, bekleyen süre uzatmalarını diske yazar. */
