@@ -1,0 +1,377 @@
+{
+  "app": {
+    "name": "Cevherclient",
+    "tagline": "Connect to the world where ore shines"
+  },
+  "common": {
+    "loading": "Loading…",
+    "ok": "OK",
+    "retry": "Try again",
+    "close": "Close",
+    "details": "Technical details",
+    "errorCode": "Error code",
+    "back": "Back"
+  },
+  "titlebar": {
+    "minimize": "Minimize",
+    "close": "Close"
+  },
+  "nav": {
+    "play": "Play",
+    "versions": "Versions",
+    "settings": "Settings",
+    "news": "News",
+    "store": "Store",
+    "mods": "Mods",
+    "credits": "Buy Credits",
+    "discord": "Discord",
+    "profile": "Profile",
+    "menu": "Menu"
+  },
+  "login": {
+    "title": "Welcome",
+    "subtitle": "Enter the player name you will use on the server.",
+    "loginHint": "Sign in with your account. You won't be asked for a password in-game.",
+    "registerHint": "Create your account for the server. You sign in from the launcher with this name and password; no password in-game.",
+    "tabLogin": "Sign in",
+    "tabRegister": "Register",
+    "usernameLabel": "Player name",
+    "usernamePlaceholder": "e.g. Steve_42",
+    "usernameRule": "3–16 characters; letters, digits and underscores only.",
+    "passwordLabel": "Password",
+    "passwordRule": "At least {{min}} characters.",
+    "passwordRepeatLabel": "Password (repeat)",
+    "passwordMismatch": "Passwords do not match.",
+    "submit": "Sign in",
+    "submitRegister": "Create account"
+  },
+  "launch": {
+    "stages": {
+      "preparing": "Preparing profile",
+      "java": "Selecting Java",
+      "installing": "Installing game files",
+      "modpack": "Syncing mods",
+      "starting": "Starting the game"
+    },
+    "startedTitle": "Link established",
+    "startedMessage": "{{target}} launched. Have fun!",
+    "exitedTitle": "Game closed",
+    "exitedMessage": "The launcher is ready again."
+  },
+  "settings": {
+    "title": "Settings",
+    "autosave": "Changes are saved automatically.",
+    "java": {
+      "title": "Java",
+      "auto": "Automatic",
+      "autoHint": "The right Java is picked for each version automatically.",
+      "browse": "Browse…",
+      "custom": "Custom path",
+      "detected": "Detected installations"
+    },
+    "memory": {
+      "title": "Memory (RAM)",
+      "system": "System RAM: {{total}}",
+      "hint": "At least 2 GB is left free for the system."
+    },
+    "resolution": {
+      "title": "Resolution",
+      "width": "Width",
+      "height": "Height",
+      "fullscreen": "Fullscreen",
+      "preset": "Preset",
+      "fitHint": "In windowed mode, if the size is larger than your screen, the game window is shrunk to fit."
+    },
+    "jvm": {
+      "title": "JVM arguments",
+      "reset": "Reset to default",
+      "hint": "For advanced users. Separate with spaces."
+    },
+    "language": {
+      "title": "Language",
+      "tr": "Türkçe",
+      "en": "English",
+      "de": "Deutsch",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語"
+    }
+  },
+  "news": {
+    "title": "News",
+    "subtitle": "Latest announcements from the server",
+    "empty": "No announcements yet.",
+    "more": "Read more",
+    "less": "Show less",
+    "openSite": "Open on website"
+  },
+  "store": {
+    "balance": "Balance",
+    "topUp": "Top Up Credits",
+    "all": "All",
+    "featured": "Featured",
+    "buy": "Buy",
+    "buying": "Purchasing…",
+    "stock": "Stock: {{count}}",
+    "soldOut": "Sold out",
+    "empty": "The store has no products right now.",
+    "loadFailed": "Couldn't load the store.",
+    "notLinked": "Your launcher account isn't linked to your website account yet. Sign out and sign back in with the same name and password to link it; if the name belongs to someone else on the website, contact an admin.",
+    "confirmTitle": "Confirm purchase",
+    "confirmHint": "The amount is taken from your website balance and the item is delivered to your account.",
+    "product": "Item",
+    "price": "Price",
+    "after": "Balance after",
+    "insufficient": "Your balance isn't enough for this item.",
+    "confirm": "Confirm and buy",
+    "boughtTitle": "Purchased",
+    "boughtMessage": "{{name}} is being delivered to your account."
+  },
+  "errors": {
+    "JAVA_NOT_FOUND": {
+      "title": "Java not found",
+      "message": "This version needs Java {{version}}, but no suitable installation was found. Check the Java path in Settings or switch it to \"Automatic\"."
+    },
+    "NO_INTERNET": {
+      "title": "No internet connection",
+      "message": "The servers can't be reached. Check your connection and try again."
+    },
+    "AUTH_FAILED": {
+      "title": "Sign-in failed",
+      "message": "Could not sign in. Please try again.",
+      "reasons": {
+        "invalidUsername": "The username must be 3–16 characters and contain only letters, digits and underscores.",
+        "wrongCredentials": "Wrong player name or password.",
+        "usernameTaken": "This player name is already taken. Try another name or sign in.",
+        "weakPassword": "The password must be at least 6 characters.",
+        "protectedName": "This name belongs to a server admin; it can only be registered from the server machine.",
+        "tooManyAccounts": "The account limit for this connection has been reached.",
+        "tooManyAttempts": "Too many failed attempts. Wait a few minutes and try again.",
+        "sessionExpired": "Your session expired. Please sign in again.",
+        "serverUnreachable": "Could not reach the account server. The game server may be offline.",
+        "serverError": "The account server returned an error. Please notify the admins."
+      }
+    },
+    "DOWNLOAD_FAILED": {
+      "title": "Download failed",
+      "message": "Files could not be downloaded. You can restart the download.",
+      "reasons": {
+        "noVersion": "This mod has not been released for the server's Minecraft version (Fabric)."
+      }
+    },
+    "LAUNCH_FAILED": {
+      "title": "Couldn't start the game",
+      "message": "Something went wrong while starting Minecraft.",
+      "reasons": {
+        "alreadyRunning": "The game is already running."
+      }
+    },
+    "SERVER_OFFLINE": {
+      "title": "Server offline",
+      "message": "{{server}} isn't responding right now. Try again in a bit."
+    },
+    "MODPACK_SYNC_FAILED": {
+      "title": "Mod sync failed",
+      "message": "The server's modpack couldn't be updated. You can't join the server with missing mods."
+    },
+    "STORE_FAILED": {
+      "title": "Store action failed",
+      "message": "The action couldn't be completed. Please try again.",
+      "reasons": {
+        "notLinked": "Your launcher account isn't linked to your website account. Sign out and sign back in with the same name and password.",
+        "insufficientBalance": "Not enough balance. Top up credits and try again.",
+        "outOfStock": "This item is sold out.",
+        "productNotFound": "Item not found; the store may have changed.",
+        "inProgress": "Your previous purchase is still in progress.",
+        "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+        "disabled": "The store is closed right now.",
+        "unavailable": "Couldn't reach the website. Try again shortly.",
+        "serverUnreachable": "Couldn't reach the account server. The game server may be offline.",
+        "pluginOutdated": "The server's CevherAuth plugin doesn't support the store yet; tell an admin.",
+        "serverError": "The server returned an error. Please tell the admins."
+      }
+    },
+    "CONFIG_INVALID": {
+      "title": "Couldn't read server configuration",
+      "message": "The launcher configuration file is missing or invalid. Please let the admins know."
+    },
+    "LAUNCHER_OUTDATED": {
+      "title": "Launcher out of date",
+      "message": "This server requires Cevherclient {{required}} or newer (you have {{current}})."
+    },
+    "UNKNOWN": {
+      "title": "Unexpected error",
+      "message": "Something went wrong. If it keeps happening, restart the launcher."
+    }
+  },
+  "update": {
+    "readyTitle": "Update ready",
+    "readyMessage": "Cevherclient {{version}} was downloaded. The launcher will restart to install it.",
+    "downloading": "Update {{percent}}%",
+    "updating": "Updating",
+    "restarting": "Restarting",
+    "install": "Install v{{version}} and restart",
+    "button": "Update to v{{version}}"
+  },
+  "topbar": {
+    "players": "{{count}} Players",
+    "offline": "Server offline"
+  },
+  "userMenu": {
+    "orders": "My Orders",
+    "logout": "Sign Out"
+  },
+  "home": {
+    "play": "PLAY",
+    "running": "GAME RUNNING",
+    "launching": "Launching",
+    "requirements": {
+      "title": "System requirements",
+      "minimum": "Minimum requirements",
+      "recommended": "Recommended requirements",
+      "showMore": "Show more",
+      "showLess": "Show less",
+      "rows": {
+        "os": "Operating system (OS)",
+        "arch": "OS architecture",
+        "cpu": "Processor (CPU)",
+        "cpuFeatures": "Processor features",
+        "gpu": "Graphics card",
+        "gpuFeatures": "Graphics card features",
+        "vram": "VRAM",
+        "storage": "Free space",
+        "ram": "RAM",
+        "graphics": "Recommended graphics settings",
+        "resolution": "Recommended resolution"
+      },
+      "values": {
+        "low": "Low",
+        "high": "High",
+        "unifiedMemory": "Unified memory"
+      }
+    }
+  },
+  "mods": {
+    "loaderTitle": "Mod Loader",
+    "useFabric": "Use the Fabric mod loader",
+    "fabricOn": "Fabric on — mods will be loaded into the game.",
+    "fabricOff": "Fabric off — the game starts unmodded (vanilla); the Performance Pack and auto-close on leaving the server won't work.",
+    "packTitle": "Performance Pack",
+    "packCount": "{{installed}}/{{total}} installed",
+    "install": "Install Performance Pack",
+    "update": "Update Pack",
+    "installing": "Installing… {{percent}}%",
+    "remove": "Remove",
+    "autoInstall": "Install automatically on first launch",
+    "installed": "installed",
+    "unavailable": "not available for this version",
+    "installedTitle": "Performance Pack installed",
+    "installedMessage": "Mods will load the next time you press Play.",
+    "desc": {
+      "fabric-api": "Core library other mods depend on.",
+      "sodium": "Rewrites the rendering engine; the biggest FPS gain.",
+      "lithium": "Speeds up game logic and tick calculations.",
+      "ferrite-core": "Significantly reduces memory usage.",
+      "immediatelyfast": "Speeds up UI and immediate-mode rendering.",
+      "entityculling": "Skips rendering entities you can't see.",
+      "krypton": "Optimizes the network stack; lowers latency on servers.",
+      "threadtweak": "Balances thread priorities.",
+      "dynamic-fps": "Lowers FPS while the window is in the background to save resources.",
+      "iris": "Loads shader packs into the game.",
+      "modmenu": "Lets you view and configure installed mods in-game.",
+      "shulkerboxtooltip": "Shows the contents of a shulker box when you hover over it.",
+      "lambdynamiclights": "Held items such as torches light up their surroundings dynamically.",
+      "smoothplayeranimations": "Makes player movement and animations fluid.",
+      "appleskin": "Shows the hunger and saturation values of food.",
+      "xaeros-world-map": "A full-screen world map that records where you have been.",
+      "entitytexturefeatures": "Adds support for random and emissive entity textures."
+    }
+  },
+  "profile": {
+    "accountType": "Cevherclient account",
+    "infoTitle": "Account Details",
+    "username": "Player name",
+    "passwordTitle": "Change Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "repeatPassword": "Repeat password",
+    "changePassword": "Change Password",
+    "passwordNote": "Changing your password signs out your launcher on other computers.",
+    "passwordChangedTitle": "Password changed",
+    "passwordChanged": "You stay signed in on this computer.",
+    "siteTitle": "Website Account",
+    "registeredAt": "Website member since",
+    "recentOrders": "Recent orders",
+    "siteHint": "Balance, credit top-ups, orders and e-mail are managed from your cevhercraft.com account."
+  },
+  "versions": {
+    "completedTitle": "Download complete",
+    "completedMessage": "{{version}} is ready to play."
+  },
+  "modBrowser": {
+    "title": "Find Mods & Shaders",
+    "search": "Search Modrinth… (e.g. minimap, zoom)",
+    "popular": "Most popular mods",
+    "results": "{{count}} results",
+    "by": "· {{author}}",
+    "downloads": "{{count}} downloads",
+    "needsServer": "Must also be on the server — may not work here",
+    "install": "Install",
+    "installing": "Installing…",
+    "installed": "Installed",
+    "inPack": "In pack",
+    "empty": "No suitable mods found for this version.",
+    "more": "Show more",
+    "fabricOff": "Turn on Fabric above to install mods.",
+    "dependency": "dependency",
+    "installedTitleList": "Your Mods",
+    "installedTitle": "Mod installed",
+    "installedMessage": "{{name}} will load the next time you press Play.",
+    "tabMods": "Mods",
+    "tabShaders": "Shaders",
+    "searchShader": "Search Modrinth shaders… (e.g. complementary, bsl)",
+    "popularShader": "Most popular shaders",
+    "emptyShader": "No suitable shaders found for this version.",
+    "installedShaders": "Your Shaders",
+    "shaderAutoIris": "Installing a shader also installs the required Iris Shaders mod automatically.",
+    "shaderModFound": "You already have a shader mod ({{name}}); Iris will not be installed.",
+    "shaderInstalledTitle": "Shader installed",
+    "shaderInstalledWithIris": "{{name}} and {{loader}} will load the next time you press Play. Pick it in Options → Video Settings → Shader Packs."
+  },
+  "splash": {
+    "starting": "Starting CevherClient",
+    "checking": "Checking for updates",
+    "upToDate": "Application up to date",
+    "downloading": "Downloading new version",
+    "ready": "Ready",
+    "updated": "Updated"
+  },
+  "quality": {
+    "title": "Choose your quality level",
+    "subtitle": "First launch of Cevherclient. Your choice decides which shader is installed; performance settings are optimized to the highest level in all three.",
+    "remember": "Remember my choice",
+    "note": "You can change this at any time in the settings.",
+    "wait": "Downloading mod and shader files, this can take a few minutes…",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "installing": "Installing… {{percent}}%",
+    "doneTitle": "Quality set",
+    "doneMessage": "{{shader}} installed. It becomes active on the next Play.",
+    "settingsTitle": "Device Quality",
+    "settingsHint": "The options only change the shader; the optimization settings are the same, and at the highest level, for every tier.",
+    "tiers": {
+      "high": {
+        "name": "High",
+        "desc": "Every effect and the most advanced shader (Complementary Unbound). Recommended for a recent machine."
+      },
+      "medium": {
+        "name": "Medium",
+        "desc": "A balance between looks and smoothness (Photon). The right pick for a mid-range machine."
+      },
+      "low": {
+        "name": "Low",
+        "desc": "As light as possible (SuperDuperVanilla). For older or entry-level machines."
+      }
+    }
+  }
+}

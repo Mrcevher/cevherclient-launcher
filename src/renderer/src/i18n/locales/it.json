@@ -1,0 +1,297 @@
+{
+  "app": {
+    "name": "Cevherclient",
+    "tagline": "Connettiti al mondo dove brilla il minerale"
+  },
+  "common": {
+    "loading": "Caricamento…",
+    "ok": "OK",
+    "retry": "Riprova",
+    "close": "Chiudi",
+    "details": "Dettagli tecnici",
+    "errorCode": "Codice errore",
+    "back": "Indietro"
+  },
+  "titlebar": {
+    "minimize": "Riduci a icona",
+    "close": "Chiudi"
+  },
+  "nav": {
+    "play": "Gioca",
+    "versions": "Versioni",
+    "settings": "Impostazioni",
+    "news": "Notizie",
+    "store": "Negozio",
+    "mods": "Mod",
+    "credits": "Compra crediti",
+    "discord": "Discord",
+    "profile": "Profilo",
+    "menu": "Menu"
+  },
+  "login": {
+    "title": "Benvenuto",
+    "subtitle": "Inserisci il nome giocatore che userai sul server.",
+    "loginHint": "Accedi con il tuo account. In gioco non ti verrà chiesta la password.",
+    "registerHint": "Crea il tuo account per il server. Accedi al launcher con questo nome e questa password; nessuna password in gioco.",
+    "tabLogin": "Accedi",
+    "tabRegister": "Registrati",
+    "usernameLabel": "Nome giocatore",
+    "usernamePlaceholder": "es. Steve_42",
+    "usernameRule": "3–16 caratteri; solo lettere, cifre e trattini bassi.",
+    "passwordLabel": "Password",
+    "passwordRule": "Almeno {{min}} caratteri.",
+    "passwordRepeatLabel": "Password (ripeti)",
+    "passwordMismatch": "Le password non coincidono.",
+    "submit": "Accedi",
+    "submitRegister": "Crea account"
+  },
+  "launch": {
+    "stages": {
+      "preparing": "Preparazione del profilo",
+      "java": "Selezione di Java",
+      "installing": "Installazione dei file di gioco",
+      "modpack": "Sincronizzazione delle mod",
+      "starting": "Avvio del gioco"
+    },
+    "startedTitle": "Connessione stabilita",
+    "startedMessage": "{{target}} avviato. Buon divertimento!",
+    "exitedTitle": "Gioco chiuso",
+    "exitedMessage": "Il launcher è di nuovo pronto."
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "autosave": "Le modifiche vengono salvate automaticamente.",
+    "java": {
+      "title": "Java",
+      "auto": "Automatico",
+      "autoHint": "Per ogni versione viene scelto automaticamente il Java adatto.",
+      "browse": "Sfoglia…",
+      "custom": "Percorso personalizzato",
+      "detected": "Installazioni trovate"
+    },
+    "memory": {
+      "title": "Memoria (RAM)",
+      "system": "RAM di sistema: {{total}}",
+      "hint": "Almeno 2 GB restano liberi per il sistema."
+    },
+    "resolution": {
+      "title": "Risoluzione",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "fullscreen": "Schermo intero",
+      "preset": "Predefinita",
+      "fitHint": "In modalità finestra, se la dimensione supera lo schermo, la finestra di gioco viene ridotta per adattarsi."
+    },
+    "jvm": {
+      "title": "Argomenti JVM",
+      "reset": "Ripristina predefiniti",
+      "hint": "Per utenti esperti. Separa con spazi."
+    },
+    "language": {
+      "title": "Lingua",
+      "tr": "Türkçe",
+      "en": "English",
+      "de": "Deutsch",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語"
+    }
+  },
+  "news": {
+    "title": "Notizie",
+    "subtitle": "Ultimi annunci dal server",
+    "empty": "Ancora nessun annuncio."
+  },
+  "errors": {
+    "JAVA_NOT_FOUND": {
+      "title": "Java non trovato",
+      "message": "Questa versione richiede Java {{version}}, ma non è stata trovata un'installazione adatta. Controlla il percorso Java nelle impostazioni o impostalo su \"Automatico\"."
+    },
+    "NO_INTERNET": {
+      "title": "Nessuna connessione Internet",
+      "message": "Impossibile raggiungere i server. Controlla la connessione e riprova."
+    },
+    "AUTH_FAILED": {
+      "title": "Accesso non riuscito",
+      "message": "Impossibile accedere. Riprova.",
+      "reasons": {
+        "invalidUsername": "Il nome deve avere 3–16 caratteri e contenere solo lettere, cifre e trattini bassi.",
+        "wrongCredentials": "Nome giocatore o password errati.",
+        "usernameTaken": "Questo nome giocatore è già in uso. Scegline un altro o accedi.",
+        "weakPassword": "La password deve avere almeno 6 caratteri.",
+        "protectedName": "Questo nome appartiene a un amministratore; può essere registrato solo dal computer del server.",
+        "tooManyAccounts": "È stato raggiunto il limite di account per questa connessione.",
+        "tooManyAttempts": "Troppi tentativi falliti. Attendi qualche minuto e riprova.",
+        "sessionExpired": "La sessione è scaduta. Accedi di nuovo.",
+        "serverUnreachable": "Impossibile raggiungere il server degli account. Il server di gioco potrebbe essere offline.",
+        "serverError": "Il server degli account ha restituito un errore. Avvisa gli amministratori."
+      }
+    },
+    "DOWNLOAD_FAILED": {
+      "title": "Download non riuscito",
+      "message": "Impossibile scaricare i file. Puoi riavviare il download.",
+      "reasons": {
+        "noVersion": "Questa mod non è disponibile per la versione Minecraft del server (Fabric)."
+      }
+    },
+    "LAUNCH_FAILED": {
+      "title": "Impossibile avviare il gioco",
+      "message": "Si è verificato un errore durante l'avvio di Minecraft.",
+      "reasons": {
+        "alreadyRunning": "Il gioco è già in esecuzione."
+      }
+    },
+    "SERVER_OFFLINE": {
+      "title": "Server offline",
+      "message": "{{server}} al momento non risponde. Riprova tra poco."
+    },
+    "MODPACK_SYNC_FAILED": {
+      "title": "Sincronizzazione delle mod non riuscita",
+      "message": "Impossibile aggiornare il modpack del server. Non puoi entrare con mod mancanti."
+    },
+    "CONFIG_INVALID": {
+      "title": "Configurazione del server illeggibile",
+      "message": "Il file di configurazione del launcher manca o non è valido. Avvisa gli amministratori."
+    },
+    "LAUNCHER_OUTDATED": {
+      "title": "Launcher non aggiornato",
+      "message": "Questo server richiede Cevherclient {{required}} o successivo (hai la {{current}})."
+    },
+    "UNKNOWN": {
+      "title": "Errore imprevisto",
+      "message": "Qualcosa è andato storto. Se succede di nuovo, riavvia il launcher."
+    }
+  },
+  "update": {
+    "readyTitle": "Aggiornamento pronto",
+    "readyMessage": "Cevherclient {{version}} è stato scaricato. Il launcher si riavvierà per installarlo.",
+    "downloading": "Aggiornamento {{percent}}%",
+    "updating": "Aggiornamento",
+    "restarting": "Riavvio",
+    "install": "Installa v{{version}} e riavvia",
+    "button": "Aggiorna a v{{version}}"
+  },
+  "topbar": {
+    "players": "{{count}} giocatori",
+    "offline": "Server offline"
+  },
+  "userMenu": {
+    "orders": "I miei ordini",
+    "logout": "Esci"
+  },
+  "home": {
+    "play": "GIOCA",
+    "running": "GIOCO IN CORSO",
+    "launching": "Avvio in corso",
+    "requirements": {
+      "title": "Requisiti di sistema",
+      "minimum": "Requisiti minimi",
+      "recommended": "Requisiti consigliati",
+      "showMore": "Mostra di più",
+      "showLess": "Mostra meno",
+      "rows": {
+        "os": "Sistema operativo (OS)",
+        "arch": "Architettura del sistema",
+        "cpu": "Processore (CPU)",
+        "cpuFeatures": "Funzionalità del processore",
+        "gpu": "Scheda grafica",
+        "gpuFeatures": "Funzionalità della scheda grafica",
+        "vram": "VRAM",
+        "storage": "Spazio libero",
+        "ram": "RAM",
+        "graphics": "Impostazioni grafiche consigliate",
+        "resolution": "Risoluzione consigliata"
+      },
+      "values": {
+        "low": "Bassa",
+        "high": "Alta",
+        "unifiedMemory": "Memoria unificata"
+      }
+    }
+  },
+  "mods": {
+    "loaderTitle": "Caricatore di mod",
+    "useFabric": "Usa il caricatore di mod Fabric",
+    "fabricOn": "Fabric attivo — le mod verranno caricate nel gioco.",
+    "fabricOff": "Fabric disattivo — il gioco parte senza mod (vanilla); il pacchetto prestazioni e la chiusura automatica all'uscita dal server non funzionano.",
+    "packTitle": "Pacchetto prestazioni",
+    "packCount": "{{installed}}/{{total}} installate",
+    "install": "Installa il pacchetto prestazioni",
+    "update": "Aggiorna il pacchetto",
+    "installing": "Installazione… {{percent}}%",
+    "remove": "Rimuovi",
+    "autoInstall": "Installa automaticamente al primo avvio",
+    "installed": "installata",
+    "unavailable": "non disponibile per questa versione",
+    "installedTitle": "Pacchetto prestazioni installato",
+    "installedMessage": "Le mod verranno caricate al prossimo avvio.",
+    "desc": {
+      "fabric-api": "Libreria di base da cui dipendono le altre mod.",
+      "sodium": "Riscrive il motore di rendering; il maggiore aumento di FPS.",
+      "lithium": "Velocizza la logica di gioco e il calcolo dei tick.",
+      "ferrite-core": "Riduce sensibilmente l'uso della memoria.",
+      "immediatelyfast": "Velocizza l'interfaccia e il rendering immediato.",
+      "entityculling": "Non disegna le entità non visibili.",
+      "krypton": "Ottimizza lo stack di rete; meno latenza sui server.",
+      "threadtweak": "Bilancia le priorità dei thread.",
+      "dynamic-fps": "Riduce gli FPS in background per risparmiare risorse."
+    }
+  },
+  "profile": {
+    "accountType": "Account Cevherclient",
+    "infoTitle": "Dati dell'account",
+    "username": "Nome giocatore",
+    "passwordTitle": "Cambia password",
+    "currentPassword": "Password attuale",
+    "newPassword": "Nuova password",
+    "repeatPassword": "Ripeti password",
+    "changePassword": "Cambia password",
+    "passwordNote": "Cambiando la password esci dal launcher sugli altri computer.",
+    "passwordChangedTitle": "Password cambiata",
+    "passwordChanged": "Su questo computer resti connesso.",
+    "siteTitle": "Account del sito",
+    "siteHint": "Saldo, crediti, ordini ed e-mail si gestiscono dal tuo account cevhercraft.com."
+  },
+  "versions": {
+    "completedTitle": "Download completato",
+    "completedMessage": "{{version}} è pronto per giocare."
+  },
+  "modBrowser": {
+    "title": "Trova mod e shader",
+    "search": "Cerca su Modrinth… (es. minimap, zoom)",
+    "popular": "Mod più popolari",
+    "results": "{{count}} risultati",
+    "by": "· {{author}}",
+    "downloads": "{{count}} download",
+    "needsServer": "Deve essere anche sul server — qui potrebbe non funzionare",
+    "install": "Installa",
+    "installing": "Installazione…",
+    "installed": "Installata",
+    "inPack": "Nel pacchetto",
+    "empty": "Nessuna mod adatta trovata per questa versione.",
+    "more": "Mostra altre",
+    "fabricOff": "Attiva Fabric qui sopra per installare le mod.",
+    "dependency": "dipendenza",
+    "installedTitleList": "Le tue mod",
+    "installedTitle": "Mod installata",
+    "installedMessage": "{{name}} verrà caricata al prossimo avvio.",
+    "tabMods": "Mod",
+    "tabShaders": "Shader",
+    "searchShader": "Cerca shader su Modrinth… (es. complementary, bsl)",
+    "popularShader": "Shader più popolari",
+    "emptyShader": "Nessuno shader adatto trovato per questa versione.",
+    "installedShaders": "I tuoi shader",
+    "shaderAutoIris": "Installando uno shader viene installata automaticamente anche la mod Iris Shaders richiesta.",
+    "shaderModFound": "Hai già una mod per shader ({{name}}); Iris non verrà installata.",
+    "shaderInstalledTitle": "Shader installato",
+    "shaderInstalledWithIris": "{{name}} e {{loader}} verranno caricati al prossimo avvio. Scegli lo shader in Opzioni → Video → Pacchetti shader."
+  },
+  "splash": {
+    "starting": "Avvio di CevherClient",
+    "checking": "Ricerca aggiornamenti",
+    "upToDate": "Applicazione aggiornata",
+    "downloading": "Download della nuova versione",
+    "ready": "Pronto",
+    "updated": "Aggiornato"
+  }
+}

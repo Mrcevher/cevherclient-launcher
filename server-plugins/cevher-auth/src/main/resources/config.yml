@@ -1,0 +1,85 @@
+# CevherAuth — Cevherclient launcher hesapları
+#
+# Oyuncu hesabını launcher'da açar / launcher'da giriş yapar; oyunda şifre sorulmaz.
+# Oyna'ya basıldığında launcher bu eklentiden tek kullanımlık bir "giriş bileti" alır;
+# oyuncu sunucuya bağlanırken bilet kontrol edilir. Bileti olmayan (launcher kullanmayan)
+# kimse sunucuya giremez, böylece lisanssız sunucuda başkasının adıyla girilemez.
+
+http:
+  # Launcher'ın bağlanacağı adres ve port. Başka bilgisayarlardan girilecekse bu port da
+  # (Minecraft portu gibi) modemde yönlendirilmeli ve launcher config'indeki authServerUrl
+  # buna göre yazılmalı.
+  bind: 0.0.0.0
+  port: 25580
+  # Sunucu bir reverse proxy (nginx, Caddy, Cloudflare) arkasındaysa true:
+  # oyuncu IP'si X-Forwarded-For başlığından okunur. Doğrudan açıksa false bırakın.
+  trust-proxy-headers: false
+  # Proxy başlıkları (X-Forwarded-For) yalnızca bağlantıyı bu adreslerden gelen proxy'ler
+  # kurduysa dikkate alınır. Boş bırakılırsa yalnızca yerel makine (127.0.0.1, ::1) güvenilir.
+  trusted-proxies:
+    - 127.0.0.1
+    - "::1"
+  # Aynı istemciden aynı anda açık tutulabilecek en fazla bağlantı.
+  max-connections-per-ip: 6
+
+# Launcher'dan gelmeyen (bileti olmayan) oyuncuları sunucuya alma.
+require-launcher: true
+# Bileti alan IP ile oyuna bağlanan IP aynı olmalı mı? (playit.gg gibi tünel kullanıyorsanız false.)
+check-ip: true
+
+# Launcher oturumu kaç gün geçerli (her Oyna'da yenilenir). Süre dolunca launcher şifre sorar.
+session-days: 30
+# Oyna'ya basıldıktan sonra oyunun açılıp sunucuya bağlanması için süre (saniye).
+ticket-seconds: 300
+# Bilet kullanıldıktan sonra aynı oyuncunun (aynı IP'den) bilet almadan yeniden
+# bağlanabildiği süre (saniye). Bağlantı kopunca "Yeniden Bağlan" çalışsın diye. 0 = kapalı.
+reconnect-grace-seconds: 120
+
+password:
+  min-length: 6
+  max-length: 64
+# Aynı IP'den en fazla kaç hesap açılabilir (0 = sınırsız).
+max-accounts-per-ip: 3
+# Aynı (IP, kullanıcı adı) çiftinden 10 dakikada izin verilen hatalı şifre denemesi.
+# Aynı IP'den tüm hesaplara ve aynı hesaba tüm IP'lerden bunun 3 katı uygulanır.
+max-failed-logins: 10
+# Bir IP'den 10 dakikada denenebilecek kayıt sayısı (yerel makine hariç).
+max-registrations-per-10min: 5
+# Hesap başına aynı anda açık tutulan en fazla launcher oturumu (eskisi silinir).
+max-sessions-per-account: 10
+# IP başına 10 dakikada izin verilen biletsiz/eşleşmeyen sunucu bağlantı denemesi.
+max-ticket-misses: 20
+
+# Yönetici (op) adlarıyla yalnızca sunucunun çalıştığı bilgisayardan (aracısız, tarayıcı
+# olmayan bağlantı) kayıt olunabilir; başkası "arda" gibi yönetici adlarını sizden önce kapamaz.
+protect-op-names: true
+# Sunucuda daha önce oynamış oyuncuların adları da aynı şekilde korunur (ilk gelen kapmasın).
+# Bu oyuncular için hesabı /cevherauth kayit <ad> <sifre> ile siz açın.
+protect-played-names: true
+
+# LeaderOS web sitesi ile hesap senkronu.
+# - Launcher'dan kayıt olan oyuncunun sitede de aynı ad ve şifreyle hesabı açılır.
+# - Sitede kayıt olan oyuncu, site şifresiyle launcher'a giriş yapabilir (launcher hesabı o an açılır).
+# - Senkrondan önce açılmış launcher hesapları, oyuncu launcher'a ilk giriş yaptığında siteye aktarılır.
+# Site erişilemezse launcher normal çalışır; eksik site hesabı sonraki girişte açılır.
+leaderos:
+  enabled: false
+  # Sitenin adresi (sonunda / olmadan). Örnek: https://cevhercraft.com
+  url: ""
+  # Site > Yönetim Paneli > Ayarlar > API sayfasındaki anahtar.
+  api-key: ""
+  # Siteye yapılan isteklerin zaman aşımı (saniye).
+  timeout-seconds: 8
+
+# Launcher içi Mağaza ve Profil (site kredisi, siparişler). leaderos.* açık olmalı.
+# Satın alma, launcher hesabıyla eşleşmiş (aynı ad + şifre) site hesabının kredisiyle yapılır;
+# site API anahtarı yalnızca bu eklentide durur, launcher'a hiç gönderilmez.
+store:
+  enabled: true
+  # Hesap başına 10 dakikada en fazla satın alma denemesi.
+  max-purchases-per-10min: 15
+
+messages:
+  lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
+  no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."
+  wrong-name: "&cOyuncu adı launcher hesabınla uyuşmuyor.\n&7Launcher'dan çıkış yapıp tekrar giriş yap."

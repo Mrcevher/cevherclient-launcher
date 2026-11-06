@@ -1,0 +1,54 @@
+{
+  "minLauncherVersion": "0.1.0",
+  "authServerUrl": "https://auth.cevhercraft.com",
+  "links": {
+    "website": "https://cevhercraft.com",
+    "store": "https://cevhercraft.com/store",
+    "credits": "https://cevhercraft.com/store",
+    "orders": "https://cevhercraft.com/account",
+    "discord": "https://discord.gg/vPKYKEaFQN"
+  },
+  "servers": [
+    {
+      "id": "survival",
+      "name": "Kral Pakt Survival",
+      "description": {
+        "tr": "Gerçek hayattan hayvanlar ve moblarla dolu bir survival dünyası. Ormanlarda geyikler, nehirlerde balık sürüleri, gecenin karanlığında kurtlar…",
+        "en": "A survival world full of real-life animals and mobs. Deer in the forests, schools of fish in the rivers, wolves in the dark of night…"
+      },
+      "address": "play.cevhercraft.com",
+      "port": 25565,
+      "minecraftVersion": "1.21.11",
+      "loader": {
+        "type": "fabric"
+      },
+      "themeColor": "#2fd3c6"
+    }
+  ],
+  "news": [
+    {
+      "id": "launcher-0-1",
+      "date": "2026-10-15T18:00:00Z",
+      "title": {
+        "tr": "Cevherclient yayında!",
+        "en": "Cevherclient is live!"
+      },
+      "content": {
+        "tr": "Kendi launcher'ımızın ilk sürümü hazır.\n\n- **Tek tıkla** sunucuya bağlan\n- Launcher hesabınla gir, oyunda şifre yok\n- Sodium, Lithium ve daha fazlasıyla **Performans Paketi**\n\nHata bulursan Discord'daki `#destek` kanalına yaz.",
+        "en": "The first version of our own launcher is ready.\n\n- Connect to the server **in one click**\n- Sign in with your launcher account, no password in-game\n- **Performance Pack** with Sodium, Lithium and more\n\nIf you find a bug, post it in the `#support` channel on Discord."
+      }
+    },
+    {
+      "id": "wildlife-update",
+      "date": "2026-10-02T12:00:00Z",
+      "title": {
+        "tr": "Vahşi Yaşam güncellemesi",
+        "en": "Wildlife update"
+      },
+      "content": {
+        "tr": "Survival dünyasına **12 yeni hayvan** geldi.\n\n| Biyom | Yeni canlılar |\n|---|---|\n| Tayga | Boz ayı, vaşak |\n| Savan | Zürafa, sırtlan |\n| Okyanus | Mürekkep balığı sürüleri |\n\n> Gece ormanlara tek başına girmemeni öneririz.",
+        "en": "**12 new animals** have arrived in the survival world.\n\n| Biome | New creatures |\n|---|---|\n| Taiga | Brown bear, lynx |\n| Savanna | Giraffe, hyena |\n| Ocean | Squid schools |\n\n> We recommend not entering forests alone at night."
+      }
+    }
+  ]
+}

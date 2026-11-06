@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "cevher_client",
+  "version": "${version}",
+  "name": "Cevherclient İstemci",
+  "description": "Cevherclient mod menüsü: HUD modülleri, HUD düzenleyici ve oyun içi ayarlar. Varsayılan tuş: Sağ Shift.",
+  "authors": ["Cevherclient"],
+  "license": "UNLICENSED",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.cevherclient.client.CevherClientMod"]
+  },
+  "mixins": ["cevher_client.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21"
+  }
+}

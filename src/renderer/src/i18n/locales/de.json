@@ -1,0 +1,297 @@
+{
+  "app": {
+    "name": "Cevherclient",
+    "tagline": "Verbinde dich mit der Welt, in der das Erz glänzt"
+  },
+  "common": {
+    "loading": "Wird geladen…",
+    "ok": "OK",
+    "retry": "Erneut versuchen",
+    "close": "Schließen",
+    "details": "Technische Details",
+    "errorCode": "Fehlercode",
+    "back": "Zurück"
+  },
+  "titlebar": {
+    "minimize": "Minimieren",
+    "close": "Schließen"
+  },
+  "nav": {
+    "play": "Spielen",
+    "versions": "Versionen",
+    "settings": "Einstellungen",
+    "news": "Neuigkeiten",
+    "store": "Shop",
+    "mods": "Mods",
+    "credits": "Credits kaufen",
+    "discord": "Discord",
+    "profile": "Profil",
+    "menu": "Menü"
+  },
+  "login": {
+    "title": "Willkommen",
+    "subtitle": "Gib den Spielernamen ein, den du auf dem Server verwenden wirst.",
+    "loginHint": "Melde dich mit deinem Konto an. Im Spiel wird kein Passwort abgefragt.",
+    "registerHint": "Erstelle dein Konto für den Server. Du meldest dich mit diesem Namen und Passwort im Launcher an; im Spiel ist kein Passwort nötig.",
+    "tabLogin": "Anmelden",
+    "tabRegister": "Registrieren",
+    "usernameLabel": "Spielername",
+    "usernamePlaceholder": "z. B. Steve_42",
+    "usernameRule": "3–16 Zeichen; nur Buchstaben, Ziffern und Unterstriche.",
+    "passwordLabel": "Passwort",
+    "passwordRule": "Mindestens {{min}} Zeichen.",
+    "passwordRepeatLabel": "Passwort (wiederholen)",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+    "submit": "Anmelden",
+    "submitRegister": "Konto erstellen"
+  },
+  "launch": {
+    "stages": {
+      "preparing": "Profil wird vorbereitet",
+      "java": "Java wird ausgewählt",
+      "installing": "Spieldateien werden installiert",
+      "modpack": "Mods werden synchronisiert",
+      "starting": "Spiel wird gestartet"
+    },
+    "startedTitle": "Verbindung hergestellt",
+    "startedMessage": "{{target}} wurde gestartet. Viel Spaß!",
+    "exitedTitle": "Spiel beendet",
+    "exitedMessage": "Der Launcher ist wieder bereit."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "autosave": "Änderungen werden automatisch gespeichert.",
+    "java": {
+      "title": "Java",
+      "auto": "Automatisch",
+      "autoHint": "Für jede Version wird automatisch das passende Java gewählt.",
+      "browse": "Durchsuchen…",
+      "custom": "Eigener Pfad",
+      "detected": "Gefundene Installationen"
+    },
+    "memory": {
+      "title": "Arbeitsspeicher (RAM)",
+      "system": "System-RAM: {{total}}",
+      "hint": "Mindestens 2 GB bleiben für das System frei."
+    },
+    "resolution": {
+      "title": "Auflösung",
+      "width": "Breite",
+      "height": "Höhe",
+      "fullscreen": "Vollbild",
+      "preset": "Vorlage",
+      "fitHint": "Im Fenstermodus wird das Spielfenster verkleinert, wenn die Größe den Bildschirm übersteigt."
+    },
+    "jvm": {
+      "title": "JVM-Argumente",
+      "reset": "Auf Standard zurücksetzen",
+      "hint": "Für Fortgeschrittene. Mit Leerzeichen trennen."
+    },
+    "language": {
+      "title": "Sprache",
+      "tr": "Türkçe",
+      "en": "English",
+      "de": "Deutsch",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語"
+    }
+  },
+  "news": {
+    "title": "Neuigkeiten",
+    "subtitle": "Neueste Ankündigungen des Servers",
+    "empty": "Noch keine Ankündigungen."
+  },
+  "errors": {
+    "JAVA_NOT_FOUND": {
+      "title": "Java nicht gefunden",
+      "message": "Diese Version benötigt Java {{version}}, aber es wurde keine passende Installation gefunden. Prüfe den Java-Pfad in den Einstellungen oder stelle ihn auf „Automatisch“."
+    },
+    "NO_INTERNET": {
+      "title": "Keine Internetverbindung",
+      "message": "Die Server sind nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
+    },
+    "AUTH_FAILED": {
+      "title": "Anmeldung fehlgeschlagen",
+      "message": "Die Anmeldung war nicht möglich. Bitte versuche es erneut.",
+      "reasons": {
+        "invalidUsername": "Der Name muss 3–16 Zeichen lang sein und darf nur Buchstaben, Ziffern und Unterstriche enthalten.",
+        "wrongCredentials": "Spielername oder Passwort ist falsch.",
+        "usernameTaken": "Dieser Spielername ist bereits vergeben. Wähle einen anderen oder melde dich an.",
+        "weakPassword": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+        "protectedName": "Dieser Name gehört einem Server-Admin; er kann nur vom Server-Rechner aus registriert werden.",
+        "tooManyAccounts": "Das Kontolimit für diese Verbindung ist erreicht.",
+        "tooManyAttempts": "Zu viele Fehlversuche. Warte ein paar Minuten und versuche es erneut.",
+        "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+        "serverUnreachable": "Der Kontoserver ist nicht erreichbar. Der Spielserver ist möglicherweise offline.",
+        "serverError": "Der Kontoserver hat einen Fehler gemeldet. Bitte informiere die Admins."
+      }
+    },
+    "DOWNLOAD_FAILED": {
+      "title": "Download fehlgeschlagen",
+      "message": "Die Dateien konnten nicht heruntergeladen werden. Du kannst den Download neu starten.",
+      "reasons": {
+        "noVersion": "Dieser Mod wurde für die Minecraft-Version des Servers (Fabric) nicht veröffentlicht."
+      }
+    },
+    "LAUNCH_FAILED": {
+      "title": "Spiel konnte nicht gestartet werden",
+      "message": "Beim Starten von Minecraft ist ein Fehler aufgetreten.",
+      "reasons": {
+        "alreadyRunning": "Das Spiel läuft bereits."
+      }
+    },
+    "SERVER_OFFLINE": {
+      "title": "Server offline",
+      "message": "{{server}} antwortet gerade nicht. Versuche es gleich noch einmal."
+    },
+    "MODPACK_SYNC_FAILED": {
+      "title": "Mod-Synchronisierung fehlgeschlagen",
+      "message": "Das Modpack des Servers konnte nicht aktualisiert werden. Mit fehlenden Mods kannst du nicht beitreten."
+    },
+    "CONFIG_INVALID": {
+      "title": "Serverkonfiguration nicht lesbar",
+      "message": "Die Konfigurationsdatei des Launchers fehlt oder ist ungültig. Bitte informiere die Admins."
+    },
+    "LAUNCHER_OUTDATED": {
+      "title": "Launcher veraltet",
+      "message": "Dieser Server benötigt Cevherclient {{required}} oder neuer (du hast {{current}})."
+    },
+    "UNKNOWN": {
+      "title": "Unerwarteter Fehler",
+      "message": "Etwas ist schiefgelaufen. Wenn das wieder passiert, starte den Launcher neu."
+    }
+  },
+  "update": {
+    "readyTitle": "Update bereit",
+    "readyMessage": "Cevherclient {{version}} wurde heruntergeladen. Der Launcher startet neu und installiert es.",
+    "downloading": "Update {{percent}} %",
+    "updating": "Wird aktualisiert",
+    "restarting": "Neustart",
+    "install": "v{{version}} installieren und neu starten",
+    "button": "Auf v{{version}} aktualisieren"
+  },
+  "topbar": {
+    "players": "{{count}} Spieler",
+    "offline": "Server offline"
+  },
+  "userMenu": {
+    "orders": "Meine Bestellungen",
+    "logout": "Abmelden"
+  },
+  "home": {
+    "play": "SPIELEN",
+    "running": "SPIEL LÄUFT",
+    "launching": "Wird gestartet",
+    "requirements": {
+      "title": "Systemanforderungen",
+      "minimum": "Mindestanforderungen",
+      "recommended": "Empfohlene Anforderungen",
+      "showMore": "Mehr anzeigen",
+      "showLess": "Weniger anzeigen",
+      "rows": {
+        "os": "Betriebssystem (OS)",
+        "arch": "OS-Architektur",
+        "cpu": "Prozessor (CPU)",
+        "cpuFeatures": "Prozessorfunktionen",
+        "gpu": "Grafikkarte",
+        "gpuFeatures": "Grafikkartenfunktionen",
+        "vram": "VRAM",
+        "storage": "Freier Speicherplatz",
+        "ram": "RAM",
+        "graphics": "Empfohlene Grafikeinstellungen",
+        "resolution": "Empfohlene Auflösung"
+      },
+      "values": {
+        "low": "Niedrig",
+        "high": "Hoch",
+        "unifiedMemory": "Gemeinsamer Speicher"
+      }
+    }
+  },
+  "mods": {
+    "loaderTitle": "Mod-Loader",
+    "useFabric": "Fabric-Mod-Loader verwenden",
+    "fabricOn": "Fabric an — Mods werden ins Spiel geladen.",
+    "fabricOff": "Fabric aus — das Spiel startet ohne Mods (Vanilla); das Performance-Paket und das automatische Schließen beim Verlassen des Servers funktionieren nicht.",
+    "packTitle": "Performance-Paket",
+    "packCount": "{{installed}}/{{total}} installiert",
+    "install": "Performance-Paket installieren",
+    "update": "Paket aktualisieren",
+    "installing": "Wird installiert… {{percent}} %",
+    "remove": "Entfernen",
+    "autoInstall": "Beim ersten Start automatisch installieren",
+    "installed": "installiert",
+    "unavailable": "für diese Version nicht verfügbar",
+    "installedTitle": "Performance-Paket installiert",
+    "installedMessage": "Die Mods werden beim nächsten Spielen geladen.",
+    "desc": {
+      "fabric-api": "Basisbibliothek, auf die andere Mods angewiesen sind.",
+      "sodium": "Schreibt die Render-Engine neu; der größte FPS-Gewinn.",
+      "lithium": "Beschleunigt Spiellogik und Tick-Berechnungen.",
+      "ferrite-core": "Senkt den Speicherverbrauch deutlich.",
+      "immediatelyfast": "Beschleunigt die Oberfläche und das Sofort-Rendering.",
+      "entityculling": "Überspringt das Zeichnen nicht sichtbarer Objekte.",
+      "krypton": "Optimiert den Netzwerk-Stack; weniger Latenz auf Servern.",
+      "threadtweak": "Gleicht Thread-Prioritäten aus.",
+      "dynamic-fps": "Senkt die FPS im Hintergrund und spart Ressourcen."
+    }
+  },
+  "profile": {
+    "accountType": "Cevherclient-Konto",
+    "infoTitle": "Kontodaten",
+    "username": "Spielername",
+    "passwordTitle": "Passwort ändern",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "repeatPassword": "Passwort wiederholen",
+    "changePassword": "Passwort ändern",
+    "passwordNote": "Wenn du dein Passwort änderst, wirst du im Launcher auf anderen Computern abgemeldet.",
+    "passwordChangedTitle": "Passwort geändert",
+    "passwordChanged": "Auf diesem Computer bleibst du angemeldet.",
+    "siteTitle": "Website-Konto",
+    "siteHint": "Guthaben, Credits, Bestellungen und E-Mail werden über dein cevhercraft.com-Konto verwaltet."
+  },
+  "versions": {
+    "completedTitle": "Download abgeschlossen",
+    "completedMessage": "{{version}} ist spielbereit."
+  },
+  "modBrowser": {
+    "title": "Mods & Shader finden",
+    "search": "Modrinth durchsuchen… (z. B. Minimap, Zoom)",
+    "popular": "Beliebteste Mods",
+    "results": "{{count}} Ergebnisse",
+    "by": "· {{author}}",
+    "downloads": "{{count}} Downloads",
+    "needsServer": "Muss auch auf dem Server sein — funktioniert hier evtl. nicht",
+    "install": "Installieren",
+    "installing": "Wird installiert…",
+    "installed": "Installiert",
+    "inPack": "Im Paket",
+    "empty": "Keine passenden Mods für diese Version gefunden.",
+    "more": "Mehr anzeigen",
+    "fabricOff": "Aktiviere oben Fabric, um Mods zu installieren.",
+    "dependency": "Abhängigkeit",
+    "installedTitleList": "Deine Mods",
+    "installedTitle": "Mod installiert",
+    "installedMessage": "{{name}} wird beim nächsten Spielen geladen.",
+    "tabMods": "Mods",
+    "tabShaders": "Shader",
+    "searchShader": "Shader auf Modrinth suchen… (z. B. complementary, bsl)",
+    "popularShader": "Beliebteste Shader",
+    "emptyShader": "Keine passenden Shader für diese Version gefunden.",
+    "installedShaders": "Deine Shader",
+    "shaderAutoIris": "Beim Installieren eines Shaders wird die nötige Iris-Shaders-Mod automatisch mitinstalliert.",
+    "shaderModFound": "Du hast bereits eine Shader-Mod ({{name}}); Iris wird nicht zusätzlich installiert.",
+    "shaderInstalledTitle": "Shader installiert",
+    "shaderInstalledWithIris": "{{name}} und {{loader}} werden beim nächsten Spielen geladen. Wähle den Shader unter Optionen → Video → Shaderpakete."
+  },
+  "splash": {
+    "starting": "CevherClient wird gestartet",
+    "checking": "Suche nach Updates",
+    "upToDate": "Anwendung ist aktuell",
+    "downloading": "Neue Version wird heruntergeladen",
+    "ready": "Bereit",
+    "updated": "Aktualisiert"
+  }
+}

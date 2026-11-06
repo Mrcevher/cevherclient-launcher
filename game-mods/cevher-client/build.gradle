@@ -1,0 +1,45 @@
+// Cevherclient istemci modu (mod menüsü, HUD modülleri, HUD düzenleyici) — yalnızca istemci tarafı.
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+base {
+	archivesName = "cevher-client-${project.minecraft_version}"
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def props = [version: project.version, minecraft_version: project.minecraft_version]
+	inputs.properties props
+	filesMatching("fabric.mod.json") {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Geliştirme: aynı sunucuya ikinci bir istemci açmak için (./gradlew runClient2). Kendi run2 klasörü ve
+// "Bob" kullanıcı adıyla çalışır; çok oyunculu özellikleri (kozmetik eşitlemesi gibi) denemek içindir.
+loom {
+	runs {
+		client2 {
+			client()
+			runDir 'run2'
+			programArgs '--username', 'Bob'
+		}
+	}
+}

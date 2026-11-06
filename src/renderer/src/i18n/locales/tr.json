@@ -1,0 +1,377 @@
+{
+  "app": {
+    "name": "Cevherclient",
+    "tagline": "Cevherin parladığı dünyaya bağlan"
+  },
+  "common": {
+    "loading": "Yükleniyor…",
+    "ok": "Tamam",
+    "retry": "Tekrar dene",
+    "close": "Kapat",
+    "details": "Teknik ayrıntı",
+    "errorCode": "Hata kodu",
+    "back": "Geri"
+  },
+  "titlebar": {
+    "minimize": "Küçült",
+    "close": "Kapat"
+  },
+  "nav": {
+    "play": "Oyna",
+    "versions": "Sürümler",
+    "settings": "Ayarlar",
+    "news": "Haberler",
+    "store": "Mağaza",
+    "mods": "Modlar",
+    "credits": "Kredi Al",
+    "discord": "Discord",
+    "profile": "Profil",
+    "menu": "Menü"
+  },
+  "login": {
+    "title": "Hoş geldin",
+    "subtitle": "Sunucuda kullanacağın oyuncu adını yaz.",
+    "loginHint": "Hesabınla giriş yap. Oyunun içinde bir daha şifre sorulmaz.",
+    "registerHint": "Sunucu için hesabını aç. Bu ad ve şifreyle launcher'dan girersin; oyunun içinde şifre sorulmaz.",
+    "tabLogin": "Giriş yap",
+    "tabRegister": "Kayıt ol",
+    "usernameLabel": "Oyuncu adı",
+    "usernamePlaceholder": "Ör. Steve_42",
+    "usernameRule": "3–16 karakter; yalnızca harf, rakam ve alt çizgi.",
+    "passwordLabel": "Şifre",
+    "passwordRule": "En az {{min}} karakter.",
+    "passwordRepeatLabel": "Şifre (tekrar)",
+    "passwordMismatch": "Şifreler aynı değil.",
+    "submit": "Giriş yap",
+    "submitRegister": "Hesap oluştur"
+  },
+  "launch": {
+    "stages": {
+      "preparing": "Profil hazırlanıyor",
+      "java": "Java seçiliyor",
+      "installing": "Oyun dosyaları kuruluyor",
+      "modpack": "Modlar senkronize ediliyor",
+      "starting": "Oyun başlatılıyor"
+    },
+    "startedTitle": "Bağlantı kuruldu",
+    "startedMessage": "{{target}} başlatıldı. İyi oyunlar!",
+    "exitedTitle": "Oyun kapandı",
+    "exitedMessage": "Launcher yeniden hazır."
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "autosave": "Değişiklikler otomatik kaydedilir.",
+    "java": {
+      "title": "Java",
+      "auto": "Otomatik",
+      "autoHint": "Her sürüm için uygun Java otomatik seçilir.",
+      "browse": "Gözat…",
+      "custom": "Özel yol",
+      "detected": "Bulunan kurulumlar"
+    },
+    "memory": {
+      "title": "Bellek (RAM)",
+      "system": "Sistem RAM'i: {{total}}",
+      "hint": "Sistem için en az 2 GB boş bırakılır."
+    },
+    "resolution": {
+      "title": "Çözünürlük",
+      "width": "Genişlik",
+      "height": "Yükseklik",
+      "fullscreen": "Tam ekran",
+      "preset": "Hazır boyut",
+      "fitHint": "Pencereli modda boyut ekranından büyükse oyun penceresi ekrana sığacak şekilde küçültülür."
+    },
+    "jvm": {
+      "title": "JVM argümanları",
+      "reset": "Varsayılana dön",
+      "hint": "İleri düzey kullanıcılar için. Boşlukla ayırın."
+    },
+    "language": {
+      "title": "Dil",
+      "tr": "Türkçe",
+      "en": "English",
+      "de": "Deutsch",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語"
+    }
+  },
+  "news": {
+    "title": "Haberler",
+    "subtitle": "Sunucudan son duyurular",
+    "empty": "Henüz duyuru yok.",
+    "more": "Devamını oku",
+    "less": "Daha az göster",
+    "openSite": "Sitede aç"
+  },
+  "store": {
+    "balance": "Bakiye",
+    "topUp": "Kredi Yükle",
+    "all": "Tümü",
+    "featured": "Öne çıkan",
+    "buy": "Satın Al",
+    "buying": "Satın alınıyor…",
+    "stock": "Stok: {{count}}",
+    "soldOut": "Tükendi",
+    "empty": "Mağazada şu an ürün yok.",
+    "loadFailed": "Mağaza yüklenemedi.",
+    "notLinked": "Launcher hesabın henüz site hesabınla eşleşmedi. Launcher'dan çıkış yapıp aynı ad ve şifreyle tekrar giriş yaparsan eşleşir; ad sitede başka birine aitse yöneticiye yaz.",
+    "confirmTitle": "Satın almayı onayla",
+    "confirmHint": "Tutar site bakiyenden düşülür, ürün hesabına teslim edilir.",
+    "product": "Ürün",
+    "price": "Fiyat",
+    "after": "Kalan bakiye",
+    "insufficient": "Bakiyen bu ürün için yetmiyor.",
+    "confirm": "Onayla ve satın al",
+    "boughtTitle": "Satın alındı",
+    "boughtMessage": "{{name}} hesabına teslim ediliyor."
+  },
+  "errors": {
+    "JAVA_NOT_FOUND": {
+      "title": "Java bulunamadı",
+      "message": "Bu sürüm için Java {{version}} gerekiyor ancak uygun bir kurulum bulunamadı. Ayarlar'dan Java yolunu kontrol edin veya \"Otomatik\"e alın."
+    },
+    "NO_INTERNET": {
+      "title": "İnternet bağlantısı yok",
+      "message": "Sunuculara ulaşılamıyor. Bağlantınızı kontrol edip tekrar deneyin."
+    },
+    "AUTH_FAILED": {
+      "title": "Giriş başarısız",
+      "message": "Giriş yapılamadı. Lütfen tekrar deneyin.",
+      "reasons": {
+        "invalidUsername": "Kullanıcı adı 3–16 karakter olmalı ve yalnızca harf, rakam ve alt çizgi içermeli.",
+        "wrongCredentials": "Oyuncu adı veya şifre yanlış.",
+        "usernameTaken": "Bu oyuncu adı zaten alınmış. Başka bir ad dene ya da giriş yap.",
+        "weakPassword": "Şifre en az 6 karakter olmalı.",
+        "protectedName": "Bu ad sunucu yöneticisine ait; yalnızca sunucunun çalıştığı bilgisayardan kayıt olunabilir.",
+        "tooManyAccounts": "Bu bağlantıdan açılabilecek hesap sınırına ulaşıldı.",
+        "tooManyAttempts": "Çok fazla hatalı deneme. Birkaç dakika bekleyip tekrar dene.",
+        "sessionExpired": "Oturumunun süresi doldu. Lütfen tekrar giriş yap.",
+        "serverUnreachable": "Hesap sunucusuna ulaşılamadı. Oyun sunucusu kapalı olabilir.",
+        "serverError": "Hesap sunucusu bir hata döndürdü. Lütfen yöneticilere bildir."
+      }
+    },
+    "DOWNLOAD_FAILED": {
+      "title": "İndirme başarısız",
+      "message": "Dosyalar indirilemedi. İndirmeyi yeniden başlatabilirsiniz.",
+      "reasons": {
+        "noVersion": "Bu mod sunucunun Minecraft sürümü (Fabric) için yayınlanmamış."
+      }
+    },
+    "LAUNCH_FAILED": {
+      "title": "Oyun başlatılamadı",
+      "message": "Minecraft başlatılırken bir sorun oluştu.",
+      "reasons": {
+        "alreadyRunning": "Oyun zaten çalışıyor."
+      }
+    },
+    "SERVER_OFFLINE": {
+      "title": "Sunucu çevrimdışı",
+      "message": "{{server}} şu an yanıt vermiyor. Biraz sonra tekrar deneyin."
+    },
+    "MODPACK_SYNC_FAILED": {
+      "title": "Mod senkronizasyonu başarısız",
+      "message": "Sunucunun mod paketi güncellenemedi. Eksik modlarla sunucuya bağlanılamaz."
+    },
+    "STORE_FAILED": {
+      "title": "Mağaza işlemi başarısız",
+      "message": "İşlem tamamlanamadı. Lütfen tekrar dene.",
+      "reasons": {
+        "notLinked": "Launcher hesabın site hesabınla eşleşmemiş. Çıkış yapıp aynı ad ve şifreyle tekrar giriş yap.",
+        "insufficientBalance": "Bakiyen yetersiz. Kredi yükleyip tekrar dene.",
+        "outOfStock": "Bu ürün tükendi.",
+        "productNotFound": "Ürün bulunamadı; mağaza güncellenmiş olabilir.",
+        "inProgress": "Önceki satın alma hâlâ sürüyor.",
+        "tooManyAttempts": "Çok fazla deneme. Birkaç dakika sonra tekrar dene.",
+        "disabled": "Mağaza şu an kapalı.",
+        "unavailable": "Siteye ulaşılamadı. Biraz sonra tekrar dene.",
+        "serverUnreachable": "Hesap sunucusuna ulaşılamadı. Oyun sunucusu kapalı olabilir.",
+        "pluginOutdated": "Sunucudaki CevherAuth eklentisi mağazayı desteklemiyor; yöneticiye bildir.",
+        "serverError": "Sunucu bir hata döndürdü. Lütfen yöneticilere bildir."
+      }
+    },
+    "CONFIG_INVALID": {
+      "title": "Sunucu yapılandırması okunamadı",
+      "message": "Launcher yapılandırma dosyası eksik veya hatalı. Lütfen yöneticilere bildirin."
+    },
+    "LAUNCHER_OUTDATED": {
+      "title": "Launcher güncel değil",
+      "message": "Bu sunucu için Cevherclient {{required}} veya üstü gerekiyor (sizdeki: {{current}})."
+    },
+    "UNKNOWN": {
+      "title": "Beklenmeyen hata",
+      "message": "Bir şeyler ters gitti. Sorun devam ederse launcher'ı yeniden başlatın."
+    }
+  },
+  "update": {
+    "readyTitle": "Güncelleme hazır",
+    "readyMessage": "Cevherclient {{version}} indirildi. Launcher yeniden başlatılıp kurulacak.",
+    "downloading": "Güncelleme %{{percent}}",
+    "updating": "Güncelleniyor",
+    "restarting": "Yeniden başlatılıyor",
+    "install": "v{{version}} kur ve yeniden başlat",
+    "button": "Güncelle v{{version}}"
+  },
+  "topbar": {
+    "players": "{{count}} Oyuncu",
+    "offline": "Sunucu kapalı"
+  },
+  "userMenu": {
+    "orders": "Siparişlerim",
+    "logout": "Çıkış Yap"
+  },
+  "home": {
+    "play": "OYNA",
+    "running": "OYUN AÇIK",
+    "launching": "Başlatılıyor",
+    "requirements": {
+      "title": "Sistem gereksinimleri",
+      "minimum": "Minimum gereksinimler",
+      "recommended": "Önerilen gereksinimler",
+      "showMore": "Daha fazla göster",
+      "showLess": "Daha az göster",
+      "rows": {
+        "os": "İşletim sistemi (OS)",
+        "arch": "OS mimarisi",
+        "cpu": "İşlemci (CPU)",
+        "cpuFeatures": "İşlemci özellikleri",
+        "gpu": "Ekran kartı",
+        "gpuFeatures": "Ekran kartı özellikleri",
+        "vram": "VRAM",
+        "storage": "Boş alan",
+        "ram": "RAM",
+        "graphics": "Önerilen grafik ayarları",
+        "resolution": "Önerilen çözünürlük"
+      },
+      "values": {
+        "low": "Düşük",
+        "high": "Yüksek",
+        "unifiedMemory": "Birleşik bellek"
+      }
+    }
+  },
+  "mods": {
+    "loaderTitle": "Mod Yükleyici",
+    "useFabric": "Fabric mod yükleyicisini kullan",
+    "fabricOn": "Fabric açık — modlar oyuna yüklenecek.",
+    "fabricOff": "Fabric kapalı — oyun modsuz (vanilla) açılır; Performans Paketi ve sunucudan çıkınca otomatik kapanma çalışmaz.",
+    "packTitle": "Performans Paketi",
+    "packCount": "{{installed}}/{{total}} kurulu",
+    "install": "Performans Paketini Kur",
+    "update": "Paketi Güncelle",
+    "installing": "Kuruluyor… %{{percent}}",
+    "remove": "Kaldır",
+    "autoInstall": "İlk açılışta otomatik kur",
+    "installed": "kurulu",
+    "unavailable": "bu sürüm için yok",
+    "installedTitle": "Performans Paketi kuruldu",
+    "installedMessage": "Modlar bir sonraki Oyna'da yüklenecek.",
+    "desc": {
+      "fabric-api": "Diğer modların dayandığı temel kütüphane.",
+      "sodium": "Render motorunu baştan yazar; en büyük FPS kazancı.",
+      "lithium": "Oyun mantığı ve tik hesaplarını hızlandırır.",
+      "ferrite-core": "Bellek kullanımını belirgin şekilde düşürür.",
+      "immediatelyfast": "Arayüz ve anlık çizim işlemlerini hızlandırır.",
+      "entityculling": "Görünmeyen varlıkları çizmeyi atlar.",
+      "krypton": "Ağ katmanını optimize eder; sunucuda gecikmeyi azaltır.",
+      "threadtweak": "İş parçacığı önceliklerini dengeler.",
+      "dynamic-fps": "Pencere arka plandayken FPS'i düşürüp kaynak tasarrufu sağlar.",
+      "iris": "Shader paketlerini oyuna yükler.",
+      "modmenu": "Kurulu modları oyun içinden görüp ayarlamanı sağlar.",
+      "shulkerboxtooltip": "Shulker kutusunun içini fareyle üzerine gelince gösterir.",
+      "lambdynamiclights": "Elindeki meşale gibi eşyalar etrafı dinamik olarak aydınlatır.",
+      "smoothplayeranimations": "Oyuncu hareketlerini ve animasyonlarını akıcı hale getirir.",
+      "appleskin": "Yiyeceklerin doyuruculuk ve doygunluk değerlerini gösterir.",
+      "xaeros-world-map": "Gezdiğin yerleri kaydeden tam ekran dünya haritası.",
+      "entitytexturefeatures": "Varlıklar için rastgele ve emisyonlu dokuları destekler."
+    }
+  },
+  "profile": {
+    "accountType": "Cevherclient hesabı",
+    "infoTitle": "Hesap Bilgileri",
+    "username": "Oyuncu adı",
+    "passwordTitle": "Şifre Değiştir",
+    "currentPassword": "Mevcut şifre",
+    "newPassword": "Yeni şifre",
+    "repeatPassword": "Şifre tekrar",
+    "changePassword": "Şifre Değiştir",
+    "passwordNote": "Şifre değişince diğer bilgisayarlardaki launcher oturumların kapanır.",
+    "passwordChangedTitle": "Şifre değiştirildi",
+    "passwordChanged": "Bu bilgisayarda girişli kalmaya devam ediyorsun.",
+    "siteTitle": "Web Sitesi Hesabı",
+    "registeredAt": "Site kaydı",
+    "recentOrders": "Son siparişler",
+    "siteHint": "Bakiye, kredi yükleme, siparişler ve e-posta işlemleri cevhercraft.com hesabından yönetilir."
+  },
+  "versions": {
+    "completedTitle": "İndirme tamamlandı",
+    "completedMessage": "{{version}} oynamaya hazır."
+  },
+  "modBrowser": {
+    "title": "Mod ve Shader Ara",
+    "search": "Modrinth'te mod ara… (ör. minimap, zoom)",
+    "popular": "En popüler modlar",
+    "results": "{{count}} sonuç",
+    "by": "· {{author}}",
+    "downloads": "{{count}} indirme",
+    "needsServer": "Sunucuda da kurulu olmalı — bu sunucuda çalışmayabilir",
+    "install": "Kur",
+    "installing": "Kuruluyor…",
+    "installed": "Kuruldu",
+    "inPack": "Pakette",
+    "empty": "Bu sürüm için uygun mod bulunamadı.",
+    "more": "Daha fazla göster",
+    "fabricOff": "Mod kurmak için yukarıdan Fabric'i aç.",
+    "dependency": "bağımlılık",
+    "installedTitleList": "Kurduğun Modlar",
+    "installedTitle": "Mod kuruldu",
+    "installedMessage": "{{name}} bir sonraki Oyna'da yüklenecek.",
+    "tabMods": "Modlar",
+    "tabShaders": "Shaderlar",
+    "searchShader": "Modrinth'te shader ara… (ör. complementary, bsl)",
+    "popularShader": "En popüler shaderlar",
+    "emptyShader": "Bu sürüm için uygun shader bulunamadı.",
+    "installedShaders": "Kurduğun Shaderlar",
+    "shaderAutoIris": "Shader kurunca gerekli Iris Shaders modu otomatik kurulur.",
+    "shaderModFound": "Zaten bir shader modun var ({{name}}); Iris ayrıca kurulmayacak.",
+    "shaderInstalledTitle": "Shader kuruldu",
+    "shaderInstalledWithIris": "{{name}} ve {{loader}} bir sonraki Oyna'da yüklenecek. Oyunda Seçenekler → Video → Shader Paketleri'nden seç."
+  },
+  "splash": {
+    "starting": "CevherClient başlatılıyor",
+    "checking": "Güncellemeler denetleniyor",
+    "upToDate": "Uygulama güncel",
+    "downloading": "Yeni sürüm indiriliyor",
+    "ready": "Hazır",
+    "updated": "Güncellendi"
+  },
+  "quality": {
+    "title": "Kalite seviyeni seç",
+    "subtitle": "Cevherclient ilk açılış. Seçimin kurulacak shader'ı belirler; performans ayarları üç seviyede de en üst düzeyde optimize edilir.",
+    "remember": "Seçimimi hatırla",
+    "note": "Bunu istediğin zaman ayarlardan değiştirebilirsin.",
+    "wait": "Mod ve shader dosyaları indiriliyor, bu birkaç dakika sürebilir…",
+    "cancel": "İptal",
+    "apply": "Uygula",
+    "installing": "Kuruluyor… %{{percent}}",
+    "doneTitle": "Kalite ayarlandı",
+    "doneMessage": "{{shader}} kuruldu. Bir sonraki Oyna'da aktif olur.",
+    "settingsTitle": "Cihaz Kalitesi",
+    "settingsHint": "Seçenekler yalnızca shader'ı değiştirir; optimizasyon ayarları her seviyede aynı ve en üst düzeydedir.",
+    "tiers": {
+      "high": {
+        "name": "Yüksek",
+        "desc": "Tüm efektler ve en gelişmiş shader (Complementary Unbound). Yeni nesil bir bilgisayar için önerilir."
+      },
+      "medium": {
+        "name": "Orta",
+        "desc": "Görünüm ile akıcılık arasında denge (Photon). Orta seviye bir bilgisayar için doğru seçim."
+      },
+      "low": {
+        "name": "Düşük",
+        "desc": "Olabildiğince hafif (SuperDuperVanilla). Eski veya giriş seviyesi bilgisayarlar için."
+      }
+    }
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "app": {
+    "name": "Cevherclient",
+    "tagline": "鉱石が輝く世界へつながろう"
+  },
+  "common": {
+    "loading": "読み込み中…",
+    "ok": "OK",
+    "retry": "再試行",
+    "close": "閉じる",
+    "details": "技術的な詳細",
+    "errorCode": "エラーコード",
+    "back": "戻る"
+  },
+  "titlebar": {
+    "minimize": "最小化",
+    "close": "閉じる"
+  },
+  "nav": {
+    "play": "プレイ",
+    "versions": "バージョン",
+    "settings": "設定",
+    "news": "ニュース",
+    "store": "ストア",
+    "mods": "Mod",
+    "credits": "クレジット購入",
+    "discord": "Discord",
+    "profile": "プロフィール",
+    "menu": "メニュー"
+  },
+  "login": {
+    "title": "ようこそ",
+    "subtitle": "サーバーで使うプレイヤー名を入力してください。",
+    "loginHint": "アカウントでログインしてください。ゲーム内でパスワードを聞かれることはありません。",
+    "registerHint": "サーバー用のアカウントを作成します。この名前とパスワードでランチャーにログインします。ゲーム内ではパスワード不要です。",
+    "tabLogin": "ログイン",
+    "tabRegister": "新規登録",
+    "usernameLabel": "プレイヤー名",
+    "usernamePlaceholder": "例: Steve_42",
+    "usernameRule": "3〜16文字。英字・数字・アンダースコアのみ。",
+    "passwordLabel": "パスワード",
+    "passwordRule": "{{min}}文字以上。",
+    "passwordRepeatLabel": "パスワード（確認）",
+    "passwordMismatch": "パスワードが一致しません。",
+    "submit": "ログイン",
+    "submitRegister": "アカウント作成"
+  },
+  "launch": {
+    "stages": {
+      "preparing": "プロフィールを準備中",
+      "java": "Java を選択中",
+      "installing": "ゲームファイルをインストール中",
+      "modpack": "Mod を同期中",
+      "starting": "ゲームを起動中"
+    },
+    "startedTitle": "接続完了",
+    "startedMessage": "{{target}} を起動しました。楽しんでください！",
+    "exitedTitle": "ゲームが終了しました",
+    "exitedMessage": "ランチャーの準備ができました。"
+  },
+  "settings": {
+    "title": "設定",
+    "autosave": "変更は自動的に保存されます。",
+    "java": {
+      "title": "Java",
+      "auto": "自動",
+      "autoHint": "バージョンごとに適切な Java が自動で選ばれます。",
+      "browse": "参照…",
+      "custom": "カスタムパス",
+      "detected": "見つかったインストール"
+    },
+    "memory": {
+      "title": "メモリ（RAM）",
+      "system": "システム RAM: {{total}}",
+      "hint": "システム用に最低 2 GB は空けておきます。"
+    },
+    "resolution": {
+      "title": "解像度",
+      "width": "幅",
+      "height": "高さ",
+      "fullscreen": "フルスクリーン",
+      "preset": "プリセット",
+      "fitHint": "ウィンドウモードで画面より大きいサイズを選ぶと、ゲームウィンドウは画面に収まるよう縮小されます。"
+    },
+    "jvm": {
+      "title": "JVM 引数",
+      "reset": "デフォルトに戻す",
+      "hint": "上級者向け。スペースで区切ってください。"
+    },
+    "language": {
+      "title": "言語",
+      "tr": "Türkçe",
+      "en": "English",
+      "de": "Deutsch",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語"
+    }
+  },
+  "news": {
+    "title": "ニュース",
+    "subtitle": "サーバーからの最新のお知らせ",
+    "empty": "まだお知らせはありません。"
+  },
+  "errors": {
+    "JAVA_NOT_FOUND": {
+      "title": "Java が見つかりません",
+      "message": "このバージョンには Java {{version}} が必要ですが、適切なインストールが見つかりませんでした。設定の Java パスを確認するか「自動」に切り替えてください。"
+    },
+    "NO_INTERNET": {
+      "title": "インターネットに接続されていません",
+      "message": "サーバーに接続できません。接続を確認して再試行してください。"
+    },
+    "AUTH_FAILED": {
+      "title": "ログインに失敗しました",
+      "message": "ログインできませんでした。もう一度お試しください。",
+      "reasons": {
+        "invalidUsername": "名前は3〜16文字で、英字・数字・アンダースコアのみ使用できます。",
+        "wrongCredentials": "プレイヤー名またはパスワードが違います。",
+        "usernameTaken": "このプレイヤー名はすでに使われています。別の名前にするかログインしてください。",
+        "weakPassword": "パスワードは6文字以上にしてください。",
+        "protectedName": "この名前はサーバー管理者のものです。サーバーのコンピューターからのみ登録できます。",
+        "tooManyAccounts": "この接続で作成できるアカウント数の上限に達しました。",
+        "tooManyAttempts": "失敗が多すぎます。数分待ってから再試行してください。",
+        "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+        "serverUnreachable": "アカウントサーバーに接続できません。ゲームサーバーがオフラインの可能性があります。",
+        "serverError": "アカウントサーバーがエラーを返しました。管理者に連絡してください。"
+      }
+    },
+    "DOWNLOAD_FAILED": {
+      "title": "ダウンロードに失敗しました",
+      "message": "ファイルをダウンロードできませんでした。ダウンロードをやり直せます。",
+      "reasons": {
+        "noVersion": "この Mod はサーバーの Minecraft バージョン（Fabric）向けに公開されていません。"
+      }
+    },
+    "LAUNCH_FAILED": {
+      "title": "ゲームを起動できませんでした",
+      "message": "Minecraft の起動中に問題が発生しました。",
+      "reasons": {
+        "alreadyRunning": "ゲームはすでに起動しています。"
+      }
+    },
+    "SERVER_OFFLINE": {
+      "title": "サーバーがオフラインです",
+      "message": "{{server}} は現在応答していません。しばらくしてから再試行してください。"
+    },
+    "MODPACK_SYNC_FAILED": {
+      "title": "Mod の同期に失敗しました",
+      "message": "サーバーの Mod パックを更新できませんでした。Mod が不足したままでは参加できません。"
+    },
+    "CONFIG_INVALID": {
+      "title": "サーバー設定を読み込めません",
+      "message": "ランチャーの設定ファイルがないか無効です。管理者に連絡してください。"
+    },
+    "LAUNCHER_OUTDATED": {
+      "title": "ランチャーが古くなっています",
+      "message": "このサーバーには Cevherclient {{required}} 以降が必要です（現在: {{current}}）。"
+    },
+    "UNKNOWN": {
+      "title": "予期しないエラー",
+      "message": "問題が発生しました。繰り返し起こる場合はランチャーを再起動してください。"
+    }
+  },
+  "update": {
+    "readyTitle": "アップデートの準備完了",
+    "readyMessage": "Cevherclient {{version}} をダウンロードしました。ランチャーを再起動してインストールします。",
+    "downloading": "アップデート {{percent}}%",
+    "updating": "更新中",
+    "restarting": "再起動中",
+    "install": "v{{version}} をインストールして再起動",
+    "button": "v{{version}} に更新"
+  },
+  "topbar": {
+    "players": "{{count}} 人がプレイ中",
+    "offline": "サーバーはオフライン"
+  },
+  "userMenu": {
+    "orders": "注文履歴",
+    "logout": "ログアウト"
+  },
+  "home": {
+    "play": "プレイ",
+    "running": "プレイ中",
+    "launching": "起動中",
+    "requirements": {
+      "title": "動作環境",
+      "minimum": "最低動作環境",
+      "recommended": "推奨動作環境",
+      "showMore": "もっと見る",
+      "showLess": "閉じる",
+      "rows": {
+        "os": "OS",
+        "arch": "OSアーキテクチャ",
+        "cpu": "プロセッサー (CPU)",
+        "cpuFeatures": "プロセッサー機能",
+        "gpu": "グラフィックカード",
+        "gpuFeatures": "グラフィックカード機能",
+        "vram": "VRAM",
+        "storage": "空き容量",
+        "ram": "RAM",
+        "graphics": "推奨グラフィック設定",
+        "resolution": "推奨解像度"
+      },
+      "values": {
+        "low": "低",
+        "high": "高",
+        "unifiedMemory": "ユニファイドメモリ"
+      }
+    }
+  },
+  "mods": {
+    "loaderTitle": "Mod ローダー",
+    "useFabric": "Fabric Mod ローダーを使う",
+    "fabricOn": "Fabric オン — Mod がゲームに読み込まれます。",
+    "fabricOff": "Fabric オフ — ゲームは Mod なし（バニラ）で起動します。パフォーマンスパックとサーバー退出時の自動終了は動作しません。",
+    "packTitle": "パフォーマンスパック",
+    "packCount": "{{installed}}/{{total}} インストール済み",
+    "install": "パフォーマンスパックをインストール",
+    "update": "パックを更新",
+    "installing": "インストール中… {{percent}}%",
+    "remove": "削除",
+    "autoInstall": "初回起動時に自動でインストール",
+    "installed": "インストール済み",
+    "unavailable": "このバージョンには未対応",
+    "installedTitle": "パフォーマンスパックをインストールしました",
+    "installedMessage": "次にプレイを押したときに Mod が読み込まれます。",
+    "desc": {
+      "fabric-api": "他の Mod が必要とする基本ライブラリ。",
+      "sodium": "描画エンジンを書き換え、最も大きく FPS を向上。",
+      "lithium": "ゲームロジックと tick 計算を高速化。",
+      "ferrite-core": "メモリ使用量を大幅に削減。",
+      "immediatelyfast": "UI と即時描画を高速化。",
+      "entityculling": "見えないエンティティの描画を省略。",
+      "krypton": "ネットワーク処理を最適化し、サーバーでの遅延を軽減。",
+      "threadtweak": "スレッドの優先度を調整。",
+      "dynamic-fps": "ウィンドウが背面にあるとき FPS を下げて負荷を軽減。"
+    }
+  },
+  "profile": {
+    "accountType": "Cevherclient アカウント",
+    "infoTitle": "アカウント情報",
+    "username": "プレイヤー名",
+    "passwordTitle": "パスワード変更",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "repeatPassword": "パスワード（確認）",
+    "changePassword": "パスワードを変更",
+    "passwordNote": "パスワードを変更すると、他のコンピューターのランチャーからログアウトされます。",
+    "passwordChangedTitle": "パスワードを変更しました",
+    "passwordChanged": "このコンピューターではログインしたままです。",
+    "siteTitle": "ウェブサイトのアカウント",
+    "siteHint": "残高、クレジット、注文、メールは cevhercraft.com のアカウントで管理します。"
+  },
+  "versions": {
+    "completedTitle": "ダウンロード完了",
+    "completedMessage": "{{version}} をプレイできます。"
+  },
+  "modBrowser": {
+    "title": "Mod とシェーダーを探す",
+    "search": "Modrinth で検索…（例: minimap, zoom）",
+    "popular": "人気の Mod",
+    "results": "{{count}} 件",
+    "by": "· {{author}}",
+    "downloads": "{{count}} ダウンロード",
+    "needsServer": "サーバー側にも必要 — ここでは動作しない可能性があります",
+    "install": "インストール",
+    "installing": "インストール中…",
+    "installed": "インストール済み",
+    "inPack": "パックに含まれています",
+    "empty": "このバージョンに合う Mod が見つかりません。",
+    "more": "もっと見る",
+    "fabricOff": "Mod をインストールするには上で Fabric をオンにしてください。",
+    "dependency": "依存",
+    "installedTitleList": "インストールした Mod",
+    "installedTitle": "Mod をインストールしました",
+    "installedMessage": "{{name}} は次にプレイを押したときに読み込まれます。",
+    "tabMods": "Mod",
+    "tabShaders": "シェーダー",
+    "searchShader": "Modrinth でシェーダーを検索…（例: complementary, bsl）",
+    "popularShader": "人気のシェーダー",
+    "emptyShader": "このバージョンに合うシェーダーが見つかりません。",
+    "installedShaders": "インストールしたシェーダー",
+    "shaderAutoIris": "シェーダーをインストールすると、必要な Iris Shaders Mod も自動でインストールされます。",
+    "shaderModFound": "すでにシェーダー Mod（{{name}}）があるため、Iris は追加でインストールされません。",
+    "shaderInstalledTitle": "シェーダーをインストールしました",
+    "shaderInstalledWithIris": "{{name}} と {{loader}} は次にプレイを押したときに読み込まれます。オプション → ビデオ設定 → シェーダーパックで選択してください。"
+  },
+  "splash": {
+    "starting": "CevherClient を起動中",
+    "checking": "アップデートを確認中",
+    "upToDate": "最新バージョンです",
+    "downloading": "新しいバージョンをダウンロード中",
+    "ready": "準備完了",
+    "updated": "アップデート完了"
+  }
+}

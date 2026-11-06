@@ -1,0 +1,21 @@
+name: CevherUIBridge
+version: '${version}'
+main: net.cevherclient.uibridge.CevherUiBridgePlugin
+api-version: '1.21'
+description: Cevherclient modları için sunucu köprüsü — SAO arayüzü ve kozmetik eşitlemesi.
+authors: [Cevherclient]
+commands:
+  saoui:
+    description: Cevherclient SAO arayüzünü aç/kapat
+    usage: /saoui <on|off|liste|reload> [oyuncu]
+    permission: cevherui.admin
+permissions:
+  cevherui.admin:
+    description: /saoui komutu
+    default: op
+  cevherui.storage:
+    description: SAO envanterindeki Depo düğmesiyle depoyu açabilir
+    default: true
+  cevherclient.cosmetic.*:
+    description: Tüm kozmetikleri seçebilir (cosmetics.require-permission açıkken)
+    default: op

@@ -1,0 +1,59 @@
+{
+  "name": "cevherclient",
+  "productName": "Cevherclient",
+  "version": "4.8.11",
+  "description": "Cevherclient — kendi sunucumuz için özel Minecraft Java Edition launcher'ı",
+  "main": "./out/main/index.js",
+  "author": "Cevherclient",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "postinstall": "install-electron && node scripts/patch-deps.mjs",
+    "dev": "electron-vite dev",
+    "preview": "electron-vite preview",
+    "build:mod": "node scripts/build-session-mod.mjs",
+    "build:client-mod": "node scripts/build-session-mod.mjs --mod cevher-client",
+    "build:icon": "electron scripts/make-icon.cjs",
+    "build": "npm run typecheck && electron-vite build",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/rajdhani": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "framer-motion": "^14.3.0",
+    "i18next": "^26.5.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9",
+    "vite": "^8.3.4",
+    "zustand": "^5.0.15"
+  },
+  "overrides": {
+    "@xmcl/unzip": {
+      "@xmcl/yauzl": "^2.10.0"
+    }
+  },
+  "dependencies": {
+    "@xmcl/core": "^2.16.2",
+    "@xmcl/installer": "^6.3.6",
+    "@xmcl/unzip": "^2.2.0",
+    "electron-updater": "^6.8.9"
+  }
+}

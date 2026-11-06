@@ -1,0 +1,15 @@
+DirectoryIndex index.html
+
+<IfModule mod_mime.c>
+  AddType video/mp4 .mp4
+  AddType image/webp .webp
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(mp4|webp|png)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

@@ -1,0 +1,13 @@
+node_modules
+out
+dist
+*.log
+.DS_Store
+
+# Derleme / araç çıktıları
+.gradle/
+build/
+graphify-out*/
+
+# Mod geliştirme sırasında açılan test oyunu ve sunucusu
+game-mods/*/run*/

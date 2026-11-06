@@ -1,0 +1,37 @@
+// CevherAuth — Cevherclient launcher hesapları için Paper eklentisi.
+// Dış bağımlılık yok: HTTP için JDK'nın com.sun.net.httpserver'ı, JSON için Paper'ın Gson'u.
+plugins {
+	id 'java'
+}
+
+group = 'net.cevherclient'
+
+repositories {
+	mavenCentral()
+	maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+	compileOnly "io.papermc.paper:paper-api:${project.paper_api_version}"
+}
+
+java {
+	toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = 21
+	options.encoding = 'UTF-8'
+}
+
+processResources {
+	def props = [version: project.version]
+	inputs.properties props
+	filesMatching('plugin.yml') {
+		expand props
+	}
+}
+
+jar {
+	archiveFileName = "CevherAuth-${project.version}.jar"
+}

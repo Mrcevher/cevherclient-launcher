@@ -1,0 +1,84 @@
+# CevherUIBridge — Cevherclient UI modu için sunucu köprüsü
+#
+# Cevherclient UI modu olan oyuncu sunucuya girince "cevherclient:hello" gönderir. Bu eklenti
+# o oyunculara "cevherclient:ui" kanalından "sao_on" / "sao_off" göndererek SAO arayüzünü açıp kapatır.
+# Modu olmayan oyuncular hiçbir şey fark etmez. hello sahte gönderilebilir: bu eklenti ona yalnızca
+# "arayüz mesajı kime gidecek" diye bakar, hiçbir yetki kararı vermez.
+
+# SAO arayüzünün otomatik açılacağı dünyalar. Oyuncu bu dünyalardan birindeyse "sao_on",
+# başka bir dünyaya geçince "sao_off" gönderilir. Boş bırakılırsa arayüz yalnızca /saoui ile açılır.
+# Örnek: sao-worlds: [kat_1, kat_2]
+sao-worlds: []
+
+# Gelen her hello'yu konsola yaz (oyuncu, mod sürümü, protokol).
+log-hello: true
+
+# SAO envanterindeki Depo düğmesi. Yalnızca SAO'su açık ve cevherui.storage yetkisi olan oyuncular açabilir.
+storage:
+  # enderchest: oyuncunun ender sandığı açılır.
+  # command: aşağıdaki komut oyuncu adına çalışır (ör. bir kasa eklentisinin "pv 1" komutu).
+  mode: enderchest
+  command: ""
+  # İki açma arasındaki en kısa süre (milisaniye).
+  cooldown-ms: 1000
+
+# BetterHud: SAO arayüzü açık olan modlu oyuncularda (Survival/Adventure) sunucunun BetterHud HUD'u
+# gizlenir; HP panelini ve hotbar'ı mod çizer. Modsuz oyuncular BetterHud'u görmeye devam eder.
+# Komutlar konsoldan çalışır, {player} oyuncu adıyla değişir. BetterHud yüklü değilse hiçbir şey yapılmaz.
+# Hedef HP popup'ı (sao_target_popup) etkilenmez.
+betterhud:
+  enabled: true
+  hide-commands:
+    - "hud hud remove {player} sao_hud"
+  show-commands:
+    - "hud hud add {player} sao_hud"
+
+# Kozmetik eşitlemesi (Cevherclient istemci modu, kanal cevherclient:cosmetic).
+# Oyuncular baş, sırt (kanatlar) ve pelerin yuvalarında seçtikleri kozmetiği sunucuya bildirir; sunucu doğrular
+# ve aynı modlu istemcilerde olan diğer oyunculara dağıtır. Kozmetik seçimi yalnızca görünümdür, hiçbir yetki ya
+# da eşya kararı vermez.
+cosmetics:
+  enabled: true
+  # Seçilebilecek kozmetik kimlikleri (modun cosmetics.json dosyasındaki id'ler). "*" hepsine izin verir.
+  available:
+    # Baş
+    - witch_hat
+    - top_hat
+    - xmas_hat
+    - straw_hat
+    - straw_hat_v2
+    - chef_hat
+    - cowboy_hat
+    - mushroom_hat
+    - crown
+    - mistletoe_crown
+    - paper_bag
+    - pumpkin_mask
+    - gingerbread_mask
+    - skull_mask
+    - snowman
+    - grave
+    # Sırt
+    - angel_wings
+    - black_wings
+    - dragon_wings
+    - feather_wings
+    - valkyrie_wings
+    - ice_wings
+    - life_buoy
+    - hay_bale
+    # Pelerin
+    - cape_odinmc
+    - cape_odinmc_anime
+    - cape_odin_gecesi
+    - cape_aurora
+    - cape_kuzgun
+    - cape_buz_runu
+    - cape_anime
+    - cape_pembe_gece
+    - cape_buz_buyucusu
+    - cape_kizil_tapinak
+  # true ise her kozmetik için cevherclient.cosmetic.<id> yetkisi aranır (ör. cevherclient.cosmetic.witch_hat).
+  require-permission: false
+  # Bir oyuncunun aynı yuvadaki iki seçim değişikliği arasındaki en kısa süre (milisaniye).
+  min-interval-ms: 500

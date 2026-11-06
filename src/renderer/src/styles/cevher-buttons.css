@@ -1,0 +1,242 @@
+/* ==========================================================================
+   CevherClient — OYNA / OYUN AÇIK butonları
+   Arka plan paleti: gece mavisi bulutlar, altın kale ışıkları, mavi kristaller.
+
+   Kullanım:
+     <button class="cv-btn">OYNA</button>                    -> oynamaya hazır
+     <button class="cv-btn is-running">OYUN AÇIK</button>    -> oyun çalışıyor
+     <button class="cv-btn" disabled>OYNA</button>           -> devre dışı / yükleniyor
+   Oyun açıldığında butona "is-running" sınıfını ekle, kapanınca kaldır.
+   ========================================================================== */
+
+:root {
+  /* Altın: güneş ve kale pencereleri */
+  --cv-gold-hi:   #fff1c4;
+  --cv-gold-1:    #ffd77a;
+  --cv-gold-2:    #f2b544;
+  --cv-gold-3:    #c98522;
+  --cv-gold-edge: #fff4d6;
+
+  /* Gece mavisi: arka planın alt bulutları */
+  --cv-navy-ink:  #16224a;   /* altın buton üstündeki yazı */
+  --cv-navy-1:    rgba(24, 44, 92, 0.80);
+  --cv-navy-2:    rgba(9, 18, 44, 0.88);
+
+  /* Kristal mavisi: kulelerin tepesindeki ışık */
+  --cv-crystal:      #6cc4ff;
+  --cv-crystal-soft: rgba(108, 196, 255, 0.45);
+  --cv-crystal-text: #d6ecff;
+
+  --cv-radius: 12px;
+  --cv-height: 68px;
+  --cv-font: inherit;        /* launcher fontunu kullanır (ör. Inter) */
+}
+
+/* ---------- Ortak temel ---------- */
+.cv-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  height: var(--cv-height);
+  padding: 0 28px;
+  border-radius: var(--cv-radius);
+  border: 1px solid rgba(255, 238, 198, 0.42);
+  font-family: var(--cv-font);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* OYNA (varsayılan durum): bakır tonlu buzlu cam */
+  color: #fff6e0;
+  text-shadow:
+    0 1px 2px rgba(60, 34, 4, 0.55),
+    0 0 18px rgba(255, 200, 110, 0.35);
+  background:
+    /* ince karartma: parlak bulutlar üstünde yazı okunaklı kalsın */
+    linear-gradient(180deg, rgba(14, 14, 18, 0.06) 0%, rgba(14, 14, 18, 0.18) 100%),
+    linear-gradient(180deg,
+      rgba(255, 226, 154, 0.40) 0%,
+      rgba(247, 196, 96, 0.30) 48%,
+      rgba(206, 136, 32, 0.38) 100%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),      /* üst parlama */
+    inset 0 0 0 1px rgba(255, 232, 178, 0.16),    /* iç altın çizgi */
+    0 0 0 1px rgba(90, 66, 22, 0.28),             /* koyu dış çizgi: bulutlardan ayırır */
+    0 8px 24px -8px rgba(4, 10, 30, 0.55),        /* gölge */
+    0 0 22px rgba(255, 196, 92, 0.18);            /* sıcak hale */
+
+  transition:
+    transform 160ms ease,
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+
+/* Güneş ışını süpürmesi: arada bir kendiliğinden, üzerine gelince hemen */
+.cv-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -20%;
+  bottom: -20%;
+  left: -40%;
+  width: 34%;
+  transform: translateX(-120%) skewX(-22deg);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%);
+  animation: cv-sweep 5.5s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+
+/* Üst yarıda yumuşak cam parlaması */
+.cv-btn::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 50% 0;
+  border-radius: var(--cv-radius) var(--cv-radius) 40% 40% / var(--cv-radius) var(--cv-radius) 18px 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.cv-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 232, 178, 0.24),
+    0 0 0 1px rgba(90, 66, 22, 0.32),
+    0 14px 30px -6px rgba(4, 10, 30, 0.6),
+    0 0 34px rgba(255, 204, 110, 0.34);
+}
+.cv-btn:hover::before {
+  animation: cv-sweep-once 0.9s ease-out forwards;
+}
+
+.cv-btn:active {
+  transform: translateY(1px);
+  filter: brightness(0.97);
+  box-shadow:
+    inset 0 2px 6px rgba(90, 56, 10, 0.30),
+    0 0 0 1px rgba(90, 66, 22, 0.32),
+    0 4px 10px -4px rgba(4, 10, 30, 0.5),
+    0 0 16px rgba(255, 196, 92, 0.20);
+}
+
+.cv-btn:focus-visible {
+  outline: 2px solid var(--cv-crystal);
+  outline-offset: 3px;
+}
+
+.cv-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.9) brightness(0.62);
+  opacity: 0.75;
+  transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(10, 18, 44, 0.55);
+}
+.cv-btn:disabled::before { animation: none; opacity: 0; }
+
+/* ---------- OYUN AÇIK: gece camı + kristal ışığı ---------- */
+.cv-btn.is-running {
+  cursor: default;
+  color: var(--cv-crystal-text);
+  text-shadow: 0 0 12px rgba(108, 196, 255, 0.45);
+  border-color: var(--cv-crystal-soft);
+  background:
+    radial-gradient(120% 140% at 50% 120%, rgba(108, 196, 255, 0.22) 0%, rgba(108, 196, 255, 0) 60%),
+    linear-gradient(180deg, var(--cv-navy-1), var(--cv-navy-2));
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(108, 196, 255, 0.10),
+    0 0 0 1px rgba(4, 10, 30, 0.55),
+    0 10px 24px -8px rgba(2, 6, 20, 0.7),
+    0 0 18px rgba(108, 196, 255, 0.22);
+  animation: cv-crystal-pulse 2.8s ease-in-out infinite;
+  filter: none;
+  transform: none;
+}
+
+/* Yazının solunda nabız gibi atan kristal */
+.cv-btn.is-running::before {
+  content: "";
+  position: static;
+  z-index: auto;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 2px;
+  transform: rotate(45deg);
+  border-radius: 1.5px;
+  background: linear-gradient(135deg, #e8f6ff 0%, var(--cv-crystal) 55%, #2f7fe0 100%);
+  box-shadow: 0 0 6px var(--cv-crystal), 0 0 14px rgba(108, 196, 255, 0.7);
+  animation: cv-gem 2.8s ease-in-out infinite;
+}
+
+.cv-btn.is-running::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0));
+}
+
+.cv-btn.is-running:hover,
+.cv-btn.is-running:active {
+  transform: none;
+  filter: none;
+}
+.cv-btn.is-running:hover::before { animation: cv-gem 2.8s ease-in-out infinite; }
+
+/* ---------- Animasyonlar ---------- */
+@keyframes cv-sweep {
+  0%, 72%  { transform: translateX(-120%) skewX(-22deg); }
+  100%     { transform: translateX(520%)  skewX(-22deg); }
+}
+@keyframes cv-sweep-once {
+  from { transform: translateX(-120%) skewX(-22deg); }
+  to   { transform: translateX(520%)  skewX(-22deg); }
+}
+@keyframes cv-crystal-pulse {
+  0%, 100% {
+    border-color: rgba(108, 196, 255, 0.38);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 0 0 1px rgba(108, 196, 255, 0.08),
+      0 0 0 1px rgba(4, 10, 30, 0.55),
+      0 10px 24px -8px rgba(2, 6, 20, 0.7),
+      0 0 14px rgba(108, 196, 255, 0.18);
+  }
+  50% {
+    border-color: rgba(140, 210, 255, 0.70);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 0 1px rgba(108, 196, 255, 0.18),
+      0 0 0 1px rgba(4, 10, 30, 0.55),
+      0 10px 24px -8px rgba(2, 6, 20, 0.7),
+      0 0 30px rgba(108, 196, 255, 0.42);
+  }
+}
+@keyframes cv-gem {
+  0%, 100% { opacity: 0.75; box-shadow: 0 0 5px var(--cv-crystal), 0 0 10px rgba(108, 196, 255, 0.5); }
+  50%      { opacity: 1;    box-shadow: 0 0 8px var(--cv-crystal), 0 0 20px rgba(108, 196, 255, 0.9); }
+}
+
+/* Hareket azaltma tercihi olanlar için animasyonları kapat */
+@media (prefers-reduced-motion: reduce) {
+  .cv-btn, .cv-btn::before, .cv-btn.is-running, .cv-btn.is-running::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,49 @@
+// Cevherclient oturum modu — yalnızca istemci tarafı, Fabric API gerektirmez (sadece mixin).
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+base {
+	archivesName = "cevher-session-${project.minecraft_version}"
+}
+
+loom {
+	runs {
+		// Elle test (./gradlew runClient): oyun kimsenin dinlemediği bir adrese Quick Play ile
+		// bağlanmayı dener; hata ekranında "Geri"ye basınca ana menü yerine oyun kapanmalı.
+		client {
+			vmArg '-Dcevherclient.exitOnLeave=true'
+			// Farklı sunucu için: ./gradlew runClient -PtestServer=localhost:25565
+			programArgs '--quickPlayMultiplayer', (project.findProperty('testServer') ?: 'localhost:25599').toString()
+		}
+		// Uçtan uca test için yerel sunucu (./gradlew runServer). run-server/server.properties
+		// içinde online-mode=false ve server-port=25599 olmalı; istemci buna bağlanır.
+		server {
+			runDir 'run-server'
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+processResources {
+	def props = [version: project.version, minecraft_version: project.minecraft_version]
+	inputs.properties props
+	filesMatching("fabric.mod.json") {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}

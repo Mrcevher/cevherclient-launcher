@@ -1,0 +1,33 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.cevherclient.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractClientPlayerMixin",
+    "BossHealthOverlayAccessor",
+    "CameraMixin",
+    "ChatComponentMixin",
+    "ClientPacketListenerMixin",
+    "ConnectScreenMixin",
+    "DisconnectedScreenMixin",
+    "EndCrystalRendererMixin",
+    "EntityRendererMixin",
+    "GameRendererMixin",
+    "GuiAccessor",
+    "GuiMixin",
+    "HumanoidArmorLayerMixin",
+    "ItemEntityRendererMixin",
+    "ItemInHandRendererMixin",
+    "LevelMixin",
+    "LightTextureMixin",
+    "MouseHandlerMixin",
+    "OverlayTextureAccessor",
+    "ParticleEngineMixin",
+    "ScreenEffectRendererMixin",
+    "WingsLayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

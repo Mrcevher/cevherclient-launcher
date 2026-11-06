@@ -1,0 +1,79 @@
+# Cevherclient paketleme yapılandırması.
+#
+# Otomatik güncelleme: electron-updater, `publish` alanındaki GitHub deposunun
+# Releases sayfasından güncelleme arar (paket içine app-update.yml olarak yazılır).
+# `owner` / `repo` değerlerini kendi deponuzla değiştirin.
+#
+# Kod imzalama ortam değişkenleriyle yapılır (yoksa paket imzasız üretilir):
+#   Windows: CSC_LINK (.pfx yolu veya base64), CSC_KEY_PASSWORD
+#   macOS:   CSC_LINK + CSC_KEY_PASSWORD (Developer ID Application sertifikası),
+#            noterlik için APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
+appId: net.cevherclient.launcher
+productName: Cevherclient
+# Electron sigortaları: exe'yi ELECTRON_RUN_AS_NODE / --inspect / NODE_OPTIONS ile başka amaçla
+# çalıştırmayı kapatır ve uygulama kodunun yalnızca bütünlüğü doğrulanan app.asar'dan yüklenmesini sağlar.
+electronFuses:
+  runAsNode: false
+  enableNodeCliInspectArguments: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+directories:
+  buildResources: build
+  output: dist
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+# Yerleşik varsayılan uzaktan config uygulama kaynaklarına kopyalanır.
+extraResources:
+  - from: resources/mock
+    to: mock
+  # Sunucudan çıkınca oyunu kapatan oturum modu (npm run build:mod ile üretilir).
+  - from: resources/mods
+    to: mods
+publish:
+  - provider: github
+    owner: Mrcevher
+    repo: cevherclient-launcher
+    releaseType: release
+win:
+  # İmza varsa (CSC_LINK) zaman damgası sertifika süresi dolsa da imzayı geçerli tutar.
+  signtoolOptions:
+    rfc3161TimeStampServer: http://timestamp.digicert.com
+    signingHashAlgorithms: [sha256]
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Cevherclient
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  # Güncelleme kurulumu sessiz yapılabilsin diye kullanıcı başına kurulum varsayılan.
+  perMachine: false
+  # Yükseltilmiş (yönetici) kurulum kapalı: klasör seçilebilse de uygulama her zaman kullanıcının
+  # kendi yetkisiyle kurulur; böylece başka kullanıcıların yazabildiği bir klasör yönetici yetkisiyle
+  # çalıştırılan dosyalar barındırmaz.
+  allowElevation: false
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    # electron-updater macOS'ta zip paketini kullanır.
+    - target: zip
+      arch: [x64, arm64]
+  category: public.app-category.games
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  hardenedRuntime: true
+  gatekeeperAssess: false
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Game
+  maintainer: Cevherclient
+  artifactName: ${productName}-${version}.${ext}

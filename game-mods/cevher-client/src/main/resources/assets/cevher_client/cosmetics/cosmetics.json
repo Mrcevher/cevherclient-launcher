@@ -1,0 +1,46 @@
+{
+  "cosmetics": [
+    {
+      "id": "witch_hat",
+      "name": "Cadı Şapkası",
+      "slot": "head",
+      "model": "cosmetics/witch_hat/witch_hat.bbmodel",
+      "texture": "textures/cosmetic/witch_hat.png"
+    },
+    { "id": "top_hat", "name": "Silindir Şapka", "slot": "head", "mesh": "cosmetics/odin/top_hat.json", "icon": "textures/gui/cosmetic/top_hat.png" },
+    { "id": "xmas_hat", "name": "Noel Şapkası", "slot": "head", "mesh": "cosmetics/odin/xmas_hat.json", "icon": "textures/gui/cosmetic/xmas_hat.png" },
+    { "id": "straw_hat", "name": "Hasır Şapka", "slot": "head", "mesh": "cosmetics/odin/straw_hat.json", "icon": "textures/gui/cosmetic/straw_hat.png" },
+    { "id": "straw_hat_v2", "name": "Geniş Hasır Şapka", "slot": "head", "mesh": "cosmetics/odin/straw_hat_v2.json", "icon": "textures/gui/cosmetic/straw_hat_v2.png" },
+    { "id": "chef_hat", "name": "Aşçı Şapkası", "slot": "head", "mesh": "cosmetics/odin/chef_hat.json", "icon": "textures/gui/cosmetic/chef_hat.png" },
+    { "id": "cowboy_hat", "name": "Kovboy Şapkası", "slot": "head", "mesh": "cosmetics/odin/cowboy_hat.json", "icon": "textures/gui/cosmetic/cowboy_hat.png" },
+    { "id": "mushroom_hat", "name": "Mantar Şapka", "slot": "head", "mesh": "cosmetics/odin/mushroom_hat.json", "icon": "textures/gui/cosmetic/mushroom_hat.png" },
+    { "id": "crown", "name": "Taç", "slot": "head", "mesh": "cosmetics/odin/crown.json", "icon": "textures/gui/cosmetic/crown.png" },
+    { "id": "mistletoe_crown", "name": "Ökseotu Tacı", "slot": "head", "mesh": "cosmetics/odin/mistletoe_crown.json", "icon": "textures/gui/cosmetic/mistletoe_crown.png" },
+    { "id": "paper_bag", "name": "Kese Kâğıdı", "slot": "head", "mesh": "cosmetics/odin/paper_bag.json", "icon": "textures/gui/cosmetic/paper_bag.png" },
+    { "id": "pumpkin_mask", "name": "Balkabağı Maskesi", "slot": "head", "mesh": "cosmetics/odin/pumpkin_mask.json", "icon": "textures/gui/cosmetic/pumpkin_mask.png" },
+    { "id": "gingerbread_mask", "name": "Kurabiye Maskesi", "slot": "head", "mesh": "cosmetics/odin/gingerbread_mask.json", "icon": "textures/gui/cosmetic/gingerbread_mask.png" },
+    { "id": "skull_mask", "name": "Kafatası Maskesi", "slot": "head", "mesh": "cosmetics/odin/skull_mask.json", "icon": "textures/gui/cosmetic/skull_mask.png" },
+    { "id": "snowman", "name": "Kardan Adam", "slot": "head", "mesh": "cosmetics/odin/snowman.json", "icon": "textures/gui/cosmetic/snowman.png" },
+    { "id": "grave", "name": "Mezar Taşı", "slot": "head", "mesh": "cosmetics/odin/grave.json", "icon": "textures/gui/cosmetic/grave.png" },
+
+    { "id": "angel_wings", "name": "Melek Kanatları", "slot": "back", "mesh": "cosmetics/odin/angel_wings.json", "icon": "textures/gui/cosmetic/angel_wings.png", "flaps": true },
+    { "id": "black_wings", "name": "Kara Kanatlar", "slot": "back", "mesh": "cosmetics/odin/black_wings.json", "icon": "textures/gui/cosmetic/black_wings.png", "flaps": true },
+    { "id": "dragon_wings", "name": "Ejderha Kanatları", "slot": "back", "mesh": "cosmetics/odin/dragon_wings.json", "icon": "textures/gui/cosmetic/dragon_wings.png", "flaps": true },
+    { "id": "feather_wings", "name": "Tüy Kanatları", "slot": "back", "mesh": "cosmetics/odin/feather_wings.json", "icon": "textures/gui/cosmetic/feather_wings.png", "flaps": true },
+    { "id": "valkyrie_wings", "name": "Valkür Kanatları", "slot": "back", "mesh": "cosmetics/odin/valkyrie_wings.json", "icon": "textures/gui/cosmetic/valkyrie_wings.png", "flaps": true },
+    { "id": "ice_wings", "name": "Buz Kanatları", "slot": "back", "mesh": "cosmetics/odin/ice_wings.json", "icon": "textures/gui/cosmetic/ice_wings.png", "flaps": true },
+    { "id": "life_buoy", "name": "Can Simidi", "slot": "back", "mesh": "cosmetics/odin/life_buoy.json", "icon": "textures/gui/cosmetic/life_buoy.png" },
+    { "id": "hay_bale", "name": "Saman Balyası", "slot": "back", "mesh": "cosmetics/odin/hay_bale.json", "icon": "textures/gui/cosmetic/hay_bale.png" },
+
+    { "id": "cape_odinmc", "name": "OdinMC", "slot": "cape", "cape": "textures/cape/odinmc.png" },
+    { "id": "cape_odinmc_anime", "name": "OdinMC Anime", "slot": "cape", "cape": "textures/cape/odinmc_anime.png" },
+    { "id": "cape_odin_gecesi", "name": "Odin Gecesi", "slot": "cape", "cape": "textures/cape/odin_gecesi.png" },
+    { "id": "cape_aurora", "name": "Aurora", "slot": "cape", "cape": "textures/cape/aurora.png" },
+    { "id": "cape_kuzgun", "name": "Kuzgun", "slot": "cape", "cape": "textures/cape/kuzgun.png" },
+    { "id": "cape_buz_runu", "name": "Buz Rünü", "slot": "cape", "cape": "textures/cape/buz_runu.png" },
+    { "id": "cape_anime", "name": "Anime (hareketli)", "slot": "cape", "frames": "textures/cape/anime/frame_%02d.png", "frameCount": 16, "frameMs": 90 },
+    { "id": "cape_pembe_gece", "name": "Pembe Gece (hareketli)", "slot": "cape", "frames": "textures/cape/pembe_gece/frame_%02d.png", "frameCount": 4, "frameMs": 160 },
+    { "id": "cape_buz_buyucusu", "name": "Buz Büyücüsü (hareketli)", "slot": "cape", "frames": "textures/cape/buz_buyucusu/frame_%02d.png", "frameCount": 4, "frameMs": 160 },
+    { "id": "cape_kizil_tapinak", "name": "Kızıl Tapınak (hareketli)", "slot": "cape", "frames": "textures/cape/kizil_tapinak/frame_%02d.png", "frameCount": 4, "frameMs": 160 }
+  ]
+}

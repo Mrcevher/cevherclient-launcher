@@ -1,0 +1,15 @@
+name: CevherAuth
+version: '${version}'
+main: net.cevherclient.auth.CevherAuthPlugin
+api-version: '1.21'
+description: Cevherclient launcher hesapları — oyuncu şifresini launcher'da girer, oyunda şifre sorulmaz.
+authors: [Cevherclient]
+commands:
+  cevherauth:
+    description: CevherAuth hesap yönetimi
+    usage: /cevherauth <liste|sil|sifre|kayit|reload>
+    permission: cevherauth.admin
+permissions:
+  cevherauth.admin:
+    description: CevherAuth yönetim komutları
+    default: op
