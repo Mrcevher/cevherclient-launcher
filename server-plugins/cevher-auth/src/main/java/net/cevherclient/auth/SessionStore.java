@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   (sessions.json) yalnızca SHA-256 özeti tutulur; sunucu yeniden başlasa da geçerlidir.
  *   Hesap başına oturum sayısı sınırlıdır; süre uzatmaları bellekte tutulur ve toplu yazılır.
  * - Bilet: Oyna'ya basınca oturumla alınan, tek kullanımlık, kısa ömürlü izin.
- *   Yalnızca bellekte tutulur.
+ *   Yalnızca bellekte tutulur. Tüketilen biletin yeniden bağlanma kaydı (bilet sırrıyla)
+ *   reconnect.json'da tutulur; "Yeniden Bağlan" sunucu yeniden başlasa da çalışır.
  *
  * Oturum/bilet üretimi ile hesap iptali (şifre değişimi, silme) aynı kilit altında
  * sıralanır; iptalden sonra eski kimlik bilgisiyle yeni oturum veya bilet çıkmaz.
@@ -53,15 +54,22 @@ final class SessionStore {
 	}
 
 	private final Path file;
+	/** Yeniden bağlanma kayıtları; sunucu yeniden başlasa da "Yeniden Bağlan" çalışsın diye diskte. */
+	private final Path reconnectFile;
 	private final AccountStore accounts;
 	private final Map<String, Session> sessions = new ConcurrentHashMap<>();
 	private final Map<String, Ticket> tickets = new ConcurrentHashMap<>();
-	/** Bileti yeni tüketilmiş oyuncular: kısa süre yeniden bağlanabilirler. */
+	/**
+	 * Bileti tüketilmiş oyuncular: aynı oyun (aynı bilet sırrıyla kanıt üreterek) yeniden
+	 * bağlanabilir. Oyuncu Oyna'ya yeniden basıp yeni bileti kullanınca yenisiyle değişir,
+	 * şifre değişince / hesap silinince silinir.
+	 */
 	private final Map<String, Ticket> recent = new ConcurrentHashMap<>();
 	private boolean dirty;
 
-	SessionStore(Path file, AccountStore accounts) {
+	SessionStore(Path file, Path reconnectFile, AccountStore accounts) {
 		this.file = file;
+		this.reconnectFile = reconnectFile;
 		this.accounts = accounts;
 	}
 
@@ -74,6 +82,19 @@ final class SessionStore {
 				sessions.put(hash, s);
 			}
 		});
+		Map<String, Ticket> reconnect = JsonFile.read(reconnectFile, new TypeToken<HashMap<String, Ticket>>() {}.getType(), new HashMap<>());
+		recent.clear();
+		reconnect.forEach((key, t) -> {
+			if (t != null && t.username() != null && t.secret() != null && t.ip() != null && t.expiresAt() > now
+				&& key.equals(AccountStore.key(t.username()))) {
+				recent.put(key, t);
+			}
+		});
+	}
+
+	/** Yeniden bağlanma kayıtlarını diske yazar (yalnızca değiştiklerinde çağrılır). */
+	private synchronized void saveRecent() throws IOException {
+		JsonFile.write(reconnectFile, new HashMap<>(recent));
 	}
 
 	/**
@@ -159,7 +180,9 @@ final class SessionStore {
 		int before = sessions.size();
 		sessions.values().removeIf(s -> AccountStore.key(s.username).equals(key));
 		tickets.remove(key);
-		recent.remove(key);
+		if (recent.remove(key) != null) {
+			saveRecent();
+		}
 		int removed = before - sessions.size();
 		if (removed > 0) {
 			save();
@@ -174,8 +197,8 @@ final class SessionStore {
 	 *
 	 * Canlı bilet yoksa yeniden bağlanma payına bakılır: bilet tüketildikten sonra
 	 * {@code graceMs} süresince aynı oyuncu (aynı sırla, gerekirse aynı IP'den) yeniden
-	 * bağlanabilir; böylece bağlantı koptuğunda "Yeniden Bağlan" çalışır. Pay sabit süreli
-	 * olup her bağlanışta uzamaz.
+	 * bağlanabilir; böylece bağlantı koptuğunda "Yeniden Bağlan" çalışır. Süresiz pay
+	 * ({@code reconnect-grace-seconds: -1}) oyuncu Oyna'ya yeniden basana kadar geçerlidir.
 	 */
 	/** Yalnızca teşhis/log için: adın bekleyen ya da yeniden bağlanma payındaki biletinin IP'si; yoksa null. */
 	String pendingTicketIp(String name) {
@@ -235,7 +258,15 @@ final class SessionStore {
 			return false;
 		}
 		if (graceMs > 0) {
-			recent.put(key, new Ticket(t.username(), ip, now + graceMs, t.secret()));
+			long expiresAt = graceMs >= Long.MAX_VALUE - now ? Long.MAX_VALUE : now + graceMs;
+			recent.put(key, new Ticket(t.username(), ip, expiresAt, t.secret()));
+		} else {
+			recent.remove(key);
+		}
+		try {
+			saveRecent();
+		} catch (IOException ignored) {
+			// Yazılamazsa kayıt bellekte geçerli kalır; yalnızca sunucu yeniden başlarsa kaybolur.
 		}
 		return true;
 	}
@@ -244,7 +275,9 @@ final class SessionStore {
 	synchronized void cleanup() throws IOException {
 		long now = System.currentTimeMillis();
 		tickets.values().removeIf(t -> t.expiresAt() <= now);
-		recent.values().removeIf(t -> t.expiresAt() <= now);
+		if (recent.values().removeIf(t -> t.expiresAt() <= now)) {
+			saveRecent();
+		}
 		if (sessions.values().removeIf(s -> s.expiresAt <= now)) {
 			dirty = true;
 		}

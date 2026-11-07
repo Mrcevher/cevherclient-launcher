@@ -37,7 +37,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	public void onEnable() {
 		saveDefaultConfig();
 		accounts = new AccountStore(getDataFolder().toPath().resolve("accounts.json"));
-		sessions = new SessionStore(getDataFolder().toPath().resolve("sessions.json"), accounts);
+		sessions = new SessionStore(getDataFolder().toPath().resolve("sessions.json"), getDataFolder().toPath().resolve("reconnect.json"), accounts);
 		try {
 			accounts.load();
 			sessions.load();
@@ -131,8 +131,10 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		return Math.max(30, getConfig().getLong("ticket-seconds", 300)) * 1000L;
 	}
 
+	/** Yeniden bağlanma payı; negatif ayar (-1) süresiz demektir: oyuncu Oyna'ya yeniden basana kadar. */
 	long reconnectGraceMs() {
-		return Math.max(0, getConfig().getLong("reconnect-grace-seconds", 120)) * 1000L;
+		long seconds = getConfig().getLong("reconnect-grace-seconds", -1);
+		return seconds < 0 ? Long.MAX_VALUE : seconds * 1000L;
 	}
 
 	boolean protectOpNames() {

@@ -39,9 +39,11 @@ check-ip: true
 session-days: 30
 # Oyna'ya basıldıktan sonra oyunun açılıp sunucuya bağlanması için süre (saniye).
 ticket-seconds: 300
-# Bilet kullanıldıktan sonra aynı oyuncunun (aynı IP'den) bilet almadan yeniden
-# bağlanabildiği süre (saniye). Bağlantı kopunca "Yeniden Bağlan" çalışsın diye. 0 = kapalı.
-reconnect-grace-seconds: 120
+# Bilet kullanıldıktan sonra aynı oyunun Oyna'ya basmadan "Yeniden Bağlan" ile girebildiği süre
+# (saniye). -1 = süresiz: oyun açık kaldıkça (sunucu yeniden başlasa da) geçerli; oyuncu Oyna'ya
+# yeniden basınca ya da şifresi değişince biter. Kanıt yine istenir: bilet sırrı yalnızca o oyundadır.
+# 0 = kapalı.
+reconnect-grace-seconds: -1
 
 password:
   min-length: 6
