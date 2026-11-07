@@ -7,6 +7,9 @@ dist
 # Derleme / araç çıktıları
 .gradle/
 build/
+# Kökteki build/ derleme çıktısı değil, electron-builder'ın kaynak klasörü (uygulama ikonu):
+# depoda olmalı, yoksa CI paketleri varsayılan Electron ikonuyla üretir.
+!/build/
 graphify-out*/
 
 # Mod geliştirme sırasında açılan test oyunu ve sunucusu
