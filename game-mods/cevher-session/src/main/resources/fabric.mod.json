@@ -3,7 +3,7 @@
   "id": "cevher_session",
   "version": "${version}",
   "name": "Cevherclient Session",
-  "description": "Cevherclient ile açılan oyunda, oyuncu sunucudan ayrılınca oyunu kapatır ve sunucuya launcher biletinin kanıtını gönderir.",
+  "description": "Cevherclient ile açılan oyunda, oyuncu sunucudan ayrılınca oyunu kapatır, sunucuya launcher biletinin kanıtını gönderir ve sunucu kaynak paketini onay sormadan, önceden kuruluysa yeniden yüklemeden kabul eder.",
   "authors": ["Cevherclient"],
   "license": "UNLICENSED",
   "environment": "client",

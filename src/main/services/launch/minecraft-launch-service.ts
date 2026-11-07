@@ -17,6 +17,7 @@ import { clearJoinTicket, prepareSessionMod, writeJoinTicket } from './session-m
 import { prepareUiMod } from './ui-mod'
 import { removeGifCapeMod } from './gifcape-mod'
 import { prepareClientMod } from './client-mod'
+import { prepareServerPack } from './server-pack'
 import { fitToScreen } from './window-size'
 
 /** Her aşamanın toplam ilerlemedeki payı [başlangıç, bitiş]. */
@@ -159,6 +160,12 @@ export class MinecraftLaunchService implements LaunchService {
     if (server) await removeGifCapeMod(gamePath)
     // İstemci modu (cevher_client): mod menüsü, HUD modülleri ve HUD düzenleyici.
     if (server) await prepareClientMod(server, gamePath)
+    // Sunucu kaynak paketi önceden kurulur; oturum modu girişte onay ekranını ve yeniden yüklemeyi atlar.
+    // Mod yoksa (vanilla) oyun paketi yine kendisi indireceği için iki kez yüklenmesin diye kurulmaz.
+    if (server && sessionArgs.length > 0) {
+      const authUrl = (await config.get()).config.authServerUrl?.replace(/\/+$/, '')
+      await prepareServerPack(authUrl, gamePath, (p) => this.report('starting', p * 0.8))
+    }
 
     let resolved: ResolvedVersion
     try {

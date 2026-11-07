@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  *   POST /api/password  { token, currentPassword, newPassword } → { ok, username, token }
  *   POST /api/site/profile, /api/store/listing, /api/store/buy  → bkz. {@link SiteBridge}
  *   GET  /api/health                            → { ok, service }
+ *   GET  /api/pack                              → { ok, enabled, sha1, size, url }  (bkz. {@link ServerPack})
  *
  * Hatalarda { ok: false, error: "<KOD>" } döner; kodlar launcher'da Türkçe/İngilizce
  * mesaja çevrilir.
@@ -72,10 +73,12 @@ final class AuthHttpServer {
 	private ExecutorService executor;
 
 	private final SiteBridge bridge;
+	private final ServerPack pack;
 
 	AuthHttpServer(CevherAuthPlugin plugin) {
 		this.plugin = plugin;
 		this.bridge = new SiteBridge(plugin);
+		this.pack = new ServerPack(plugin);
 	}
 
 	void start(String bind, int port) throws IOException {
@@ -140,6 +143,10 @@ final class AuthHttpServer {
 				JsonObject o = ok();
 				o.addProperty("service", "cevher-auth");
 				send(ex, 200, o);
+				return;
+			}
+			if (path.equals("/api/pack") && ex.getRequestMethod().equals("GET")) {
+				send(ex, 200, pack.describe());
 				return;
 			}
 			if (!ex.getRequestMethod().equals("POST")) {

@@ -65,6 +65,17 @@ protect-op-names: true
 # Bu oyuncular için hesabı /cevherauth kayit <ad> <sifre> ile siz açın.
 protect-played-names: true
 
+# Sunucunun kaynak paketi launcher'da önceden kurulsun: launcher Oyna'da paketi indirip
+# etkinleştirir, oyun sunucu paketi gönderdiğinde onay ekranı göstermez ve aynı paketi
+# yeniden yüklemez (girişte kasma olmaz). Paket değişince launcher bir sonraki Oyna'da yenisini indirir.
+resource-pack:
+  enabled: false
+  # Sunucuya gönderilen paket dosyası (sunucu klasörüne göre). Nexo: plugins/Nexo/pack/pack.zip
+  file: plugins/Nexo/pack/pack.zip
+  # Launcher'ın paketi indireceği adres; {sha1} dosyanın SHA-1'iyle değiştirilir.
+  # Nexo + Polymath: https://atlas.nexomc.com/pack.zip?id={sha1}
+  url: "https://atlas.nexomc.com/pack.zip?id={sha1}"
+
 # LeaderOS web sitesi ile hesap senkronu.
 # - Launcher'dan kayıt olan oyuncunun sitede de aynı ad ve şifreyle hesabı açılır.
 # - Sitede kayıt olan oyuncu, site şifresiyle launcher'a giriş yapabilir (launcher hesabı o an açılır).
