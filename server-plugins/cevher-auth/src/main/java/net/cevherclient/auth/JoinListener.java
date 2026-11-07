@@ -70,7 +70,13 @@ final class JoinListener implements Listener {
 			}
 			case MISSING, WRONG_IP -> {
 				misses.record(ip);
-				plugin.getLogger().info(name + " biletsiz bağlanmaya çalıştı (" + ip + "), reddedildi");
+				if (found.check() == SessionStore.TicketCheck.WRONG_IP) {
+					// Sık neden: launcher bileti Cloudflare/proxy üzerinden IPv6 ile, oyun IPv4 ile bağlanır.
+					plugin.getLogger().info(name + " biletinin IP'si uyuşmuyor (bilet: " + plugin.sessions().pendingTicketIp(name)
+						+ ", bağlantı: " + ip + "), reddedildi. Tünel/IPv6 kullanılıyorsa check-ip: false yapın; bağı require-proof sağlar.");
+				} else {
+					plugin.getLogger().info(name + " biletsiz bağlanmaya çalıştı (" + ip + "), reddedildi");
+				}
 				event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("no-ticket"));
 			}
 		}

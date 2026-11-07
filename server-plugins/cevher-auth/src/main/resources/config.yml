@@ -31,6 +31,8 @@ require-launcher: true
 require-proof: true
 # Bileti alan IP ile oyuna bağlanan IP aynı olmalı mı? Ek bir kontroldür; asıl bağ require-proof'tur.
 # (playit.gg gibi IP'yi değiştiren bir tünel kullanıyorsanız false yapın; require-proof açık kalsın.)
+# Launcher API'si Cloudflare Tunnel gibi bir HTTP proxy'sinin arkasındaysa da false yapın: oyuncunun
+# interneti IPv6 kullanıyorsa bilet IPv6, Minecraft bağlantısı IPv4 adresiyle görünür ve eşleşmez.
 check-ip: true
 
 # Launcher oturumu kaç gün geçerli (her Oyna'da yenilenir). Süre dolunca launcher şifre sorar.

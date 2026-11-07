@@ -68,7 +68,7 @@ public final class JoinProof {
 	}
 
 	/**
-	 * Login aşamasındaki cookie isteğine verilecek kanıt; istek CevherAuth kanıt isteği değilse
+	 * Cookie isteğine (login ya da Velocity arkasında configuration aşaması) verilecek kanıt; istek CevherAuth kanıt isteği değilse
 	 * veya sır yoksa null (oyun normal davranır).
 	 */
 	public static byte[] respond(String cookieKey) {

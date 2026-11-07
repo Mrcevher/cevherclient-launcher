@@ -177,6 +177,16 @@ final class SessionStore {
 	 * bağlanabilir; böylece bağlantı koptuğunda "Yeniden Bağlan" çalışır. Pay sabit süreli
 	 * olup her bağlanışta uzamaz.
 	 */
+	/** Yalnızca teşhis/log için: adın bekleyen ya da yeniden bağlanma payındaki biletinin IP'si; yoksa null. */
+	String pendingTicketIp(String name) {
+		String key = AccountStore.key(name);
+		Ticket t = tickets.get(key);
+		if (t == null) {
+			t = recent.get(key);
+		}
+		return t == null ? null : t.ip();
+	}
+
 	TicketLookup findTicket(String name, String ip, boolean checkIp) {
 		String key = AccountStore.key(name);
 		long now = System.currentTimeMillis();
