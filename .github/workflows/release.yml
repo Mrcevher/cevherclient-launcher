@@ -14,7 +14,21 @@ permissions:
   contents: write
 
 jobs:
+  # Release kaydı derlemelerden önce tek bir işte açılır. Aksi halde paralel çalışan üç derleme
+  # aynı anda kendi kaydını açar, aynı etiketle iki/üç release oluşur ve dosyalar bölünür;
+  # .../download/<etiket>/latest.yml bulunamaz, launcher güncellemeyi göremez.
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release kaydını aç
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --title "${GITHUB_REF_NAME#v}" --notes ""
+
   build:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
