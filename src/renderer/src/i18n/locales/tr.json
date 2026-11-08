@@ -274,7 +274,6 @@
       "ferrite-core": "Bellek kullanımını belirgin şekilde düşürür.",
       "immediatelyfast": "Arayüz ve anlık çizim işlemlerini hızlandırır.",
       "entityculling": "Görünmeyen varlıkları çizmeyi atlar.",
-      "krypton": "Ağ katmanını optimize eder; sunucuda gecikmeyi azaltır.",
       "threadtweak": "İş parçacığı önceliklerini dengeler.",
       "dynamic-fps": "Pencere arka plandayken FPS'i düşürüp kaynak tasarrufu sağlar.",
       "iris": "Shader paketlerini oyuna yükler.",

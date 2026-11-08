@@ -232,7 +232,6 @@
       "ferrite-core": "Senkt den Speicherverbrauch deutlich.",
       "immediatelyfast": "Beschleunigt die Oberfläche und das Sofort-Rendering.",
       "entityculling": "Überspringt das Zeichnen nicht sichtbarer Objekte.",
-      "krypton": "Optimiert den Netzwerk-Stack; weniger Latenz auf Servern.",
       "threadtweak": "Gleicht Thread-Prioritäten aus.",
       "dynamic-fps": "Senkt die FPS im Hintergrund und spart Ressourcen."
     }

@@ -232,7 +232,6 @@
       "ferrite-core": "メモリ使用量を大幅に削減。",
       "immediatelyfast": "UI と即時描画を高速化。",
       "entityculling": "見えないエンティティの描画を省略。",
-      "krypton": "ネットワーク処理を最適化し、サーバーでの遅延を軽減。",
       "threadtweak": "スレッドの優先度を調整。",
       "dynamic-fps": "ウィンドウが背面にあるとき FPS を下げて負荷を軽減。"
     }

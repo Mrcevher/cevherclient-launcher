@@ -91,11 +91,14 @@ export class ModrinthPerformancePackService implements PerformancePackService {
     })
     const unavailable = sameVersion ? pack.unavailable : []
     const expected = mods.filter((m) => !unavailable.includes(m.slug))
+    // Paketten çıkarılmış bir mod (Krypton gibi) hâlâ kayıtlıysa paket "kurulu" sayılmaz: kurulum
+    // yeniden çalışıp o dosyayı diskten siler.
+    const hasRetired = Object.keys(pack.mods).some((slug) => !PERFORMANCE_MODS.some((m) => m.slug === slug))
     return {
       serverId: server.id,
       minecraftVersion: server.minecraftVersion,
       mods,
-      installed: expected.length > 0 && expected.every((m) => m.installedVersion !== null),
+      installed: !hasRetired && expected.length > 0 && expected.every((m) => m.installedVersion !== null),
       unavailable,
       dependencies: sameVersion ? Object.keys(pack.deps) : []
     }
@@ -176,9 +179,13 @@ export class ModrinthPerformancePackService implements PerformancePackService {
     for (const { projectId, versionNumber, file } of depInstall) {
       next.deps[projectId] = { file: file.filename, version: versionNumber }
     }
-    // Artık gerekmeyen / sürümü değişen eski bağımlılık ve mod dosyaları.
+    // Artık gerekmeyen / sürümü değişen eski bağımlılık dosyaları ve paketten çıkarılmış modların
+    // (Krypton gibi) kayıtlı dosyaları.
     const keep = new Set([...Object.values(next.mods), ...Object.values(next.deps)].map((m) => m.file))
-    for (const old of Object.values(previous.deps)) {
+    const retired = Object.entries(previous.mods)
+      .filter(([slug]) => !PERFORMANCE_MODS.some((m) => m.slug === slug))
+      .map(([, entry]) => entry)
+    for (const old of [...Object.values(previous.deps), ...retired]) {
       if (!keep.has(old.file)) await removeOld(old.file)
     }
     // Bilinen bozuk sürüm dosyaları, kayıtta yer almasalar bile kaldırılır.

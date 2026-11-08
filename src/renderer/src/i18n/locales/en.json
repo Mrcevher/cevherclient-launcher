@@ -274,7 +274,6 @@
       "ferrite-core": "Significantly reduces memory usage.",
       "immediatelyfast": "Speeds up UI and immediate-mode rendering.",
       "entityculling": "Skips rendering entities you can't see.",
-      "krypton": "Optimizes the network stack; lowers latency on servers.",
       "threadtweak": "Balances thread priorities.",
       "dynamic-fps": "Lowers FPS while the window is in the background to save resources.",
       "iris": "Loads shader packs into the game.",
