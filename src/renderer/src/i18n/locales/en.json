@@ -156,7 +156,8 @@
       "title": "Download failed",
       "message": "Files could not be downloaded. You can restart the download.",
       "reasons": {
-        "noVersion": "This mod has not been released for the server's Minecraft version (Fabric)."
+        "noVersion": "This mod has not been released for the server's Minecraft version (Fabric).",
+        "blocked": "This mod is blocked because it causes disconnects on the server."
       }
     },
     "LAUNCH_FAILED": {

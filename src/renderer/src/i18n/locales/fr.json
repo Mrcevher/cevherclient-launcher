@@ -131,7 +131,8 @@
       "title": "Échec du téléchargement",
       "message": "Les fichiers n'ont pas pu être téléchargés. Tu peux relancer le téléchargement.",
       "reasons": {
-        "noVersion": "Ce mod n'est pas disponible pour la version Minecraft du serveur (Fabric)."
+        "noVersion": "Ce mod n'est pas disponible pour la version Minecraft du serveur (Fabric).",
+        "blocked": "Ce mod est bloqué car il provoque des déconnexions sur le serveur."
       }
     },
     "LAUNCH_FAILED": {

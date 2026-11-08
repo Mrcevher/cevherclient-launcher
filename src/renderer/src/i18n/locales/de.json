@@ -131,7 +131,8 @@
       "title": "Download fehlgeschlagen",
       "message": "Die Dateien konnten nicht heruntergeladen werden. Du kannst den Download neu starten.",
       "reasons": {
-        "noVersion": "Dieser Mod wurde für die Minecraft-Version des Servers (Fabric) nicht veröffentlicht."
+        "noVersion": "Dieser Mod wurde für die Minecraft-Version des Servers (Fabric) nicht veröffentlicht.",
+        "blocked": "Dieser Mod ist gesperrt, weil er auf dem Server Verbindungsabbrüche verursacht."
       }
     },
     "LAUNCH_FAILED": {

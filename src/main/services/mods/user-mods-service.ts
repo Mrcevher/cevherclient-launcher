@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { AppError } from '@shared/errors'
 import type { InstalledMod, ModKind, ModSearchResult, ModSide, ServerProfile, UserModsState } from '@shared/types'
 import { instanceDir } from '../minecraft/paths'
+import { isBlockedModProject } from '../launch/blocked-mods'
 import type { PerformancePackService, UserModsService } from '../types'
 import {
   downloadModFiles,
@@ -56,7 +57,7 @@ export class ModrinthUserModsService implements UserModsService {
     return {
       total: res?.total_hits ?? 0,
       offset: res?.offset ?? offset,
-      hits: (res?.hits ?? []).map((h) => ({
+      hits: (res?.hits ?? []).filter((h) => !isBlockedModProject(h.project_id)).map((h) => ({
         projectId: h.project_id,
         slug: h.slug,
         title: h.title,
@@ -113,6 +114,13 @@ export class ModrinthUserModsService implements UserModsService {
       const id = queue.shift()!
       if (seen.has(id) || (id !== projectId && present.has(id))) continue
       seen.add(id)
+      // Bağlantı koparan modlar (Krypton) ne doğrudan ne bağımlılık olarak kurulur.
+      if (isBlockedModProject(id)) {
+        if (id === projectId) {
+          throw new AppError('DOWNLOAD_FAILED', 'Bu mod sunucuda bağlantı kopmasına yol açtığı için engellendi', { reason: 'blocked' })
+        }
+        continue
+      }
       let version = await latestFabricVersion(id, mc)
       // Iris sabit proje kimliğiyle çözülür; başka bir projenin sürümü gelirse yok sayılır.
       if (id === IRIS && version && version.project_id !== IRIS) version = null

@@ -16,6 +16,7 @@ import type { LaunchCredentials, LaunchService, Services } from '../types'
 import { clearJoinTicket, prepareSessionMod, writeJoinTicket } from './session-mod'
 import { prepareUiMod } from './ui-mod'
 import { removeGifCapeMod } from './gifcape-mod'
+import { removeBlockedMods } from './blocked-mods'
 import { prepareClientMod } from './client-mod'
 import { prepareServerPack } from './server-pack'
 import { fitToScreen } from './window-size'
@@ -158,6 +159,8 @@ export class MinecraftLaunchService implements LaunchService {
     if (server) await prepareUiMod(server, gamePath)
     // Eski sürümlerin kurduğu GIF pelerin modu kaldırılır; pelerinler artık istemci modunun Kozmetikler'inde.
     if (server) await removeGifCapeMod(gamePath)
+    // Bağlantı koparan modlar (Krypton) kayıttan bağımsız olarak her açılışta silinir.
+    if (server) await removeBlockedMods(gamePath)
     // İstemci modu (cevher_client): mod menüsü, HUD modülleri ve HUD düzenleyici.
     if (server) await prepareClientMod(server, gamePath)
     // Sunucu kaynak paketi önceden kurulur; oturum modu girişte onay ekranını ve yeniden yüklemeyi atlar.

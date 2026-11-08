@@ -131,7 +131,8 @@
       "title": "ダウンロードに失敗しました",
       "message": "ファイルをダウンロードできませんでした。ダウンロードをやり直せます。",
       "reasons": {
-        "noVersion": "この Mod はサーバーの Minecraft バージョン（Fabric）向けに公開されていません。"
+        "noVersion": "この Mod はサーバーの Minecraft バージョン（Fabric）向けに公開されていません。",
+        "blocked": "この Mod はサーバーで切断の原因になるためブロックされています。"
       }
     },
     "LAUNCH_FAILED": {

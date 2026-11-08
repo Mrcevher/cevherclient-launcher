@@ -131,7 +131,8 @@
       "title": "Download non riuscito",
       "message": "Impossibile scaricare i file. Puoi riavviare il download.",
       "reasons": {
-        "noVersion": "Questa mod non è disponibile per la versione Minecraft del server (Fabric)."
+        "noVersion": "Questa mod non è disponibile per la versione Minecraft del server (Fabric).",
+        "blocked": "Questa mod è bloccata perché causa disconnessioni sul server."
       }
     },
     "LAUNCH_FAILED": {

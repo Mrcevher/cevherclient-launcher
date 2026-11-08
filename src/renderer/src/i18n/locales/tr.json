@@ -156,7 +156,8 @@
       "title": "İndirme başarısız",
       "message": "Dosyalar indirilemedi. İndirmeyi yeniden başlatabilirsiniz.",
       "reasons": {
-        "noVersion": "Bu mod sunucunun Minecraft sürümü (Fabric) için yayınlanmamış."
+        "noVersion": "Bu mod sunucunun Minecraft sürümü (Fabric) için yayınlanmamış.",
+        "blocked": "Bu mod sunucuda bağlantı kopmasına yol açtığı için engellendi."
       }
     },
     "LAUNCH_FAILED": {
