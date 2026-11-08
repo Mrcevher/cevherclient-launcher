@@ -316,7 +316,7 @@ Electron `userData` klasöründe (Windows: `%APPDATA%\Cevherclient`, macOS:
 - **Fabric mod yükleyicisini kullan** (varsayılan açık): kapatılırsa sunucu profili vanilla açılır;
   Performans Paketi ve sunucudan çıkınca otomatik kapanma o zaman çalışmaz.
 - **Performans Paketi:** Fabric API, Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling,
-  Krypton, ThreadTweak, Dynamic FPS; shader yükleyici Iris; oyun içi modlar Mod Menu, Shulker Box
+  ThreadTweak, Dynamic FPS; shader yükleyici Iris; oyun içi modlar Mod Menu, Shulker Box
   Tooltip, LambDynamicLights, SmoothPlayerAnimations, AppleSkin, Xaero's World Map ve Entity Texture
   Features. Modların zorunlu bağımlılıkları (Cloth Config, Player Animation Library, Text Placeholder
   API …) otomatik kurulur; bir mod başka birinin belirli sürümüne bağlıysa (Iris → Sodium) o sürüm

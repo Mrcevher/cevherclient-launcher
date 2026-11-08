@@ -27,7 +27,6 @@ export const PERFORMANCE_MODS: ReadonlyArray<{ slug: string; id: string; name: s
   { slug: 'ferrite-core', id: 'uXXizFIs', name: 'FerriteCore' },
   { slug: 'immediatelyfast', id: '5ZwdcRci', name: 'ImmediatelyFast' },
   { slug: 'entityculling', id: 'NNAgCjsB', name: 'EntityCulling' },
-  { slug: 'krypton', id: 'fQEb0iXm', name: 'Krypton' },
   { slug: 'threadtweak', id: 'vSEH1ERy', name: 'ThreadTweak' },
   { slug: 'dynamic-fps', id: 'LQ3K71Q1', name: 'Dynamic FPS' },
   { slug: 'iris', id: 'YL57xq9U', name: 'Iris Shaders' },
