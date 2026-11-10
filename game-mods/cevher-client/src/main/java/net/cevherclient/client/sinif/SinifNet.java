@@ -39,6 +39,25 @@ public final class SinifNet {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> bekleyen = null);
 		ClientConfigurationConnectionEvents.INIT.register((handler, client) -> bekleyen = null);
 		ClientTickEvents.END_CLIENT_TICK.register(SinifNet::tick);
+		ClientTickEvents.START_CLIENT_TICK.register(SinifNet::tuslar);
+	}
+
+	/**
+	 * 1-6 tuşları: sunucu kanalı varken eşya slotu seçmez, o slottaki yeteneği kullanır. Vanilla tuş işlemesinden
+	 * önce (tick başında) tıklamalar tüketilir.
+	 */
+	private static void tuslar(Minecraft mc) {
+		if (mc.player == null || mc.screen != null || !ClientPlayNetworking.canSend(SinifPayload.TYPE)) {
+			return;
+		}
+		for (int i = 0; i < 6; i++) {
+			while (mc.options.keyHotbarSlots[i].consumeClick()) {
+				JsonObject o = new JsonObject();
+				o.addProperty("t", "at");
+				o.addProperty("slot", i + 1);
+				gonder(o);
+			}
+		}
 	}
 
 	/** Sunucuya istek gönderir; sunucu kanalı dinlemiyorsa hiçbir şey yapmaz. */
