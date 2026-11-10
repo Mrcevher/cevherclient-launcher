@@ -77,7 +77,25 @@ public final class SinifVeri {
 			Satir bildirim) {
 	}
 
+	public record Yetenek(Satir ad, int acilis, boolean acik, int slot, List<Satir> lore) {
+	}
+
+	public record Yetenekler(String sinif, int seviye, List<Yetenek> liste) {
+	}
+
 	// --- Ayrıştırma ---
+
+	static Yetenekler yetenekler(JsonObject o) {
+		List<Yetenek> liste = new ArrayList<>();
+		for (JsonElement e : dizi(o, "yetenekler")) {
+			if (e.isJsonObject()) {
+				JsonObject y = e.getAsJsonObject();
+				liste.add(new Yetenek(satir(y.get("ad")), num(y, "acilis"), bool(y, "acik"), num(y, "slot"),
+					satirlar(y.get("lore"))));
+			}
+		}
+		return new Yetenekler(str(o, "sinif"), num(o, "seviye"), liste);
+	}
 
 	static Agac agac(JsonObject o) {
 		JsonObject ag = obj(o, "agac");

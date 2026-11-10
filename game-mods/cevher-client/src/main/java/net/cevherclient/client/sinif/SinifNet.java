@@ -82,6 +82,13 @@ public final class SinifNet {
 						ac(new SinifAgaciEkrani(veri), BEKLEME_MS);
 					}
 				}
+				case "yetenek" -> {
+					SinifVeri.Yetenekler y = SinifVeri.yetenekler(o);
+					SinifAgaciEkrani.yetenekler = y;
+					if (mc.screen instanceof SinifAgaciEkrani ekran) {
+						ekran.yetenekYenile();
+					}
+				}
 				case "kapat" -> {
 					bekleyen = null;
 					if (mc.screen instanceof SinifEkrani ekran) {

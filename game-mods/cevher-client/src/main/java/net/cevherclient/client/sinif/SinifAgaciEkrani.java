@@ -146,6 +146,113 @@ public final class SinifAgaciEkrani extends SinifEkrani {
 		puanPaneli(g, alpha);
 		agac(g, mx, my, alpha, etkilesim);
 		sifirlaDugmesi(g, mx, my, alpha, etkilesim);
+		yetenekLogo(g, mx, my, alpha, etkilesim);
+		yetenekPaneli(g, mx, my, alpha, etkilesim);
+	}
+
+	// --- Yetenek paneli (sol üst logo + soldan açılan liste) ---
+
+	/** Sunucudan gelen son yetenek listesi (ekran yeniden açılsa da korunur). */
+	static SinifVeri.Yetenekler yetenekler;
+	private static final float LOGO_D = 30;
+	private static final float YP_W = 158;
+	private static final float YP_SATIR = 27;
+	private boolean yetenekAcik;
+	private long yetenekT0;
+	private long yetenekSurum;
+
+	public void yetenekYenile() {
+		yetenekSurum++;
+	}
+
+	private float logoX() {
+		return sol() + 30;
+	}
+
+	private float logoY() {
+		return ust() + 28;
+	}
+
+	private float panelT() {
+		float t = Math.min(1f, (Util.getMillis() - yetenekT0) / 220f);
+		t = yetenekAcik ? t : 1f - t;
+		return 1f - (1f - t) * (1f - t);
+	}
+
+	private void yetenekLogo(GuiGraphics g, float mx, float my, float alpha, boolean etkilesim) {
+		float cx = logoX();
+		float cy = logoY();
+		boolean ustunde = etkilesim && Math.hypot(mx - cx, my - cy) <= LOGO_D / 2f + 2;
+		String ab = amblem;
+		float pay = 6;
+		float boy = LOGO_D + pay * 2;
+		SinifDoku.ciz(g, "agac|ylogo|" + ab + "|" + yetenekAcik + "|" + ustunde, 1, cx - boy / 2f, cy - boy / 2f, boy, boy,
+			alpha, p -> {
+				p.setColor(SinifCizim.awt(yetenekAcik || ustunde ? 0xFFF4EEE8 : 0xFFD8D4D0));
+				p.fill(new Ellipse2D.Float(pay, pay, LOGO_D, LOGO_D));
+				if (yetenekAcik) {
+					p.setColor(SinifCizim.awt(SinifCizim.TURUNCU));
+					p.setStroke(new BasicStroke(1.4f));
+					p.draw(new Ellipse2D.Float(pay - 1, pay - 1, LOGO_D + 2, LOGO_D + 2));
+				}
+				SinifCizim.amblemCiz(p, ab, 0xFF222222, pay + 4, pay + 4, LOGO_D - 8);
+			});
+		SinifCizim.satir(g, Satir.duz("Yetenekler", 0xFFD8D4D0), cx, cy + LOGO_D / 2f + 3, 6.2f, true, 1, alpha);
+		if (ustunde) {
+			ipucu = List.of(Satir.kalin("Yetenekler", 0xFFF2D4B0), Satir.duz("Tıkla: yetenek listesini aç/kapat", 0xFFBBBBBB));
+		}
+	}
+
+	private void yetenekPaneli(GuiGraphics g, float mx, float my, float alpha, boolean etkilesim) {
+		float t = panelT();
+		if (t <= 0.01f) {
+			return;
+		}
+		SinifVeri.Yetenekler y = yetenekler;
+		int n = y == null ? 0 : y.liste().size();
+		float h = 44 + Math.max(1, n) * YP_SATIR + 22;
+		float x = sol() + 8 - (1f - t) * (YP_W + 16);
+		float yy = ust() + 66;
+		float a = alpha * t;
+		SinifDoku.ciz(g, "agac|ypanel|" + yetenekSurum + "|" + n, 1, x, yy, YP_W, h, a, p -> {
+			p.setColor(SinifCizim.awt(0xE60C0A09));
+			p.fill(new RoundRectangle2D.Float(0, 0, YP_W, h, 4, 4));
+			p.setColor(SinifCizim.awt(SinifCizim.CERCEVE));
+			p.setStroke(new BasicStroke(0.8f));
+			p.draw(new RoundRectangle2D.Float(0.4f, 0.4f, YP_W - 0.8f, h - 0.8f, 4, 4));
+			SinifCizim.ayrac(p, 8, 30, YP_W - 16, 0.8f);
+		});
+		if (y == null) {
+			SinifCizim.satir(g, Satir.duz("Yükleniyor...", 0xFF9A9A9A), x + 12, yy + 44, 7f, false, 0, a);
+			return;
+		}
+		SinifCizim.satir(g, Satir.kalin("Yetenekler", 0xFFF2D4B0), x + 10, yy + 7, 9f, false, 0, a);
+		SinifCizim.satir(g, Satir.duz("Seviye " + y.seviye(), 0xFFBBBBBB), x + YP_W - 10, yy + 9.5f, 6.5f, false, 2, a);
+		for (int i = 0; i < n; i++) {
+			SinifVeri.Yetenek s = y.liste().get(i);
+			float ry = yy + 36 + i * YP_SATIR;
+			boolean ustunde = etkilesim && t > 0.95f && mx >= x && mx <= x + YP_W && my >= ry && my < ry + YP_SATIR;
+			Satir ad = s.acik() ? s.ad() : new Satir(s.ad().parcalar().stream()
+				.map(pp -> new Parca(pp.metin(), karart(pp.renk(), 0.45f), pp.kalin())).toList());
+			SinifCizim.satir(g, ad, x + 10, ry + 3, 7.4f, false, 0, a);
+			Satir alt;
+			if (!s.acik()) {
+				alt = Satir.duz("🔒 Seviye " + s.acilis() + "'de açılır", 0xFF8A8A8A);
+			} else if (s.slot() >= 1 && s.slot() <= 6) {
+				alt = Satir.duz("Tuş: " + s.slot() + "  (F ile yetenek modu)", 0xFFF0A868);
+			} else if (s.slot() == 7) {
+				alt = Satir.duz("Pasif — her zaman aktif", 0xFF9FD08A);
+			} else {
+				alt = Satir.duz("Açık", 0xFF9FD08A);
+			}
+			SinifCizim.satir(g, alt, x + 10, ry + 14, 6f, false, 0, a);
+			if (ustunde) {
+				List<Satir> ip = new ArrayList<>();
+				ip.add(s.ad());
+				ip.addAll(s.lore());
+				ipucu = ip;
+			}
+		}
 	}
 
 	private void ustBar(GuiGraphics g, float mx, float my, float alpha, boolean etkilesim) {
@@ -418,6 +525,15 @@ public final class SinifAgaciEkrani extends SinifEkrani {
 	@Override
 	protected void tikla(float mx, float my, MouseButtonEvent olay) {
 		if (olay.button() != 0 && olay.button() != 1) {
+			return;
+		}
+		if (Math.hypot(mx - logoX(), my - logoY()) <= LOGO_D / 2f + 2) {
+			yetenekAcik = !yetenekAcik;
+			yetenekT0 = Util.getMillis();
+			ses(yetenekAcik ? 1.2f : 0.9f);
+			if (yetenekAcik) {
+				gonder("yetenek");
+			}
 			return;
 		}
 		List<Sinif> siniflar = veri.siniflar();
