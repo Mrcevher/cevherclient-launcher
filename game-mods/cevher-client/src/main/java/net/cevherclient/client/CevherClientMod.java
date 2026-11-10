@@ -15,6 +15,7 @@ import net.cevherclient.client.module.impl.HitboxesModule;
 import net.cevherclient.client.module.impl.ScoreboardModule;
 import net.cevherclient.client.screen.HudEditorScreen;
 import net.cevherclient.client.screen.SaoMenuScreen;
+import net.cevherclient.client.sinif.SinifNet;
 import net.cevherclient.client.ui.ClickTracker;
 import net.cevherclient.client.ui.CombatTracker;
 import net.cevherclient.client.ui.HudRenderer;
@@ -44,7 +45,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Cevherclient istemci modu: Sağ Shift ile açılan mod menüsü, HUD modülleri ve HUD düzenleyici.
  * Yalnızca istemci tarafında çalışır. Sunucuya yalnızca kozmetik seçimi ({@link CosmeticNet}, sunucu kanalı
- * dinliyorsa) ve oyuncu açarsa Otomatik GG'nin sohbet mesajı gider.
+ * dinliyorsa), sınıf ekranlarındaki istekler ({@link SinifNet}, SinifSistemi eklentisi varsa) ve oyuncu açarsa
+ * Otomatik GG'nin sohbet mesajı gider.
  */
 public final class CevherClientMod implements ClientModInitializer {
 	public static final String MOD_ID = "cevher_client";
@@ -56,6 +58,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		ClientConfig.load();
 		Keys.register();
 		CosmeticNet.init();
+		SinifNet.init();
 		CombatTracker.init();
 
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath(MOD_ID, "hud"),
