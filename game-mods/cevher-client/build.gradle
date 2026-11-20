@@ -12,6 +12,9 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// Vaka menüsünün video arka planı (saf Java H.264/MP4 çözücü), mod jar'ının içine gömülür.
+	implementation "org.jcodec:jcodec:0.2.5"
+	include "org.jcodec:jcodec:0.2.5"
 }
 
 processResources {

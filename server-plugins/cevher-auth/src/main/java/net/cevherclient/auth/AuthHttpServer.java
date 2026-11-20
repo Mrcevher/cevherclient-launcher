@@ -183,6 +183,18 @@ final class AuthHttpServer {
 				case "/api/store/buy" -> sendResult(ex, bridge.buy(str(body, "token"), str(body, "productId")));
 				case "/api/internal/check" -> internalCheck(ex, body, client);
 				case "/api/internal/block" -> internalBlock(ex, body, client);
+				case "/api/internal/ban", "/api/internal/unban" -> {
+					if (!internalAuthorized(ex, body, client) || plugin.kaliciYasak() == null) {
+						send(ex, 403, error("FORBIDDEN"));
+					} else {
+						if (path.endsWith("/ban")) {
+							plugin.kaliciYasak().lobidenYasak(body);
+						} else {
+							plugin.kaliciYasak().lobidenKaldir(body);
+						}
+						send(ex, 200, ok());
+					}
+				}
 				default -> send(ex, 404, error("NOT_FOUND"));
 			}
 		} catch (Exception e) {

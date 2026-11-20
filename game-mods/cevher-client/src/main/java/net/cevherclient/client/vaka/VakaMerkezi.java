@@ -58,9 +58,35 @@ public final class VakaMerkezi {
 			if (mc.screen == null) {
 				okunmamis = 0;
 				bildirim = null;
+				if (net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment() && vakalar.isEmpty()) {
+					ornekYukle(); // yalnızca geliştirme ortamında: ekranı sunucusuz denemek için
+				}
 				mc.setScreen(new VakaEkrani(null));
 			}
 		}
+	}
+
+	private static void ornekYukle() {
+		long t = System.currentTimeMillis();
+		String[][] ornek = {
+			{"CtrlAltDefeate", "HİLE", "95", "Reach", "Vuruş mesafesi (Reach)", "13", "5.47 blok (sınır 3.92) hedef arda"},
+			{"TestOyuncu", "İNCELEME GEREKLİ", "-1", "", "Tıklama hızı (AutoClicker)", "4", "22 saldırı/sn (sınır 18)"},
+			{"Hizli_Kazici", "ŞÜPHELİ", "62", "Nuker", "Çok blok kırma (Nuker)", "7", "1 tikte 9 blok"}};
+		for (int n = 0; n < ornek.length; n++) {
+			String[] o = ornek[n];
+			String json = "{\"id\":\"DEV" + n + "\",\"ad\":\"" + o[0] + "\",\"durum\":\"" + o[1] + "\",\"guven\":" + o[2] + ",\"karar\":\"HILE\",\"tur\":\"" + o[3]
+				+ "\",\"ozet\":\"Örnek vaka (geliştirme ortamı)\",\"gerekce\":\"Ping düşük ve TPS 20 iken aynı ölçüm defalarca tekrarlandı; gecikmeyle açıklanamaz.\""
+				+ ",\"puan\":\"40.9\",\"kesin\":" + (n == 0) + ",\"test\":" + (n == 1) + ",\"bas\":" + (t - 60_000 * (n + 1)) + ",\"bit\":" + (t - 60_000 * n - 20_000)
+				+ ",\"dunya\":\"world\",\"konum\":\"12, 64, -30\",\"mod\":\"SURVIVAL\",\"istemci\":\"fabric\",\"pingOrt\":\"11\",\"pingMin\":\"9\",\"pingMax\":\"15\",\"tps\":\"20.0\""
+				+ ",\"ip\":\"88.230.149.252\",\"llmMs\":38000,\"kontroller\":[{\"etiket\":\"" + o[4] + "\",\"sayi\":\"" + o[5] + "\",\"enYuksek\":\"" + o[6] + "\"}"
+				+ ",{\"etiket\":\"Bakmadan vurma (KillAura)\",\"sayi\":\"2\",\"enYuksek\":\"hedefe 112° açıyla vurdu\"}]"
+				+ ",\"satirlar\":[\"05:22:12 " + o[4] + ": " + o[6] + " [ping 11 ms, TPS 20.0]\",\"05:22:14 " + o[4] + ": 5.14 blok [ping 11 ms, TPS 20.0]\""
+				+ ",\"05:22:16 Bakmadan vurma (KillAura): hedefe 112° açıyla vurdu (2.4 blok) hedef SKELETON [ping 11 ms, TPS 20.0]\"]}";
+			synchronized (vakalar) {
+				vakalar.add(JsonParser.parseString(json).getAsJsonObject());
+			}
+		}
+		surum++;
 	}
 
 	static List<JsonObject> liste() {
@@ -85,6 +111,11 @@ public final class VakaMerkezi {
 							vakalar.add(x.getAsJsonObject());
 						}
 					}
+				}
+			} else if ("sil".equals(t)) {
+				String id = str(o, "id");
+				synchronized (vakalar) {
+					vakalar.removeIf(v -> id.equals(str(v, "id")));
 				}
 			} else if ("vaka".equals(t) && o.has("vaka")) {
 				JsonObject v = o.getAsJsonObject("vaka");

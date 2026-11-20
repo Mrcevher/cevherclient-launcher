@@ -42,6 +42,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	private Guvenlik guvenlik;
 	private ModDogrulama modDogrulama;
 	private RiskTakip riskTakip;
+	private KaliciYasak kaliciYasak;
 	/** Op adları (küçük harf); HTTP iş parçacığından okunduğu için ana iş parçacığında yenilenir. */
 	private volatile Set<String> operatorNames = Set.of();
 	/** Sunucuda daha önce oynamış oyuncu adları (küçük harf); op adları gibi korunur. */
@@ -64,6 +65,8 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		riskTakip = new RiskTakip(this);
 		getServer().getPluginManager().registerEvents(riskTakip, this);
 		riskTakip.baslat();
+		kaliciYasak = new KaliciYasak(this);
+		getServer().getPluginManager().registerEvents(kaliciYasak, this);
 		modDogrulama = new ModDogrulama(this);
 
 		if (role.equals("gate")) {
@@ -162,6 +165,8 @@ public final class CevherAuthPlugin extends JavaPlugin {
 					sender.sendMessage("§aCevherAuth (kapı) ayarları yeniden yüklendi.");
 				} else if (AdminCommand.engelKomutu(this, sender, args)) {
 					return true;
+				} else if (AdminCommand.yasakKomutu(this, sender, args)) {
+					return true;
 				} else if (AdminCommand.riskKomutu(this, sender, args)) {
 					return true;
 				} else {
@@ -229,6 +234,22 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	RiskTakip riskTakip() {
 		return riskTakip;
+	}
+
+	KaliciYasak kaliciYasak() {
+		return kaliciYasak;
+	}
+
+	/**
+	 * Diğer eklentiler için (CevherKoruma "Hileydi → Onayla"): oyuncuyu hesap adı, IP, cihaz izi ve bilgisayar damgasıyla
+	 * kalıcı yasaklar; ağın giriş kapısına (lobi) da bildirir. Dönüş: kısa özet.
+	 */
+	public String disYasakla(String ad, String ip, String sebep, String yetkili, String vaka) {
+		if (kaliciYasak == null) {
+			return "kalıcı yasak sistemi kapalı";
+		}
+		KaliciYasak.Kayit k = kaliciYasak.yasakla(ad, ip, null, null, sebep, yetkili, vaka, true);
+		return k.adlar.size() + " hesap, " + k.ipler.size() + " IP, " + k.cihazlar.size() + " cihaz izi (kayıt " + k.id + ")";
 	}
 
 	/** Diğer eklentiler (CevherKoruma) için: risk bulgusu ekler. seviye = TEMIZ/DUSUK/ORTA/YUKSEK/KRITIK. */

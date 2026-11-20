@@ -63,6 +63,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		SinifNet.init();
 		RiskHud.init();
 		VakaMerkezi.init();
+		net.cevherclient.client.cihaz.CihazIzi.init();
 		CombatTracker.init();
 
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath(MOD_ID, "hud"),

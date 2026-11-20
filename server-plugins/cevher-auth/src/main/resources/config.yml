@@ -238,7 +238,16 @@ risk-takibi:
     yuksek: 40
     savas-carpani: 2
 
+# Kalıcı yasak (CevherKoruma "Hileydi → Onayla" ve /cevherauth yasakla). Yasak hesap adı, IP, Cevherclient'ın
+# gönderdiği cihaz izi (bilgisayar kimliği) ve bilgisayara yazılan damga ile eşleşir; eşleşen yeni hesap/IP yasağa eklenir.
+kalici-yasak:
+  # IP de yasaklansın mı (aynı internetteki herkes etkilenir; mobil/paylaşımlı IP'de dikkat)
+  ip: true
+  # Yasaklı IP'den/bilgisayardan gelen başka hesaplar da yasağa eklensin mi
+  bagli-hesaplar: true
+
 messages:
+  kalici-yasak: "&c&lSunucudan kalıcı olarak yasaklandın.\n&7Sebep: &f%sebep%\n&7Tarih: &f%tarih%\n&8Kayıt: %id%"
   lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
   no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."
   wrong-name: "&cOyuncu adı launcher hesabınla uyuşmuyor.\n&7Launcher'dan çıkış yapıp tekrar giriş yap."
