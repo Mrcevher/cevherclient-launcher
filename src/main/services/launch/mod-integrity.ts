@@ -288,6 +288,42 @@ async function restoreVerified(
   return restored
 }
 
+interface FabricMeta {
+  id: string | null
+  provides: string[]
+  /** Zorunlu bağımlılık kimlikleri (fabric.mod.json "depends" anahtarları). */
+  depends: string[]
+}
+
+/** Jar'ın fabric.mod.json'unu okur (çalıştırmadan); Fabric modu değilse ya da okunamazsa null. */
+async function readMeta(path: string): Promise<FabricMeta | null> {
+  try {
+    const zip = await open(path, { lazyEntries: true, autoClose: false })
+    try {
+      for await (const entry of walkEntriesGenerator(zip)) {
+        if (entry.fileName !== 'fabric.mod.json') continue
+        if (entry.uncompressedSize > MAX_META_BYTES) return null
+        const json = JSON.parse((await readEntry(zip, entry)).toString('utf8')) as {
+          id?: unknown
+          provides?: unknown
+          depends?: unknown
+        }
+        const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
+        return {
+          id: typeof json.id === 'string' ? json.id : null,
+          provides: strings(json.provides),
+          depends: json.depends && typeof json.depends === 'object' ? Object.keys(json.depends as object) : []
+        }
+      }
+      return null
+    } finally {
+      zip.close()
+    }
+  } catch {
+    return null
+  }
+}
+
 function stamp(): string {
   const d = new Date()
   const p = (n: number): string => String(n).padStart(2, '0')
@@ -337,13 +373,43 @@ async function run(gamePath: string, authUrl: string | undefined): Promise<Quara
     await mkdir(join(gamePath, '.cevher'), { recursive: true })
     await writeFile(join(gamePath, CACHE_FILE), JSON.stringify(cache), 'utf8').catch(() => undefined)
   }
-  await restoreVerified(gamePath, (h) => trusted(h) || verifiedOnModrinth(h), oldQuarantine)
+  // Doğrulanan jar'lar geri alınır; ama karantinada kalan bir moda bağımlıysa (ör. hile istemcisinin
+  // eklentisi) geri alınmaz: alınsaydı oyun açılışta "gerekli mod yok" diye çökerdi. Zincirleme bağımlılık
+  // için kalanlar listesi değişmeyene kadar tekrarlanır.
+  const metaOf = new Map<string, FabricMeta | null>()
+  for (const q of oldQuarantine) metaOf.set(q.path, await readMeta(q.path))
+  const currentIds = new Set<string>()
+  for (const jar of firstJars) {
+    const m = await readMeta(jar)
+    if (m?.id) currentIds.add(m.id)
+    for (const p of m?.provides ?? []) currentIds.add(p)
+  }
+  const stayIds = new Set<string>()
+  const addIds = (m: FabricMeta | null | undefined): void => {
+    if (m?.id) stayIds.add(m.id)
+    for (const p of m?.provides ?? []) stayIds.add(p)
+  }
+  let restorable = oldQuarantine.filter((q) => trusted(q.sha1) || verifiedOnModrinth(q.sha1))
+  for (const q of oldQuarantine) if (!restorable.includes(q)) addIds(metaOf.get(q.path))
+  for (let changed = true; changed; ) {
+    changed = false
+    for (const q of restorable) {
+      if (metaOf.get(q.path)?.depends.some((d) => stayIds.has(d) && !currentIds.has(d))) {
+        addIds(metaOf.get(q.path))
+        restorable = restorable.filter((x) => x !== q)
+        changed = true
+      }
+    }
+  }
+  await restoreVerified(gamePath, () => true, restorable)
 
   const jars = await listJars(modsDir)
   const hashes = new Map<string, string>()
   for (const jar of jars) hashes.set(jar, await sha(jar, 'sha1'))
 
   const quarantined: QuarantinedMod[] = []
+  /** Bu açılışta karantinaya taşınan dosyaların yeni yolları. */
+  const moved: string[] = []
   const dir = join(gamePath, QUARANTINE_DIR, stamp())
   for (const jar of jars) {
     const h = hashes.get(jar)!
@@ -394,11 +460,60 @@ async function run(gamePath: string, authUrl: string | undefined): Promise<Quara
     }
     try {
       await mkdir(dir, { recursive: true })
-      await rename(jar, join(dir, name.replaceAll(/[\\/]/g, '_')))
+      const target = join(dir, name.replaceAll(/[\\/]/g, '_'))
+      await rename(jar, target)
       quarantined.push(entry)
+      moved.push(target)
     } catch (err) {
       console.warn(`[mod-integrity] ${name} karantinaya taşınamadı:`, (err as Error).message)
     }
+  }
+
+  // Karantinaya alınan bir moda (ör. hile istemcisinin eklentisi ya da kütüphanesi) bağımlı kalan modlar:
+  // bırakılırsa Fabric "X, Y'yi gerektiriyor" diyerek oyunu açılışta çökertir (LAUNCH_FAILED). Bunlar da
+  // karantinaya alınır; zincirleme bağımlılıklar için kalan kalmayana kadar tekrarlanır.
+  // Kaldırılmış sayılan kimlikler: bu açılışta ve önceki açılışlarda karantinada kalan tüm jar'lar.
+  const removed = new Set<string>()
+  for (const path of await listJars(join(gamePath, QUARANTINE_DIR))) {
+    const m = await readMeta(path)
+    if (m?.id) removed.add(m.id)
+    for (const p of m?.provides ?? []) removed.add(p)
+  }
+  for (let round = 0; removed.size > 0 && round < 10; round++) {
+    const metas = new Map<string, FabricMeta | null>()
+    for (const jar of await listJars(modsDir)) metas.set(jar, await readMeta(jar))
+    const available = new Set<string>()
+    for (const m of metas.values()) {
+      if (m?.id) available.add(m.id)
+      for (const p of m?.provides ?? []) available.add(p)
+    }
+    let changed = false
+    for (const [jar, m] of metas) {
+      const missing = m?.depends.find((d) => removed.has(d) && !available.has(d))
+      if (!m || !missing) continue
+      const name = relative(modsDir, jar)
+      const target = join(dir, name.replaceAll(/[\\/]/g, '_'))
+      try {
+        await mkdir(dir, { recursive: true })
+        const sha1 = hashes.get(jar) ?? (await sha(jar, 'sha1'))
+        const sha256 = await sha(jar, 'sha256')
+        await rename(jar, target)
+        quarantined.push({
+          name,
+          modId: m.id,
+          sha1,
+          sha256,
+          risk: 'MEDIUM',
+          reason: `Karantinadaki "${missing}" moduna bağımlı: bırakılsaydı oyun açılışta çökerdi`
+        })
+        if (m.id) removed.add(m.id)
+        for (const p of m.provides) removed.add(p)
+        changed = true
+      } catch (err) {
+        console.warn(`[mod-integrity] ${name} (bağımlı) karantinaya taşınamadı:`, (err as Error).message)
+      }
+    }
+    if (!changed) break
   }
 
   if (quarantined.length > 0 && existsSync(dir)) {
