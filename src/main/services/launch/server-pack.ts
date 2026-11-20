@@ -145,8 +145,12 @@ async function setEnabled(gamePath: string, enabled: boolean): Promise<void> {
     else if (want) lines.push(line)
   }
   update('resourcePacks', ['vanilla'], enabled)
-  // Paket biçimi sürümle tam eşleşmese bile oyun "uyumsuz" deyip listeden atmasın.
-  update('incompatibleResourcePacks', [], enabled)
+  // Paket incompatibleResourcePacks'e EKLENMEZ, önceki sürümlerin eklediği kayıt da silinir.
+  // Oyun (Options.loadSelectedResourcePacks) uyumlu bir paketi bu listede bulunca onu yalnızca
+  // listeden çıkarır ve o açılışta ETKİNLEŞTİRMEZ: paket kurulu olduğu hâlde yüklenmez, sunucu
+  // aynı paketi gönderince ServerPack.isPreinstalled false döner ve paket her girişte yeniden
+  // indirilip tüm kaynaklar yeniden yüklenir (40+ sn bekleme, Vulcan zaman aşımı ile atılma).
+  update('incompatibleResourcePacks', [], false)
 
   const out = lines.join(eol) + eol
   if (out === text) return
