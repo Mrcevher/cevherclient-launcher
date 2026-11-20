@@ -231,6 +231,24 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		return riskTakip;
 	}
 
+	/** Diğer eklentiler (CevherKoruma) için: risk bulgusu ekler. seviye = TEMIZ/DUSUK/ORTA/YUKSEK/KRITIK. */
+	public void disRiskEkle(String ad, String ip, String seviye, String kaynak, String detay) {
+		if (riskTakip != null) {
+			riskTakip.ekle(ad, ip, RiskTakip.Seviye.bul(seviye), kaynak, detay);
+		}
+	}
+
+	/** Diğer eklentiler için: oyuncunun risk özeti (renk kodsuz satırlar). */
+	public java.util.List<String> disRiskRaporu(String ad) {
+		java.util.List<String> out = new java.util.ArrayList<>();
+		if (riskTakip != null) {
+			for (String s : riskTakip.rapor(ad)) {
+				out.add(s.replaceAll("&[0-9a-fk-or]", ""));
+			}
+		}
+		return out;
+	}
+
 	ModDogrulama modDogrulama() {
 		return modDogrulama;
 	}

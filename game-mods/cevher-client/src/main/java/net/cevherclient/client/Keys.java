@@ -10,6 +10,7 @@ public final class Keys {
 	public static KeyMapping MENU;
 	public static KeyMapping ZOOM;
 	public static KeyMapping FREELOOK;
+	public static KeyMapping VAKA;
 
 	private Keys() {
 	}
@@ -22,5 +23,7 @@ public final class Keys {
 			new KeyMapping("key.cevher_client.zoom", InputConstants.Type.KEYSYM, InputConstants.KEY_C, category));
 		FREELOOK = KeyBindingHelper.registerKeyBinding(
 			new KeyMapping("key.cevher_client.freelook", InputConstants.Type.KEYSYM, InputConstants.KEY_LALT, category));
+		VAKA = KeyBindingHelper.registerKeyBinding(
+			new KeyMapping("key.cevher_client.vaka", InputConstants.Type.KEYSYM, InputConstants.KEY_J, category));
 	}
 }

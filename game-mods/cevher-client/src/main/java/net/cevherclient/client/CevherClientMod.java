@@ -17,6 +17,7 @@ import net.cevherclient.client.screen.HudEditorScreen;
 import net.cevherclient.client.screen.SaoMenuScreen;
 import net.cevherclient.client.sinif.SinifNet;
 import net.cevherclient.client.risk.RiskHud;
+import net.cevherclient.client.vaka.VakaMerkezi;
 import net.cevherclient.client.ui.ClickTracker;
 import net.cevherclient.client.ui.CombatTracker;
 import net.cevherclient.client.ui.HudRenderer;
@@ -61,6 +62,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		CosmeticNet.init();
 		SinifNet.init();
 		RiskHud.init();
+		VakaMerkezi.init();
 		CombatTracker.init();
 
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath(MOD_ID, "hud"),
@@ -137,6 +139,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		}
 		ClickTracker.poll(mc);
 		CombatTracker.tick(mc);
+		VakaMerkezi.tick(mc);
 		while (Keys.MENU.consumeClick()) {
 			if (mc.screen == null) {
 				mc.setScreen(new SaoMenuScreen(null));
