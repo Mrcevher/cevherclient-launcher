@@ -7,7 +7,7 @@ import type { ChildProcess } from 'node:child_process'
 import { createMinecraftProcessWatcher, launch, MinecraftFolder, Version, type ResolvedVersion } from '@xmcl/core'
 import { AppError } from '@shared/errors'
 import { APP_NAME } from '@shared/constants'
-import type { LaunchSession, LaunchStage, LaunchTarget, ServerProfile } from '@shared/types'
+import type { LaunchSession, LaunchStage, LaunchTarget, QuarantinedMod, ServerProfile } from '@shared/types'
 import type { EventSink } from '../../utils/events'
 import { JsonStore } from '../../utils/json-store'
 import { gameDirs, instanceDir } from '../minecraft/paths'
@@ -166,9 +166,10 @@ export class MinecraftLaunchService implements LaunchService {
     if (server) await prepareClientMod(server, gamePath)
     // Mod bütünlüğü: modpack'te, launcher modlarında, Modrinth'te ya da sunucu politikasında olmayan
     // (yeniden adlandırılmış / değiştirilmiş) jar'lar oyun açılmadan karantinaya alınır.
+    let quarantined: QuarantinedMod[] = []
     if (server && server.loader.type !== 'vanilla') {
       const integrityAuthUrl = (await config.get()).config.authServerUrl?.replace(/\/+$/, '')
-      const quarantined = await enforceModIntegrity(gamePath, integrityAuthUrl)
+      quarantined = await enforceModIntegrity(gamePath, integrityAuthUrl)
       if (quarantined.length > 0) {
         this.events.emit('launch:quarantine', { files: quarantined, folder: join(gamePath, '.cevher', 'karantina') })
       }
@@ -192,7 +193,7 @@ export class MinecraftLaunchService implements LaunchService {
     // Bilete özel sır oyun moduna verilir; oyun bağlanırken bileti kendisinin aldığını kanıtlar.
     if (server) {
       await clearJoinTicket(gamePath)
-      const ticket = await this.deps.auth.prepareServerJoin()
+      const ticket = await this.deps.auth.prepareServerJoin(quarantined)
       if (ticket?.secret) {
         if (sessionArgs.length > 0) await writeJoinTicket(gamePath, ticket.username, ticket.secret)
         else console.warn(`[launch] ${server.id}: oturum modu yok; oyun bilet kanıtı gönderemeyecek`)

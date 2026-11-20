@@ -13,6 +13,9 @@ permissions:
   cevherauth.admin:
     description: CevherAuth yönetim komutları
     default: op
+  cevherauth.risk:
+    description: Risk listesini (sağ üst ekran ve sohbet uyarıları) görür
+    default: op
   # Lobi rolünde oyuncunun giriş durumu (TAB gibi eklentilerin koşulları için; CevherAuth verir).
   cevherauth.bekliyor:
     description: Henüz giriş yapmadı

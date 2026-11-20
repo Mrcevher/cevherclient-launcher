@@ -169,6 +169,7 @@ final class Guvenlik implements Listener {
 		if (n >= a.ihlalEsigi()) {
 			ihlaller.clear(ip);
 			engelle(ip, a.engelMs(), ad + ": " + neden, true);
+			plugin.riskTakip().ekle(ad, ip, RiskTakip.Seviye.YUKSEK, "ip-engeli", a.engelMs() / 60_000 + " dk: " + neden);
 		}
 	}
 
@@ -333,6 +334,7 @@ final class Guvenlik implements Listener {
 
 	private void hileBulundu(Player p, String detay) {
 		String ip = ip(p);
+		plugin.riskTakip().ekle(p.getName(), ip, RiskTakip.Seviye.KRITIK, "hile-istemcisi", detay);
 		plugin.getLogger().warning("Hile istemcisi: " + p.getName() + " (" + ip + ") " + detay);
 		if (ayar.hileEngelle() && ayar.engelAcik()) {
 			engelle(ip, ayar.engelMs(), p.getName() + ": hile istemcisi " + detay, true);
@@ -362,6 +364,7 @@ final class Guvenlik implements Listener {
 			}
 		}
 		if (neden != null) {
+			plugin.riskTakip().ekle(event.getPlayer().getName(), ip(event.getPlayer()), RiskTakip.Seviye.ORTA, "guvenlik", neden);
 			ihlal(ip(event.getPlayer()), event.getPlayer().getName(), neden);
 		}
 	}

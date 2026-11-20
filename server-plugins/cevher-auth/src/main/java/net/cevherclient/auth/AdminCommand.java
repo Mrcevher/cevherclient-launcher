@@ -19,6 +19,8 @@ import org.bukkit.command.TabExecutor;
  *   /cevherauth reload                — config.yml'i yeniden okur
  *   /cevherauth engeller              — süren geçici IP engelleri
  *   /cevherauth engelkaldir <ip>      — IP engelini kaldırır
+ *   /cevherauth risk [ad]             — risk listesi ya da bir oyuncunun bulguları
+ *   /cevherauth risktemizle <ad>      — oyuncunun risk kaydını siler
  */
 final class AdminCommand implements TabExecutor {
 	private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault());
@@ -93,6 +95,9 @@ final class AdminCommand implements TabExecutor {
 				case "engeller", "engelkaldir" -> {
 					return engelKomutu(plugin, sender, args);
 				}
+				case "risk", "risktemizle" -> {
+					return riskKomutu(plugin, sender, args);
+				}
 				default -> {
 					return false;
 				}
@@ -101,6 +106,24 @@ final class AdminCommand implements TabExecutor {
 			sender.sendMessage("§cDosyaya yazılamadı: " + e.getMessage());
 		}
 		return true;
+	}
+
+	/** Risk takibi komutları (her rolde); komut bu değilse false. */
+	static boolean riskKomutu(CevherAuthPlugin plugin, CommandSender sender, String[] args) {
+		if (args.length == 0) {
+			return false;
+		}
+		if (args[0].equalsIgnoreCase("risk")) {
+			for (String satir : plugin.riskTakip().rapor(args.length >= 2 ? args[1] : null)) {
+				sender.sendMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(satir));
+			}
+			return true;
+		}
+		if (args[0].equalsIgnoreCase("risktemizle") && args.length >= 2) {
+			sender.sendMessage(plugin.riskTakip().temizle(args[1]) ? "§a" + args[1] + " risk kaydı silindi." : "§cBu oyuncu için kayıt yok.");
+			return true;
+		}
+		return false;
 	}
 
 	/** Kapı rolünde de kullanılan IP engeli komutları; komut bu değilse false. */
@@ -129,7 +152,7 @@ final class AdminCommand implements TabExecutor {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
-			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir", "risk", "risktemizle").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
 		}
 		if (args.length == 2 && (args[0].equalsIgnoreCase("sil") || args[0].equalsIgnoreCase("sifre"))) {
 			return plugin.accounts().all().stream().map(a -> a.username)

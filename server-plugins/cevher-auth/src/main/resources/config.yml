@@ -219,6 +219,25 @@ mod-dogrulama:
   # ("squares" içindeki ares sayılmaz). Modrinth'te doğrulanan modlara uygulanmaz (Better Combat gibi).
   hile-kelimeleri: [hack, hile, cheat, injector, trigger, lua, wurst, aristois, meteor, ares, combat, mathax, vape, jex, liquidbounce, trainer, bleachhack, hacked, aura, impactclient, doomsday, sigma, exec]
 
+# Oyuncu risk takibi (1.5.0): launcher karantinası, mod doğrulama, hile istemcisi, güvenlik atmaları ve
+# Vulcan işaretleri tek defterde toplanır; oyuncular KRİTİK / YÜKSEK / ORTA / DÜŞÜK sınıflarına ayrılır.
+# Sınıf yükseldiğinde konsola [RİSK] uyarısı yazılır. OP'lar (ya da cevherauth.risk izni olanlar)
+# cevher_client modu varsa listeyi ekranın sağ üstünde görür. Komut: /cevherauth risk [ad]
+risk-takibi:
+  enabled: true
+  # Bulguların sınıfa sayıldığı süre (saat). Kayıtlar 7 gün saklanır (plugins/CevherAuth/risk.json).
+  sure-saat: 24
+  # YÜKSEK ve KRİTİK'e çıkan oyuncu OP'lara sohbetten de bildirilsin.
+  op-sohbet-uyarisi: true
+  vulcan:
+    enabled: true
+    # Penceredeki işaret puanı eşikleri (savaş kontrolleri savas-carpani kadar sayılır).
+    pencere-dakika: 10
+    dusuk: 3
+    orta: 15
+    yuksek: 40
+    savas-carpani: 2
+
 messages:
   lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
   no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."

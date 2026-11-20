@@ -2,7 +2,7 @@ import { safeStorage } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { AppError } from '@shared/errors'
 import { USERNAME_PATTERN } from '@shared/constants'
-import type { Account, AuthState } from '@shared/types'
+import type { Account, AuthState, QuarantinedMod } from '@shared/types'
 import { JsonStore } from '../../utils/json-store'
 import type { AuthService, JoinTicket, LaunchCredentials, RemoteConfigService } from '../types'
 import { offlineUuid } from './offline-uuid'
@@ -99,7 +99,7 @@ export class AccountAuthService implements AuthService {
     return { account, accessToken: randomUUID().replace(/-/g, ''), userType: 'legacy' }
   }
 
-  async prepareServerJoin(): Promise<JoinTicket | null> {
+  async prepareServerJoin(quarantined: QuarantinedMod[] = []): Promise<JoinTicket | null> {
     if (!(await this.authUrl())) return null
     const file = await this.store.read()
     const token = this.readToken(file)
@@ -109,7 +109,9 @@ export class AccountAuthService implements AuthService {
     }
     let res: Record<string, unknown>
     try {
-      res = await this.api('/api/join', { token })
+      // Oyun açılmadan karantinaya alınan jar'lar sunucunun risk takibine bildirilir (CevherAuth 1.5.0+).
+      const integrity = quarantined.slice(0, 30).map((q) => ({ name: q.name, modId: q.modId, sha1: q.sha1, risk: q.risk, reason: q.reason }))
+      res = await this.api('/api/join', integrity.length > 0 ? { token, integrity } : { token })
     } catch (err) {
       if (err instanceof AppError && err.meta?.reason === 'sessionExpired') await this.clear()
       throw err
@@ -238,7 +240,7 @@ export class AccountAuthService implements AuthService {
   /** CevherAuth API çağrısı; hata kodunu AUTH_FAILED + i18n nedenine çevirir. */
   private async api(
     path: string,
-    body: Record<string, string>,
+    body: Record<string, unknown>,
     errorCode: 'AUTH_FAILED' | 'STORE_FAILED' = 'AUTH_FAILED'
   ): Promise<Record<string, unknown>> {
     const base = await this.authUrl()

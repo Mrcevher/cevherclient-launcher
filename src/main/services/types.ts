@@ -19,6 +19,7 @@ import type {
   ModSearchResult,
   PerformancePackState,
   QualityResult,
+  QuarantinedMod,
   UserModsState,
   RemoteConfigSnapshot,
   ServerProfile,
@@ -65,7 +66,8 @@ export interface AuthService {
    * böylece oyuncu oyunda şifre yazmadan içeri girer. Bilete özel sır, oyunun bileti
    * kendisinin aldığını kanıtlaması için oyuna verilir. Hesap sunucusu yoksa null döner.
    */
-  prepareServerJoin(): Promise<JoinTicket | null>
+  /** quarantined: bu açılışta karantinaya alınan jar'lar; sunucuya risk raporu olarak gider. */
+  prepareServerJoin(quarantined?: QuarantinedMod[]): Promise<JoinTicket | null>
   /** Giriş: hesap sunucusu varsa şifre zorunlu; ad Minecraft kuralına (3–16, harf/rakam/_) uymalı. */
   login(username: string, password?: string): Promise<AuthState>
   /** Hesap sunucusunda yeni hesap açar ve giriş yapar. */

@@ -16,6 +16,7 @@ import net.cevherclient.client.module.impl.ScoreboardModule;
 import net.cevherclient.client.screen.HudEditorScreen;
 import net.cevherclient.client.screen.SaoMenuScreen;
 import net.cevherclient.client.sinif.SinifNet;
+import net.cevherclient.client.risk.RiskHud;
 import net.cevherclient.client.ui.ClickTracker;
 import net.cevherclient.client.ui.CombatTracker;
 import net.cevherclient.client.ui.HudRenderer;
@@ -59,6 +60,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		Keys.register();
 		CosmeticNet.init();
 		SinifNet.init();
+		RiskHud.init();
 		CombatTracker.init();
 
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath(MOD_ID, "hud"),

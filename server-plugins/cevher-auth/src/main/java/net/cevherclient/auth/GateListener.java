@@ -50,6 +50,9 @@ final class GateListener implements Listener {
 			HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 			JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 			if (response.statusCode() == 200 && json.has("authorized") && json.get("authorized").getAsBoolean()) {
+				if (json.has("risk") && json.get("risk").isJsonArray()) {
+					plugin.riskTakip().iceAktar(name, ip, json.getAsJsonArray("risk"));
+				}
 				return;
 			}
 			if (response.statusCode() == 403) {

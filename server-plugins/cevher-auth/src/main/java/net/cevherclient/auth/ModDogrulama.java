@@ -319,6 +319,7 @@ final class ModDogrulama {
 
 	/** KRİTİK: reddeder ve (guvenlik.hile-istemcisi.ip-engelle açıksa) IP'yi engeller. */
 	private String kritik(String ad, String ip, String mod, String neden) {
+		plugin.riskTakip().ekle(ad, ip, RiskTakip.Seviye.KRITIK, "mod-dogrulama", mod + " — " + neden);
 		plugin.getLogger().severe("[KRİTİK] " + ad + " (" + ip + ") hile modu: " + mod + " — " + neden + ", reddedildi");
 		plugin.guvenlik().hileEngeli(ip, ad + ": hile modu " + mod);
 		return mod;
@@ -356,6 +357,7 @@ final class ModDogrulama {
 	}
 
 	private String red(String ad, String ip, String mod, String neden) {
+		plugin.riskTakip().ekle(ad, ip, RiskTakip.Seviye.YUKSEK, "mod-dogrulama", mod + " — " + neden);
 		plugin.getLogger().warning(ad + " (" + ip + ") izinsiz modla girmeye çalıştı: " + mod + " — " + neden + ", reddedildi");
 		return mod;
 	}

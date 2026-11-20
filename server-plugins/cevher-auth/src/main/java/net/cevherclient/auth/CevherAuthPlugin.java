@@ -41,6 +41,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	private LobbyLogin lobbyLogin;
 	private Guvenlik guvenlik;
 	private ModDogrulama modDogrulama;
+	private RiskTakip riskTakip;
 	/** Op adları (küçük harf); HTTP iş parçacığından okunduğu için ana iş parçacığında yenilenir. */
 	private volatile Set<String> operatorNames = Set.of();
 	/** Sunucuda daha önce oynamış oyuncu adları (küçük harf); op adları gibi korunur. */
@@ -60,6 +61,9 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		guvenlik = new Guvenlik(this);
 		getServer().getPluginManager().registerEvents(guvenlik, this);
 		getServer().getScheduler().runTaskTimerAsynchronously(this, guvenlik::cleanup, 20L * 60, 20L * 60);
+		riskTakip = new RiskTakip(this);
+		getServer().getPluginManager().registerEvents(riskTakip, this);
+		riskTakip.baslat();
 		modDogrulama = new ModDogrulama(this);
 
 		if (role.equals("gate")) {
@@ -154,8 +158,11 @@ public final class CevherAuthPlugin extends JavaPlugin {
 					reloadConfig();
 					guvenlik.yenile();
 					modDogrulama.yenile();
+					riskTakip.yenile();
 					sender.sendMessage("§aCevherAuth (kapı) ayarları yeniden yüklendi.");
 				} else if (AdminCommand.engelKomutu(this, sender, args)) {
+					return true;
+				} else if (AdminCommand.riskKomutu(this, sender, args)) {
 					return true;
 				} else {
 					sender.sendMessage("§eBu sunucu kapı rolünde; hesap komutlarını lobi sunucusunda kullanın.");
@@ -179,6 +186,9 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		if (riskTakip != null) {
+			riskTakip.durdur();
+		}
 		if (lobbyLogin != null) {
 			lobbyLogin.stop();
 		}
@@ -215,6 +225,10 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	Guvenlik guvenlik() {
 		return guvenlik;
+	}
+
+	RiskTakip riskTakip() {
+		return riskTakip;
 	}
 
 	ModDogrulama modDogrulama() {
@@ -296,6 +310,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		reloadConfig();
 		guvenlik.yenile();
 		modDogrulama.yenile();
+		riskTakip.yenile();
 		refreshTrustedProxies();
 		refreshPlayedNames();
 		refreshOperators();

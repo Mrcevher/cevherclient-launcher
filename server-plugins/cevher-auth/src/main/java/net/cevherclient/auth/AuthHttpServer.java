@@ -215,6 +215,9 @@ final class AuthHttpServer {
 		String ip = str(body, "ip");
 		JsonObject o = ok();
 		o.addProperty("authorized", name != null && ip != null && lobby.isAuthorized(name, ip));
+		if (name != null) {
+			o.add("risk", plugin.riskTakip().disaAktar(name));
+		}
 		send(ex, 200, o);
 	}
 
@@ -412,6 +415,10 @@ final class AuthHttpServer {
 		if (ticket == null) {
 			send(ex, 401, error("SESSION_EXPIRED"));
 			return;
+		}
+		// Launcher'ın oyunu açmadan önce karantinaya aldığı jar'lar (5.0.6+): risk takibine işlenir.
+		if (body.has("integrity") && body.get("integrity").isJsonArray()) {
+			plugin.riskTakip().launcherRaporu(ticket.username(), client.ip(), body.getAsJsonArray("integrity"));
 		}
 		JsonObject o = ok();
 		o.addProperty("username", ticket.username());
