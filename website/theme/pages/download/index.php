@@ -1,9 +1,9 @@
 <?php $this->layout('layouts/main'); ?>
 <?php
 	// CevherClient tanıtım sayfası (tema: pop). Kaynak: CevherClient/website/theme/pages/download/index.php
-	$cvcVersion = '5.0.8';
+	$cvcVersion = '5.0.9';
 	$cvcSize = '136 MB';
-	$cvcUrl = 'https://github.com/Mrcevher/cevherclient-launcher/releases/download/v5.0.8/Cevherclient-Setup-5.0.8.exe';
+	$cvcUrl = 'https://github.com/Mrcevher/cevherclient-launcher/releases/download/v5.0.9/Cevherclient-Setup-5.0.9.exe';
 	$cvcAssets = '/client/';
 ?>
 

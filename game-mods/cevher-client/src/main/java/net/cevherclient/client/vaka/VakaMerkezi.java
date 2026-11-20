@@ -32,6 +32,7 @@ public final class VakaMerkezi {
 	private static volatile JsonObject bildirim;
 	private static volatile long bildirimZamani;
 	private static volatile int okunmamis;
+	static volatile int surum;
 
 	private VakaMerkezi() {
 	}
@@ -89,8 +90,18 @@ public final class VakaMerkezi {
 				JsonObject v = o.getAsJsonObject("vaka");
 				String id = str(v, "id");
 				synchronized (vakalar) {
-					vakalar.removeIf(x -> id.equals(str(x, "id")));
-					vakalar.add(0, v);
+					int yer = -1;
+					for (int i = 0; i < vakalar.size(); i++) {
+						if (id.equals(str(vakalar.get(i), "id"))) {
+							yer = i;
+							break;
+						}
+					}
+					if (yer >= 0) {
+						vakalar.set(yer, v); // güncelleme (LLM sonucu, yetkili kararı): sırayı bozma
+					} else {
+						vakalar.add(0, v);
+					}
 					while (vakalar.size() > MAX) {
 						vakalar.remove(vakalar.size() - 1);
 					}
@@ -103,6 +114,7 @@ public final class VakaMerkezi {
 					mc.execute(() -> mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.6f)));
 				}
 			}
+			surum++;
 		} catch (RuntimeException ex) {
 			CevherClientMod.LOGGER.warn("Hile vakası okunamadı: {}", ex.toString());
 		}

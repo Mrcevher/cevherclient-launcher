@@ -32,6 +32,9 @@ public final class VakaEkrani extends Screen {
 	private List<Satir> detay = List.of();
 	private Button isinlan;
 	private Button incelet;
+	private Button hileydi;
+	private Button yanlis;
+	private int gorulenSurum;
 
 	public VakaEkrani(Screen onceki) {
 		super(Component.literal("Hile vakaları"));
@@ -41,7 +44,13 @@ public final class VakaEkrani extends Screen {
 	@Override
 	protected void init() {
 		vakalar = VakaMerkezi.liste();
+		gorulenSurum = VakaMerkezi.surum;
 		int sag = width - 10;
+		int dx = 20 + LISTE_W;
+		hileydi = addRenderableWidget(Button.builder(Component.literal("✔ Hileydi"), b -> geriBildir("hile"))
+			.bounds(dx, height - 28, 80, 20).build());
+		yanlis = addRenderableWidget(Button.builder(Component.literal("✖ Yanlış alarm"), b -> geriBildir("temiz"))
+			.bounds(dx + 84, height - 28, 95, 20).build());
 		isinlan = addRenderableWidget(Button.builder(Component.literal("Oyuncuya ışınlan"), b -> komut("tp " + str(sec(), "ad")))
 			.bounds(sag - 230, height - 28, 110, 20).build());
 		incelet = addRenderableWidget(Button.builder(Component.literal("LLM'e yeniden incelet"), b -> komut("hilevaka incele " + str(sec(), "id")))
@@ -51,6 +60,13 @@ public final class VakaEkrani extends Screen {
 
 	private JsonObject sec() {
 		return secili >= 0 && secili < vakalar.size() ? vakalar.get(secili) : null;
+	}
+
+	/** Yetkili kararını sunucuya bildirir; ekran açık kalır, sunucu güncel vakayı geri gönderir. */
+	private void geriBildir(String karar) {
+		if (minecraft != null && minecraft.player != null && sec() != null) {
+			minecraft.player.connection.sendCommand("hilevaka geri " + str(sec(), "id") + " " + karar);
+		}
 	}
 
 	private void komut(String k) {
@@ -80,6 +96,8 @@ public final class VakaEkrani extends Screen {
 		if (isinlan != null) {
 			isinlan.active = var;
 			incelet.active = var;
+			hileydi.active = var;
+			yanlis.active = var;
 		}
 		List<Satir> l = new ArrayList<>();
 		if (!var) {
@@ -112,6 +130,13 @@ public final class VakaEkrani extends Screen {
 		}
 		if (!str(v, "llmHata").isEmpty()) {
 			ekle(l, f, w, "LLM değerlendiremedi: " + str(v, "llmHata") + " — lütfen kendin incele.", 0xFFFFFF55);
+		}
+		String op = str(v, "opKarar");
+		if (!op.isEmpty()) {
+			ekle(l, f, w, "Yetkili kararı: " + ("HILE".equals(op) ? "HİLEYDİ" : "YANLIŞ ALARM") + " (" + str(v, "opAd") + ", " + saat(v, "opZaman") + ")"
+				+ (str(v, "opNot").isEmpty() ? "" : " — " + str(v, "opNot")), "HILE".equals(op) ? 0xFFFF5555 : 0xFF55FF55);
+		} else {
+			ekle(l, f, w, "Kararını alttaki düğmelerle bildir: LLM benzer vakalarda örnek alır.", 0xFF55FFFF);
 		}
 		if (v.has("llmMs") && v.get("llmMs").getAsLong() > 0) {
 			ekle(l, f, w, "LLM karar süresi: " + (v.get("llmMs").getAsLong() / 1000) + " sn", 0xFF707070);
@@ -146,6 +171,19 @@ public final class VakaEkrani extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		if (VakaMerkezi.surum != gorulenSurum) {
+			gorulenSurum = VakaMerkezi.surum;
+			String id = str(sec(), "id");
+			vakalar = VakaMerkezi.liste();
+			secili = 0;
+			for (int i = 0; i < vakalar.size(); i++) {
+				if (str(vakalar.get(i), "id").equals(id)) {
+					secili = i;
+					break;
+				}
+			}
+			detayHazirla();
+		}
 		super.render(g, mouseX, mouseY, partialTick);
 		Font f = font;
 		g.drawString(f, "⚠ Hile vakaları", 10, 10, 0xFFFFFFFF, true);
