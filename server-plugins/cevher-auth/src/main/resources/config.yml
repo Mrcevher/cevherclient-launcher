@@ -5,6 +5,45 @@
 # oyuncu sunucuya bağlanırken bilet kontrol edilir. Bileti olmayan (launcher kullanmayan)
 # kimse sunucuya giremez, böylece lisanssız sunucuda başkasının adıyla girilemez.
 
+# Bu sunucunun rolü:
+#   standalone : Tek sunucu. Launcher'sız (biletsiz) gelen sunucuya giremez.
+#   lobby      : Velocity'nin ilk sunucusu (çakma lobi). Cevherclient ile gelen şifresiz girer;
+#                gelmeyen lobide /login <şifre> veya /register <şifre> <şifre> yapar (launcher
+#                hesabıyla aynı şifre). Hesaplar ve launcher API'si bu sunucuda durur.
+#   gate       : Arka sunucu (survival). Yalnızca lobide giriş yapmış oyuncuları alır; hesap
+#                dosyası tutmaz, launcher API'si açmaz. network.* lobideki ile aynı olmalı.
+role: standalone
+
+# Lobi ile kapı (survival) arasındaki bağ. İki sunucu aynı bilgisayarda olmalı.
+network:
+  # Ortak sır. Lobi ilk açılışta boşsa üretir; aynı değeri survival config'ine yazın.
+  secret: ""
+  # (gate) Lobideki CevherAuth API'sinin yerel adresi.
+  lobby-api: "http://127.0.0.1:25580"
+
+# (lobby) Launcher'sız gelen oyuncular için oyun içi giriş.
+in-game-login:
+  # Bu sürede giriş yapmayan atılır (saniye).
+  timeout-seconds: 90
+  # Bu kadar yanlış şifreden sonra atılır.
+  max-attempts: 5
+  # Launcher'sız oyuncular oyunda /register ile hesap açabilsin mi?
+  allow-register: true
+  # Girişten sonra oyuncuyu otomatik gönder (Velocity sunucu adı, ör. survival). Boş = gönderme.
+  send-to-server: ""
+  send-delay-ticks: 40
+  # Daha önce oynamış adlar oyunda /register ile alınamasın mı? Lisanssız sunucuda eski oyuncuların
+  # çoğunun hesabı yoktur; true yapılırsa bu oyuncuların hesabını yönetici açmak zorunda kalır.
+  # (Op adları her zaman korunur: onların hesabı konsoldan /cevherauth kayit ile açılır.)
+  protect-played-names: false
+
+# Korunan "oynamış" adları için ek kaynaklar (usercache.json biçimi; sunucu klasörüne göre ya da tam yol).
+# Lobide yalnızca bunlar okunur; ör. "C:/Users/Administrator/Desktop/Klasor_01/usercache.json"
+played-name-sources: []
+# Op adları için ek kaynaklar (ops.json biçimi). Lobide ana sunucunun ops.json'unu verin: oradaki
+# yönetici adlarıyla kimse lobide kayıt olup ana sunucuya op olarak giremesin.
+op-name-sources: []
+
 http:
   # Launcher'ın bağlanacağı adres ve port. Başka bilgisayarlardan girilecekse bu port da
   # (Minecraft portu gibi) modemde yönlendirilmeli ve launcher config'indeki authServerUrl
@@ -100,8 +139,129 @@ store:
   # Hesap başına 10 dakikada en fazla satın alma denemesi.
   max-purchases-per-10min: 15
 
+# ── Saldırı korumaları (1.4.0; 2026-11-19 saldırısından) ─────────────────────
+# Her rolde (lobi, kapı, standalone) çalışır.
+guvenlik:
+  # Aynı IP'den aynı anda bu sunucuda en fazla kaç hesap olabilir (0 = sınırsız).
+  # Saldırgan aynı IP'den 6 hesapla geldi. Mobil internette (CGNAT) farklı kişiler aynı IP'yi
+  # paylaşabilir; şikâyet gelirse artırın ya da IP'yi ip-muaf listesine ekleyin.
+  ip-basina-online: 3
+  # Bu IP'lere online sınırı ve IP engeli uygulanmaz.
+  ip-muaf: []
+  ip-engeli:
+    enabled: true
+    # Engel süresi (dakika).
+    sure-dakika: 10
+    # 10 dakikada bu kadar güvenlik nedenli atılma olursa IP engellenir.
+    ihlal-esigi: 2
+    # Güvenlik nedenli sayılan Paper atılma nedenleri.
+    kick-sebepleri:
+      - INVALID_PAYLOAD
+      - ILLEGAL_ACTION
+      - ILLEGAL_CHARACTERS
+      - TOO_MANY_PENDING_CHATS
+      - INVALID_ENTITY_ATTACKED
+      - SELF_INTERACTION
+      - SPAM
+    # Atılma mesajı bunlardan birini içeriyorsa da sayılır (küçük/büyük harf fark etmez).
+    # CevherPaketKalkan'ın at-mesaji burada olmalı.
+    kick-mesajlari:
+      - "geçersiz paket gönderdin"
+  # Kendini client brand, kayıtlı kanal ya da custom click kimliğiyle belli eden hile istemcileri.
+  hile-istemcisi:
+    enabled: true
+    # Tespit edilen IP'yi hemen ip-engeli.sure-dakika boyunca engelle.
+    ip-engelle: true
+    # Client brand bunlardan birini içeriyorsa.
+    brand: [autismclient, xynisclient, meteor, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze]
+    # Kayıtlı kanalın namespace'i (":" öncesi) bunlardan biriyse.
+    kanallar: [autismclient, xynisclient, meteor-client, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze]
+    # Custom click (dialog) kimliğinin namespace'i bunlardan biriyse.
+    custom-click: [autismclient, xynisclient]
+
+# (lobby / standalone) Launcher'la gelen oyunun yüklü modlarının HASH denetimi.
+# Cevherclient (cevher-session 1.1+) her modun jar SHA-1'ini bilet kanıtına ekler. Karar dosya adına
+# ya da mod kimliğine göre verilmez: hile modunun adını/kimliğini değiştiren araçlar jar'ın hash'ini de
+# değiştirir. Bir jar yalnızca hash'i izinli-hashler / jar-klasorleri / modpack-dosyalari içinde ya da
+# Modrinth'te yayımlanmış değiştirilmemiş bir sürümse geçer. Launcher aynı politikayı /api/mod-policy'den
+# alıp oyunu açmadan önce izinsiz jar'ları karantinaya taşır.
+# Sınır: liste istemciden gelir; oturum modunu bilerek değiştiren biri yalan söyleyebilir.
+mod-dogrulama:
+  enabled: true
+  # Mod listesi göndermeyen (eski launcher) oyuncu reddedilsin mi? Herkes 5.0.5+'a geçince true yapın.
+  liste-zorunlu: false
+  hash-kontrol: true
+  # Hash'i hiçbir listede olmayan jar: REDDET | KAYDET (yalnızca konsola yazar, girişe izin verir)
+  bilinmeyen: REDDET
+  # Bilinmeyen hash'leri Modrinth'te ara (Mod Ara / Performans Paketi modları buradan gelir).
+  modrinth-kontrol: true
+  # Modrinth'e ulaşılamazsa bilinmeyen hash'ler: GECIR | REDDET
+  modrinth-erisilemezse: REDDET
+  # Oyuna -javaagent ile kod enjekte edilmişse reddet.
+  agent-reddet: true
+  # Bu klasörlerdeki jar'ların hash'i izinlidir. Launcher'ın kendi modları (cevher-session/client/ui):
+  # her launcher sürümü yayınlanınca resources/mods içindeki jar'ları buraya kopyalayıp /cevherauth reload.
+  jar-klasorleri:
+    - "plugins/CevherAuth/izinli-jarlar"
+  # .mrpack dosyaları (modrinth.index.json hash'leri + overrides jar'ları izinli sayılır).
+  modpack-dosyalari: []
+  izinli-hashler: []
+  yasakli-hashler: []
+  # Modrinth proje kimlikleri (ör. "XeEZ3fK2"): hash'i Modrinth'te olsa da reddedilir.
+  yasakli-projeler: []
+  # Her oyuncunun mod listesi (değiştiğinde) konsola yazılsın.
+  kaydet: true
+  # Mod kimliği yasağı (kimlik değiştirilebildiği için yalnızca ek önlem; asıl koruma hash'tir).
+  yasakli: [meteor-client, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze, autismclient, xynisclient, inertia, coffee]
+  # KRİTİK hile kelimeleri: hash'i hiçbir listede olmayan bir modun kimliğinde bu kelimelerden biri
+  # geçerse giriş reddedilir ve IP guvenlik.ip-engeli.sure-dakika boyunca engellenir. Bitişik yazım da
+  # sayılır ("killaura" → aura, "thunderhack" → hack); lua, ares, exec, jex, sigma yalnızca tam kelimeyken
+  # ("squares" içindeki ares sayılmaz). Modrinth'te doğrulanan modlara uygulanmaz (Better Combat gibi).
+  hile-kelimeleri: [hack, hile, cheat, injector, trigger, lua, wurst, aristois, meteor, ares, combat, mathax, vape, jex, liquidbounce, trainer, bleachhack, hacked, aura, impactclient, doomsday, sigma, exec]
+
 messages:
   lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
   no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."
   wrong-name: "&cOyuncu adı launcher hesabınla uyuşmuyor.\n&7Launcher'dan çıkış yapıp tekrar giriş yap."
   outdated-launcher: "&cOyun, launcher bileti için kimlik kanıtı göndermedi.\n&7Cevherclient'i güncelleyip &fOyna&7'ya tekrar bas."
+  # ── lobi: oyun içi giriş ──
+  name-case: "&cBu ad &f{ad} &cyazımıyla kayıtlı.\n&7Oyuncu adını büyük/küçük harfiyle aynı yazıp tekrar gir."
+  launcher-welcome: "&6 Giriş &8▸ &bCevherclient &aile giriş yapıldı, şifre gerekmedi."
+  login-prompt: "&6 Giriş &8▸ &eGiriş yapmak için: &f/login <şifre>"
+  register-prompt: "&6 Kayıt &8▸ &eKayıt olmak için: &f/register <şifre> <şifre tekrar>\n&7 (Cevherclient ile girersen şifre sorulmaz.)"
+  login-title: "&6&lGİRİŞ YAP"
+  login-subtitle: "&f/login <şifre>"
+  register-title: "&6&lKAYIT OL"
+  register-subtitle: "&f/register <şifre> <şifre tekrar>"
+  login-actionbar: "&eGiriş yap: &f/login <şifre> &8| &7{sure} sn"
+  register-actionbar: "&eKayıt ol: &f/register <şifre> <şifre> &8| &7{sure} sn"
+  login-usage: "&6 Giriş &8▸ &cKullanım: &f/login <şifre>"
+  register-usage: "&6 Kayıt &8▸ &cKullanım: &f/register <şifre> <şifre tekrar>"
+  login-success: "&6 Giriş &8▸ &aGiriş başarılı! İyi oyunlar."
+  register-success: "&6 Kayıt &8▸ &aHesabın açıldı! Bu şifreyle Cevherclient'e de giriş yapabilirsin."
+  wrong-password: "&6 Giriş &8▸ &cŞifre yanlış. &7Kalan deneme: &f{kalan}"
+  not-registered: "&6 Giriş &8▸ &cBu ad kayıtlı değil. &7Önce &f/register <şifre> <şifre tekrar>"
+  already-registered: "&6 Kayıt &8▸ &cBu ad zaten kayıtlı. &7Giriş için &f/login <şifre>"
+  already-logged-in: "&6 Giriş &8▸ &aZaten giriş yaptın."
+  password-mismatch: "&6 Kayıt &8▸ &cŞifreler aynı değil."
+  weak-password: "&6 Kayıt &8▸ &cŞifre en az &f{min} &ckarakter olmalı."
+  invalid-username: "&6 Kayıt &8▸ &cBu adla kayıt olunamaz (3-16 harf, rakam veya _)."
+  protected-name: "&6 Kayıt &8▸ &cBu ad korunuyor. &7Hesap için yöneticiye yaz."
+  protected-op-name: "&6 Kayıt &8▸ &cBu bir yönetici adı. &7Hesabı sunucu konsolundan açılır: &f/cevherauth kayit <ad> <şifre>"
+  too-many-accounts: "&6 Kayıt &8▸ &cBu bağlantıdan çok fazla hesap açılmış."
+  site-name-taken: "&6 Kayıt &8▸ &cBu ad sitede kayıtlı. &7Site şifrenle &f/login <şifre> &7yap."
+  register-disabled: "&6 Kayıt &8▸ &cOyunda kayıt kapalı. &7Cevherclient launcher'ından kayıt ol."
+  internal-error: "&cBir hata oluştu, tekrar dene."
+  too-many-attempts: "&cÇok fazla hatalı deneme.\n&7Biraz bekleyip tekrar gel."
+  login-timeout: "&cGiriş süresi doldu.\n&7Tekrar bağlanıp &f/login &7veya &f/register &7yap."
+  # ── kapı (survival) ──
+  gate-denied: "&cÖnce lobide giriş yapmalısın: &f/login <şifre> &cveya &f/register <şifre> <şifre>"
+  gate-unavailable: "&cGiriş sistemine ulaşılamadı.\n&7Biraz sonra tekrar dene."
+  # ── güvenlik (1.4.0) ──
+  ip-engelli: "&cBu bağlantı güvenlik nedeniyle geçici olarak engellendi.
+&7Yaklaşık &f{dk} dk &7sonra tekrar dene."
+  too-many-online: "&cBu bağlantıdan zaten &f{max} &chesap oyunda.
+&7Önce diğer hesaplardan çık."
+  cheat-client: "&cHile istemcisi tespit edildi."
+  mod-denied: "&cİzin verilmeyen mod yüklü: &f{mod}
+&7Modu kaldırıp &fOyna&7'ya tekrar bas."

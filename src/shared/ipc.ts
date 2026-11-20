@@ -14,6 +14,7 @@ import type {
   AuthState,
   DeviceTier,
   GameExitEvent,
+  ModQuarantineEvent,
   GameVersion,
   InstallTask,
   JavaInstallation,
@@ -123,6 +124,8 @@ export interface IpcEventContract {
   'install:progress': InstallTask
   'launch:progress': LaunchProgress
   'launch:exit': GameExitEvent
+  /** Oyun açılmadan önce izinsiz modlar karantinaya alındı. */
+  'launch:quarantine': ModQuarantineEvent
   'update:status': UpdateStatus
   'mods:progress': PerformancePackProgress
   /** Yalnızca açılış penceresine gönderilir. */
@@ -181,6 +184,7 @@ export const EVENT_CHANNELS = [
   'install:progress',
   'launch:progress',
   'launch:exit',
+  'launch:quarantine',
   'update:status',
   'mods:progress',
   'splash:status'

@@ -34,8 +34,13 @@ final class JoinListener implements Listener {
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreLogin(AsyncPlayerPreLoginEvent event) {
-		if (!plugin.getConfig().getBoolean("require-launcher", true)) {
+		// Lobi rolünde launcher'sız oyuncu reddedilmez, oyunda şifre girer (bkz. LobbyLogin).
+		LobbyLogin lobby = plugin.lobbyLogin();
+		if (lobby == null && !plugin.getConfig().getBoolean("require-launcher", true)) {
 			return;
+		}
+		if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+			return; // Güvenlik katmanı (IP engeli / online sınırı) zaten reddetti.
 		}
 		String name = event.getName();
 		String ip = CevherAuthPlugin.ipKey(event.getAddress());
@@ -43,32 +48,74 @@ final class JoinListener implements Listener {
 			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("no-ticket"));
 			return;
 		}
+		if (lobby != null) {
+			// Offline modda "Arda" ile "arda" farklı oyunculardır: hesap kayıtlı yazımla kullanılmalı.
+			AccountStore.Account account = plugin.accounts().get(name);
+			if (account != null && !account.username.equals(name)) {
+				event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("name-case")
+					.replaceText(b -> b.matchLiteral("{ad}").replacement(account.username)));
+				return;
+			}
+		}
 		boolean checkIp = plugin.getConfig().getBoolean("check-ip", true);
 
 		SessionStore.TicketLookup found = plugin.sessions().findTicket(name, ip, checkIp);
 		switch (found.check()) {
 			case OK -> {
 				if (plugin.getConfig().getBoolean("require-proof", true)) {
-					Proof proof = requestProof(event, found.ticket(), name);
+					ProofResult pr = requestProof(event, found.ticket(), name);
+					Proof proof = pr.proof();
 					if (proof != Proof.VALID) {
+						if (lobby != null) {
+							// Lobide reddedilmez: kanıtı olmayan/yanlış olan oyuncuya oyunda şifre sorulur.
+							// Yanlış kanıt yine sayılır (tekrarlayan denemeler max-ticket-misses ile durur).
+							if (proof == Proof.INVALID) {
+								misses.record(ip);
+								plugin.getLogger().warning(name + " biletini yanlış kanıtla kullanmaya çalıştı (" + ip + "); oyunda şifre sorulacak");
+							} else {
+								plugin.getLogger().info(name + " biletli ama kanıtsız bağlandı (" + ip + "); oyunda şifre sorulacak");
+							}
+							return;
+						}
 						misses.record(ip);
 						plugin.getLogger().warning(name + " bileti kanıtsız kullanılmaya çalışıldı (" + ip + ", " + proof + "), reddedildi");
 						event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
 							plugin.message(proof == Proof.NONE ? "outdated-launcher" : "no-ticket"));
 						return;
 					}
+					// Bilet sahibinin oyunu: yüklü mod listesi izinli mi? (Lobide de reddedilir;
+					// aksi hâlde yasaklı modla gelen oyuncuya şifre sorulup içeri alınırdı.)
+					String red = plugin.modDogrulama().kontrol(name, ip, pr.mods());
+					if (red != null) {
+						event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("mod-denied")
+							.replaceText(b -> b.matchLiteral("{mod}").replacement(red)));
+						return;
+					}
 				}
 				if (!plugin.sessions().confirm(found, ip, plugin.reconnectGraceMs())) {
 					// Aynı bilet başka bağlantıyla kullanıldı veya bu arada iptal edildi.
-					event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("no-ticket"));
+					// Lobide oyuncu reddedilmez; oyunda şifre sorulur.
+					if (lobby == null) {
+						event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("no-ticket"));
+					}
+					return;
 				}
 				// Launcher'da doğrulanmış oyuncu: oyunda şifre sorulmaz.
+				if (lobby != null) {
+					lobby.markLauncherVerified(name, ip);
+				}
 			}
 			case WRONG_NAME -> {
+				if (lobby != null) {
+					return; // Oyunda şifre sorulur.
+				}
 				misses.record(ip);
 				event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("wrong-name"));
 			}
 			case MISSING, WRONG_IP -> {
+				if (lobby != null) {
+					return; // Launcher'sız oyuncu: oyunda /login veya /register.
+				}
 				misses.record(ip);
 				if (found.check() == SessionStore.TicketCheck.WRONG_IP) {
 					// Sık neden: launcher bileti Cloudflare/proxy üzerinden IPv6 ile, oyun IPv4 ile bağlanır.
@@ -95,10 +142,14 @@ final class JoinListener implements Listener {
 	 * Login aşamasında istemciden {@code cevherauth:proof/<nonce>} cookie'sini ister. Olay
 	 * zaten asenkron iş parçacığında çalışır; yanıt en fazla {@link #PROOF_TIMEOUT_MS} beklenir.
 	 */
-	private Proof requestProof(AsyncPlayerPreLoginEvent event, SessionStore.Ticket ticket, String name) {
+	private record ProofResult(Proof proof, String mods) {
+		static final ProofResult NONE = new ProofResult(Proof.NONE, null);
+	}
+
+	private ProofResult requestProof(AsyncPlayerPreLoginEvent event, SessionStore.Ticket ticket, String name) {
 		PlayerLoginConnection connection = event.getConnection();
 		if (connection == null || ticket == null) {
-			return Proof.NONE;
+			return ProofResult.NONE;
 		}
 		String nonce = TicketProof.newNonce();
 		byte[] response;
@@ -107,13 +158,14 @@ final class JoinListener implements Listener {
 				.get(PROOF_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			return Proof.NONE;
+			return ProofResult.NONE;
 		} catch (Exception e) {
-			return Proof.NONE;
+			return ProofResult.NONE;
 		}
 		if (response == null || response.length == 0) {
-			return Proof.NONE;
+			return ProofResult.NONE;
 		}
-		return TicketProof.verify(ticket.secret(), nonce, name, response) ? Proof.VALID : Proof.INVALID;
+		TicketProof.Result r = TicketProof.check(ticket.secret(), nonce, name, response);
+		return new ProofResult(r.valid() ? Proof.VALID : Proof.INVALID, r.mods());
 	}
 }

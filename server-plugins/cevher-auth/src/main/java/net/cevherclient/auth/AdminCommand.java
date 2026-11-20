@@ -17,6 +17,8 @@ import org.bukkit.command.TabExecutor;
  *   /cevherauth sifre <ad> <yeni>     — şifreyi değiştirir, açık oturumları kapatır
  *   /cevherauth kayit <ad> <sifre>    — hesap açar (korunan/op adları için; yalnızca konsol veya op)
  *   /cevherauth reload                — config.yml'i yeniden okur
+ *   /cevherauth engeller              — süren geçici IP engelleri
+ *   /cevherauth engelkaldir <ip>      — IP engelini kaldırır
  */
 final class AdminCommand implements TabExecutor {
 	private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault());
@@ -88,6 +90,9 @@ final class AdminCommand implements TabExecutor {
 					plugin.reloadSettings();
 					sender.sendMessage("§aCevherAuth ayarları yeniden yüklendi (HTTP portu değiştiyse sunucuyu yeniden başlatın).");
 				}
+				case "engeller", "engelkaldir" -> {
+					return engelKomutu(plugin, sender, args);
+				}
 				default -> {
 					return false;
 				}
@@ -98,10 +103,33 @@ final class AdminCommand implements TabExecutor {
 		return true;
 	}
 
+	/** Kapı rolünde de kullanılan IP engeli komutları; komut bu değilse false. */
+	static boolean engelKomutu(CevherAuthPlugin plugin, CommandSender sender, String[] args) {
+		if (args.length == 0) {
+			return false;
+		}
+		if (args[0].equalsIgnoreCase("engeller")) {
+			long simdi = System.currentTimeMillis();
+			var list = plugin.guvenlik().engeller().entrySet().stream().filter(e -> e.getValue().bitis() > simdi).toList();
+			sender.sendMessage("§bCevherAuth §7— " + list.size() + " geçici IP engeli");
+			for (var e : list) {
+				long dk = Math.max(1, (e.getValue().bitis() - simdi + 59_999) / 60_000);
+				sender.sendMessage(" §f" + e.getKey() + " §8| §e" + dk + " dk §8| §7" + e.getValue().neden());
+			}
+			return true;
+		}
+		if (args[0].equalsIgnoreCase("engelkaldir") && args.length >= 2) {
+			boolean ok = plugin.guvenlik().kaldir(args[1]);
+			sender.sendMessage(ok ? "§a" + args[1] + " engeli kaldırıldı." : "§cBu IP için süren engel yok.");
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
-			return Stream.of("liste", "sil", "sifre", "kayit", "reload").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
 		}
 		if (args.length == 2 && (args[0].equalsIgnoreCase("sil") || args[0].equalsIgnoreCase("sifre"))) {
 			return plugin.accounts().all().stream().map(a -> a.username)

@@ -226,6 +226,24 @@ export interface GameExitEvent {
   exitCode: number
 }
 
+/** Mod bütünlüğü denetiminde karantinaya alınan jar (bkz. main/services/launch/mod-integrity.ts). */
+export interface QuarantinedMod {
+  /** mods/ klasörüne göre yol. */
+  name: string
+  /** fabric.mod.json kimliği (okunabildiyse). */
+  modId: string | null
+  sha1: string
+  sha256: string
+  risk: 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  reason: string
+}
+
+export interface ModQuarantineEvent {
+  files: QuarantinedMod[]
+  /** Karantina klasörü (instance/.cevher/karantina/...). */
+  folder: string
+}
+
 // ── Sistem ────────────────────────────────────────────────────────────────────
 
 export interface SystemInfo {

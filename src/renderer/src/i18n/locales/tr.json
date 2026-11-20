@@ -56,7 +56,9 @@
     "startedTitle": "Bağlantı kuruldu",
     "startedMessage": "{{target}} başlatıldı. İyi oyunlar!",
     "exitedTitle": "Oyun kapandı",
-    "exitedMessage": "Launcher yeniden hazır."
+    "exitedMessage": "Launcher yeniden hazır.",
+    "quarantineTitle": "İzinsiz mod karantinaya alındı",
+    "quarantineMessage": "{{count}} dosya oyuna yüklenmedi: {{files}}. Nedeni ve dosyalar: {{folder}}"
   },
   "settings": {
     "title": "Ayarlar",

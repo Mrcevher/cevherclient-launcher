@@ -2,7 +2,7 @@ name: CevherAuth
 version: '${version}'
 main: net.cevherclient.auth.CevherAuthPlugin
 api-version: '1.21'
-description: Cevherclient launcher hesapları — oyuncu şifresini launcher'da girer, oyunda şifre sorulmaz.
+description: Cevherclient launcher hesapları — launcher ile gelen şifresiz girer; lobi rolünde launcher kullanmayan oyunda /login veya /register yapar.
 authors: [Cevherclient]
 commands:
   cevherauth:
@@ -13,3 +13,16 @@ permissions:
   cevherauth.admin:
     description: CevherAuth yönetim komutları
     default: op
+  # Lobi rolünde oyuncunun giriş durumu (TAB gibi eklentilerin koşulları için; CevherAuth verir).
+  cevherauth.bekliyor:
+    description: Henüz giriş yapmadı
+    default: false
+  cevherauth.bekliyor.giris:
+    description: Hesabı var, /login bekleniyor
+    default: false
+  cevherauth.bekliyor.kayit:
+    description: Hesabı yok, /register bekleniyor
+    default: false
+  cevherauth.kayitli:
+    description: Hesabı var
+    default: false

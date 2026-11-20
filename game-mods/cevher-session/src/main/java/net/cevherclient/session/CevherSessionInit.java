@@ -13,6 +13,10 @@ public final class CevherSessionInit implements ClientModInitializer {
 		if (CevherSession.EXIT_ON_LEAVE) {
 			JoinProof.load(FabricLoader.getInstance().getGameDir());
 			ServerPack.load(FabricLoader.getInstance().getGameDir());
+			// Mod hash'leri bağlanırken (ağ iş parçacığında) hesaplanmasın: oyun açılırken arka planda hazırlanır.
+			Thread t = new Thread(JoinProof::modList, "cevher-session-modlist");
+			t.setDaemon(true);
+			t.start();
 		}
 	}
 }

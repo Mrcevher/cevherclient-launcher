@@ -1,13 +1,18 @@
 package net.cevherclient.auth;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -20,22 +25,48 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * Oyuncu hesabını launcher'da açar veya launcher'da giriş yapar; Oyna'ya bastığında launcher
  * bu eklentiden tek kullanımlık bir giriş bileti alır ve oyuncu sunucuya hiçbir şey yazmadan
- * girer. Bileti olmayan bağlantılar reddedilir (lisanssız sunucuda kimlik sahteciliğine karşı).
+ * girer.
+ *
+ * Roller (config: role):
+ *   standalone — bileti olmayan bağlantılar reddedilir (eski davranış).
+ *   lobby      — Velocity'nin ilk sunucusu: launcher'la gelen şifresiz girer, gelmeyen oyunda
+ *                /login veya /register ile şifre girer. Launcher API burada çalışır.
+ *   gate       — arka sunucu (survival): yalnızca lobide giriş yapmış oyuncuları alır.
  */
 public final class CevherAuthPlugin extends JavaPlugin {
 	private AccountStore accounts;
 	private SessionStore sessions;
 	private AuthHttpServer http;
 	private LeaderOsSync site;
+	private LobbyLogin lobbyLogin;
+	private Guvenlik guvenlik;
+	private ModDogrulama modDogrulama;
 	/** Op adları (küçük harf); HTTP iş parçacığından okunduğu için ana iş parçacığında yenilenir. */
 	private volatile Set<String> operatorNames = Set.of();
 	/** Sunucuda daha önce oynamış oyuncu adları (küçük harf); op adları gibi korunur. */
 	private volatile Set<String> playedNames = Set.of();
 	private volatile Set<String> trustedProxies = Set.of("loopback");
+	private String role = "standalone";
 
 	@Override
 	public void onEnable() {
 		saveDefaultConfig();
+		role = getConfig().getString("role", "standalone").trim().toLowerCase(Locale.ROOT);
+		if (!role.equals("lobby") && !role.equals("gate")) {
+			role = "standalone";
+		}
+
+		// Güvenlik katmanı her rolde ilk kaydedilir: aynı öncelikte (LOWEST) önce çalışır.
+		guvenlik = new Guvenlik(this);
+		getServer().getPluginManager().registerEvents(guvenlik, this);
+		getServer().getScheduler().runTaskTimerAsynchronously(this, guvenlik::cleanup, 20L * 60, 20L * 60);
+		modDogrulama = new ModDogrulama(this);
+
+		if (role.equals("gate")) {
+			enableGate();
+			return;
+		}
+
 		accounts = new AccountStore(getDataFolder().toPath().resolve("accounts.json"));
 		sessions = new SessionStore(getDataFolder().toPath().resolve("sessions.json"), getDataFolder().toPath().resolve("reconnect.json"), accounts);
 		try {
@@ -44,7 +75,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		} catch (IOException | RuntimeException e) {
 			// Eklentiyi kapatmak giriş kapısını da kaldırırdı: bunun yerine tüm girişler reddedilir.
 			getLogger().log(Level.SEVERE, "Hesap dosyaları okunamadı; giriş kapısı kapalı kalacak (tüm girişler reddedilir). accounts.json / sessions.json dosyalarını onarıp sunucuyu yeniden başlatın", e);
-			if (getConfig().getBoolean("require-launcher", true)) {
+			if (role.equals("lobby") || getConfig().getBoolean("require-launcher", true)) {
 				getServer().getPluginManager().registerEvents(new LockdownListener(this), this);
 			}
 			return;
@@ -56,7 +87,19 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		// Op listesini ve oynamış oyuncu adlarını periyodik güncelle; süresi dolmuş oturumları temizle.
 		getServer().getScheduler().runTaskTimer(this, this::refreshOperators, 20L * 60, 20L * 60);
 		getServer().getScheduler().runTaskTimer(this, this::refreshPlayedNames, 20L * 60 * 5, 20L * 60 * 5);
+
+		if (role.equals("lobby")) {
+			ensureNetworkSecret();
+			PasswordLogFilter.install();
+			lobbyLogin = new LobbyLogin(this);
+			getServer().getPluginManager().registerEvents(lobbyLogin, this);
+			getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+			lobbyLogin.start();
+			getLogger().info("Lobi rolü: Cevherclient ile gelen şifresiz girer, gelmeyen oyunda /login veya /register yapar");
+		}
+
 		JoinListener joinListener = new JoinListener(this);
+		LobbyLogin lobby = lobbyLogin;
 		getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
 			try {
 				sessions.cleanup();
@@ -64,6 +107,9 @@ public final class CevherAuthPlugin extends JavaPlugin {
 					http.cleanup();
 				}
 				joinListener.cleanup();
+				if (lobby != null) {
+					lobby.cleanup();
+				}
 			} catch (IOException e) {
 				getLogger().log(Level.WARNING, "Oturum temizliği yazılamadı", e);
 			}
@@ -94,8 +140,48 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		}
 	}
 
+	/** Kapı rolü: hesap dosyası ve launcher API'si yok; her giriş lobiye sorulur. */
+	private void enableGate() {
+		String secret = getConfig().getString("network.secret", "");
+		if (secret == null || secret.length() < 16) {
+			getLogger().severe("Kapı rolü: network.secret boş veya kısa — lobi sunucusundaki network.secret değerini buraya kopyalayın. O zamana dek kimse giremez.");
+		}
+		getServer().getPluginManager().registerEvents(new GateListener(this), this);
+		PluginCommand command = getCommand("cevherauth");
+		if (command != null) {
+			command.setExecutor((sender, cmd, label, args) -> {
+				if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+					reloadConfig();
+					guvenlik.yenile();
+					modDogrulama.yenile();
+					sender.sendMessage("§aCevherAuth (kapı) ayarları yeniden yüklendi.");
+				} else if (AdminCommand.engelKomutu(this, sender, args)) {
+					return true;
+				} else {
+					sender.sendMessage("§eBu sunucu kapı rolünde; hesap komutlarını lobi sunucusunda kullanın.");
+				}
+				return true;
+			});
+		}
+		getLogger().info("Kapı rolü: yalnızca lobide giriş yapmış oyuncular alınır (" + getConfig().getString("network.lobby-api", "http://127.0.0.1:25580") + ")");
+	}
+
+	/** Lobi ilk açılışta ortak sırrı üretir; kapı sunucusunun config'ine kopyalanır. */
+	private void ensureNetworkSecret() {
+		String secret = getConfig().getString("network.secret", "");
+		if (secret != null && secret.length() >= 16) {
+			return;
+		}
+		getConfig().set("network.secret", Passwords.randomToken());
+		saveConfig();
+		getLogger().warning("network.secret üretildi (plugins/CevherAuth/config.yml). Aynı değeri survival'daki CevherAuth config'ine yazın.");
+	}
+
 	@Override
 	public void onDisable() {
+		if (lobbyLogin != null) {
+			lobbyLogin.stop();
+		}
 		if (http != null) {
 			http.stop();
 		}
@@ -121,6 +207,27 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	LeaderOsSync site() {
 		return site;
+	}
+
+	AuthHttpServer http() {
+		return http;
+	}
+
+	Guvenlik guvenlik() {
+		return guvenlik;
+	}
+
+	ModDogrulama modDogrulama() {
+		return modDogrulama;
+	}
+
+	boolean isGate() {
+		return role.equals("gate");
+	}
+
+	/** Lobi rolünde oyun içi giriş yöneticisi; diğer rollerde null. */
+	LobbyLogin lobbyLogin() {
+		return lobbyLogin;
 	}
 
 	long sessionLifetimeMs() {
@@ -154,6 +261,23 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		return getConfig().getBoolean("protect-played-names", true) && playedNames.contains(key);
 	}
 
+	/** Op adı mı (bu sunucunun ya da op-name-sources dosyalarındaki op'lar)? */
+	boolean isOperatorName(String username) {
+		return protectOpNames() && operatorNames.contains(username.toLowerCase(Locale.ROOT));
+	}
+
+	/**
+	 * Oyun içi /register için korunan ad. Op adları her zaman korunur. "Oynamış" adlar yalnızca
+	 * in-game-login.protect-played-names açıksa korunur: lisanssız sunucuda eski oyuncuların
+	 * çoğunun hesabı yoktur ve kendi adlarıyla kayıt olabilmeleri gerekir.
+	 */
+	boolean isReservedForInGame(String username) {
+		if (isOperatorName(username)) {
+			return true;
+		}
+		return getConfig().getBoolean("in-game-login.protect-played-names", false) && isReservedName(username);
+	}
+
 	boolean isTrustedProxy(String ipKey) {
 		return trustedProxies.contains(ipKey);
 	}
@@ -170,23 +294,63 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	void reloadSettings() {
 		reloadConfig();
+		guvenlik.yenile();
+		modDogrulama.yenile();
 		refreshTrustedProxies();
+		refreshPlayedNames();
+		refreshOperators();
 	}
 
+	/**
+	 * Korunan "oynamış" adlar. Lobide bu sunucunun kendi oyuncuları sayılmaz (lobiye herkes uğrar,
+	 * kayıt olamadan korunmaya başlarlardı); yalnızca played-name-sources dosyaları (ör. survival'ın
+	 * usercache.json'u) okunur. Diğer rollerde sunucunun kendi oyuncuları da eklenir.
+	 */
 	private void refreshPlayedNames() {
-		playedNames = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
-			.map(OfflinePlayer::getName)
-			.filter(n -> n != null)
-			.map(n -> n.toLowerCase(Locale.ROOT))
-			.collect(Collectors.toUnmodifiableSet());
+		Set<String> names = new HashSet<>();
+		if (!role.equals("lobby")) {
+			for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
+				if (p.getName() != null) {
+					names.add(p.getName().toLowerCase(Locale.ROOT));
+				}
+			}
+		}
+		names.addAll(readNames("played-name-sources"));
+		playedNames = Set.copyOf(names);
 	}
 
+	/** Bu sunucunun op'ları + op-name-sources dosyaları (ör. ana sunucunun ops.json'u). */
 	private void refreshOperators() {
-		operatorNames = Bukkit.getOperators().stream()
-			.map(OfflinePlayer::getName)
-			.filter(n -> n != null)
-			.map(n -> n.toLowerCase(Locale.ROOT))
-			.collect(Collectors.toUnmodifiableSet());
+		Set<String> names = new HashSet<>();
+		for (OfflinePlayer p : Bukkit.getOperators()) {
+			if (p.getName() != null) {
+				names.add(p.getName().toLowerCase(Locale.ROOT));
+			}
+		}
+		names.addAll(readNames("op-name-sources"));
+		operatorNames = Set.copyOf(names);
+	}
+
+	/** usercache.json / ops.json biçimindeki ([{ "name": ... }]) dosyalardan adları okur. */
+	private Set<String> readNames(String configKey) {
+		Set<String> names = new HashSet<>();
+		Path serverRoot = getDataFolder().toPath().toAbsolutePath().getParent().getParent();
+		for (String source : getConfig().getStringList(configKey)) {
+			Path path = serverRoot.resolve(source).normalize();
+			try {
+				JsonElement root = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+				if (root.isJsonArray()) {
+					for (JsonElement el : root.getAsJsonArray()) {
+						if (el.isJsonObject() && el.getAsJsonObject().has("name")) {
+							names.add(el.getAsJsonObject().get("name").getAsString().toLowerCase(Locale.ROOT));
+						}
+					}
+				}
+			} catch (IOException | RuntimeException e) {
+				getLogger().warning(configKey + " okunamadı: " + path + " (" + e.getMessage() + ")");
+			}
+		}
+		return names;
 	}
 
 	/**

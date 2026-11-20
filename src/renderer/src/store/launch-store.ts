@@ -39,6 +39,17 @@ export const useLaunchStore = create<LaunchStore>((set, get) => ({
     const offProgress = subscribe('launch:progress', ({ stage, progress }) => {
       if (get().phase === 'launching') set({ stage, progress })
     })
+    const offQuarantine = subscribe('launch:quarantine', ({ files, folder }) => {
+      useNotifyStore.getState().push({
+        kind: 'warning',
+        title: i18n.t('launch.quarantineTitle'),
+        message: i18n.t('launch.quarantineMessage', {
+          count: files.length,
+          files: files.map((f) => `${f.name} (${f.risk}: ${f.reason})`).join('; '),
+          folder
+        })
+      })
+    })
     const offExit = subscribe('launch:exit', () => {
       set({ phase: 'idle', stage: null, progress: 0, target: null })
       useNotifyStore.getState().push({
@@ -50,6 +61,7 @@ export const useLaunchStore = create<LaunchStore>((set, get) => ({
     return () => {
       offProgress()
       offExit()
+      offQuarantine()
     }
   },
 

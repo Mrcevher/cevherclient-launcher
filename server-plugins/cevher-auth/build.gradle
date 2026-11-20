@@ -13,6 +13,8 @@ repositories {
 
 dependencies {
 	compileOnly "io.papermc.paper:paper-api:${project.paper_api_version}"
+	// Konsol günlüğünden /login şifresini gizleyen filtre için (Paper çalışırken sağlar).
+	compileOnly("org.apache.logging.log4j:log4j-core:2.24.1") { transitive = false }
 }
 
 java {

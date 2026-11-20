@@ -149,6 +149,11 @@ final class AuthHttpServer {
 				send(ex, 200, pack.describe());
 				return;
 			}
+			// Launcher'ın oyun açılmadan önce uyguladığı mod politikası (izinli/yasaklı hash ve projeler).
+			if (path.equals("/api/mod-policy") && ex.getRequestMethod().equals("GET")) {
+				send(ex, 200, plugin.modDogrulama().politika());
+				return;
+			}
 			if (!ex.getRequestMethod().equals("POST")) {
 				send(ex, 405, error("METHOD_NOT_ALLOWED"));
 				return;
@@ -176,6 +181,8 @@ final class AuthHttpServer {
 				case "/api/site/profile" -> sendResult(ex, bridge.profile(str(body, "token")));
 				case "/api/store/listing" -> sendResult(ex, bridge.listing(str(body, "token")));
 				case "/api/store/buy" -> sendResult(ex, bridge.buy(str(body, "token"), str(body, "productId")));
+				case "/api/internal/check" -> internalCheck(ex, body, client);
+				case "/api/internal/block" -> internalBlock(ex, body, client);
 				default -> send(ex, 404, error("NOT_FOUND"));
 			}
 		} catch (Exception e) {
@@ -193,6 +200,52 @@ final class AuthHttpServer {
 	}
 
 	// ── uç noktalar ─────────────────────────────────────────────────────────────
+
+	/**
+	 * Kapı rolündeki arka sunucunun (survival) sorusu: { secret, name, ip } → { ok, authorized }.
+	 * Yalnızca aynı makineden, aracısız (proxy/tünel başlığı olmayan) ve doğru ortak sırla kabul edilir.
+	 */
+	private void internalCheck(HttpExchange ex, JsonObject body, Client client) throws IOException {
+		LobbyLogin lobby = plugin.lobbyLogin();
+		if (!internalAuthorized(ex, body, client)) {
+			send(ex, 403, error("FORBIDDEN"));
+			return;
+		}
+		String name = str(body, "name");
+		String ip = str(body, "ip");
+		JsonObject o = ok();
+		o.addProperty("authorized", name != null && ip != null && lobby.isAuthorized(name, ip));
+		send(ex, 200, o);
+	}
+
+	/** Yalnızca aynı makineden, aracısız (tünel başlığı olmayan) ve doğru ortak sırla gelen iç istekler. */
+	private boolean internalAuthorized(HttpExchange ex, JsonObject body, Client client) {
+		String expected = plugin.getConfig().getString("network.secret", "");
+		String given = str(body, "secret");
+		boolean secretOk = expected != null && expected.length() >= 16 && given != null
+			&& java.security.MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), given.getBytes(StandardCharsets.UTF_8));
+		return plugin.lobbyLogin() != null && client.local() && ex.getRequestHeaders().getFirst("CF-Connecting-IP") == null && secretOk;
+	}
+
+	/**
+	 * Kapı sunucusunun güvenlik nedenli IP engeli bildirimi: { secret, ip, minutes, reason }.
+	 * Engel lobide de uygulanır; saldırgan ağa yeniden giremez.
+	 */
+	private void internalBlock(HttpExchange ex, JsonObject body, Client client) throws IOException {
+		if (!internalAuthorized(ex, body, client)) {
+			send(ex, 403, error("FORBIDDEN"));
+			return;
+		}
+		String ip = str(body, "ip");
+		long minutes = body.has("minutes") && body.get("minutes").isJsonPrimitive() ? body.get("minutes").getAsLong() : 10;
+		String reason = str(body, "reason");
+		if (ip == null || ip.length() > 64) {
+			send(ex, 400, error("BAD_REQUEST"));
+			return;
+		}
+		plugin.guvenlik().engelle(ip, Math.min(Math.max(1, minutes), 24 * 60) * 60_000L, "kapı: " + (reason == null ? "?" : reason), false);
+		send(ex, 200, ok());
+	}
 
 	private void register(HttpExchange ex, JsonObject body, Client client) throws IOException {
 		String username = str(body, "username");
@@ -316,6 +369,11 @@ final class AuthHttpServer {
 	 * hesap açıp launcher hesabını ele geçirebilirdi. Korunan adlar (op / daha önce oynamış)
 	 * için siteden yeni launcher hesabı açılmaz.
 	 */
+	/** Oyun içi /login için: launcher girişiyle aynı site kuralları (oyuncu IP'si yerel sayılmaz). */
+	AccountStore.Account loginViaSite(String username, String password, AccountStore.Account account, String ip) throws IOException {
+		return loginViaSite(username, password, account, new Client(ip, false));
+	}
+
 	private AccountStore.Account loginViaSite(String username, String password, AccountStore.Account account, Client client) throws IOException {
 		LeaderOsSync site = plugin.site();
 		if (site == null || !site.enabled()) {

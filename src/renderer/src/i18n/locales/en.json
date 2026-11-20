@@ -56,7 +56,9 @@
     "startedTitle": "Link established",
     "startedMessage": "{{target}} launched. Have fun!",
     "exitedTitle": "Game closed",
-    "exitedMessage": "The launcher is ready again."
+    "exitedMessage": "The launcher is ready again.",
+    "quarantineTitle": "Unauthorized mod quarantined",
+    "quarantineMessage": "{{count}} file(s) were not loaded: {{files}}. Reason and files: {{folder}}"
   },
   "settings": {
     "title": "Settings",

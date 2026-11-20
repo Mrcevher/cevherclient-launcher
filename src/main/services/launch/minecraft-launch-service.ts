@@ -17,6 +17,7 @@ import { clearJoinTicket, prepareSessionMod, writeJoinTicket } from './session-m
 import { prepareUiMod } from './ui-mod'
 import { removeGifCapeMod } from './gifcape-mod'
 import { removeBlockedMods } from './blocked-mods'
+import { enforceModIntegrity } from './mod-integrity'
 import { prepareClientMod } from './client-mod'
 import { prepareServerPack } from './server-pack'
 import { fitToScreen } from './window-size'
@@ -163,6 +164,15 @@ export class MinecraftLaunchService implements LaunchService {
     if (server) await removeBlockedMods(gamePath)
     // İstemci modu (cevher_client): mod menüsü, HUD modülleri ve HUD düzenleyici.
     if (server) await prepareClientMod(server, gamePath)
+    // Mod bütünlüğü: modpack'te, launcher modlarında, Modrinth'te ya da sunucu politikasında olmayan
+    // (yeniden adlandırılmış / değiştirilmiş) jar'lar oyun açılmadan karantinaya alınır.
+    if (server && server.loader.type !== 'vanilla') {
+      const integrityAuthUrl = (await config.get()).config.authServerUrl?.replace(/\/+$/, '')
+      const quarantined = await enforceModIntegrity(gamePath, integrityAuthUrl)
+      if (quarantined.length > 0) {
+        this.events.emit('launch:quarantine', { files: quarantined, folder: join(gamePath, '.cevher', 'karantina') })
+      }
+    }
     // Sunucu kaynak paketi önceden kurulur; oturum modu girişte onay ekranını ve yeniden yüklemeyi atlar.
     // Mod yoksa (vanilla) oyun paketi yine kendisi indireceği için iki kez yüklenmesin diye kurulmaz.
     if (server && sessionArgs.length > 0) {
