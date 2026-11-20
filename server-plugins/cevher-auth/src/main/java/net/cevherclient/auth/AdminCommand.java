@@ -95,7 +95,7 @@ final class AdminCommand implements TabExecutor {
 				case "engeller", "engelkaldir" -> {
 					return engelKomutu(plugin, sender, args);
 				}
-				case "yasaklar", "yasakla", "yasakkaldir", "yasak" -> {
+				case "yasaklar", "yasakla", "yasakkaldir", "yasak", "yasakonay", "talepred" -> {
 					return yasakKomutu(plugin, sender, args);
 				}
 				case "risk", "risktemizle" -> {
@@ -179,6 +179,11 @@ final class AdminCommand implements TabExecutor {
 				for (String g : k.gecmis) {
 					sender.sendMessage(" §8• §7" + g);
 				}
+				sender.sendMessage(" §7Kaldırma onayları: §f" + k.onaylar.size() + "/2" + (k.onaylar.isEmpty() ? ""
+					: " (" + String.join(", ", k.onaylar.stream().map(o -> o.ad + " " + o.rol).toList()) + ")"));
+				for (KaliciYasak.Talep t : k.talepler) {
+					sender.sendMessage(" §6İtiraz §8(" + t.id + ") §7" + t.durum + " §8| §f" + t.mesaj);
+				}
 			}
 			case "yasakla" -> {
 				if (args.length < 2) {
@@ -188,12 +193,34 @@ final class AdminCommand implements TabExecutor {
 				org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayerExact(args[1]);
 				String ip = p != null ? KaliciYasak.ipOf(p) : null;
 				String sebep = args.length > 2 ? String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)) : "Yetkili kararı";
-				KaliciYasak.Kayit k = y.yasakla(args[1], ip, null, null, sebep, sender.getName(), "", true);
+				KaliciYasak.Kayit k = y.yasakla(args[1], ip, null, null, sebep, sender.getName(), "", null, null, true);
 				sender.sendMessage("§a" + args[1] + " kalıcı yasaklandı (" + k.id + "): " + k.adlar.size() + " hesap, " + k.ipler.size() + " IP, " + k.cihazlar.size() + " cihaz izi.");
 			}
 			case "yasakkaldir" -> {
-				KaliciYasak.Kayit k = args.length >= 2 ? y.kaldir(args[1], true) : null;
-				sender.sendMessage(k != null ? "§a" + k.ana + " yasağı kaldırıldı (" + k.adlar.size() + " hesap, " + k.ipler.size() + " IP)." : "§cBöyle bir yasak yok.");
+				if (!(sender instanceof org.bukkit.command.ConsoleCommandSender)) {
+					sender.sendMessage("§cYasak iki onayla kalkar: §f/cevherauth yasakonay <ad> §7(bir kurucu + bir üst yetkili ya da kurucu). Doğrudan kaldırma yalnızca konsoldan.");
+					return true;
+				}
+				if (args.length < 2) {
+					sender.sendMessage("§cKullanım: /cevherauth yasakkaldir <ad|ip|id>");
+					return true;
+				}
+				y.konsoldanKaldir(args[1], m -> sender.sendMessage("§e" + m));
+			}
+			case "yasakonay" -> {
+				if (args.length < 2) {
+					sender.sendMessage("§cKullanım: /cevherauth yasakonay <ad|id>");
+					return true;
+				}
+				y.onayla(args[1], sender.getName(), KaliciYasak.rol(sender), m -> sender.sendMessage("§e[Yasak] " + m));
+			}
+			case "talepred" -> {
+				if (args.length < 2) {
+					sender.sendMessage("§cKullanım: /cevherauth talepred <ad|id> [neden]");
+					return true;
+				}
+				String neden = args.length > 2 ? String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)) : "";
+				y.talepReddet(args[1], null, sender.getName(), KaliciYasak.rol(sender), neden, m -> sender.sendMessage("§e[Yasak] " + m));
 			}
 			default -> {
 				return false;
@@ -205,7 +232,7 @@ final class AdminCommand implements TabExecutor {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
-			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir", "risk", "risktemizle", "yasaklar", "yasak", "yasakla", "yasakkaldir").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir", "risk", "risktemizle", "yasaklar", "yasak", "yasakla", "yasakkaldir", "yasakonay", "talepred").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
 		}
 		if (args.length == 2 && (args[0].equalsIgnoreCase("sil") || args[0].equalsIgnoreCase("sifre"))) {
 			return plugin.accounts().all().stream().map(a -> a.username)

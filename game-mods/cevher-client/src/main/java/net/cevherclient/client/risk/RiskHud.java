@@ -35,6 +35,13 @@ public final class RiskHud {
 	private static volatile List<JsonObject> ham = List.of();
 	/** Liste her değiştiğinde artar. */
 	public static volatile int surum;
+	/** Kalıcı yasaklar (CevherAuth {"t":"yasaklar"}); vaka ekranının "Yasaklar" sekmesi. */
+	private static volatile List<JsonObject> yasaklar = List.of();
+	public static volatile int yasakSurum;
+
+	public static List<JsonObject> yasaklar() {
+		return yasaklar;
+	}
 
 	private RiskHud() {
 	}
@@ -48,6 +55,20 @@ public final class RiskHud {
 			+ "\"kaynak\":\"ayni-ip\",\"detay\":\"Kral34 (YÜKSEK) ile aynı IP\",\"eski\":true}]},"
 			+ "{\"ad\":\"Kral34\",\"seviye\":\"YUKSEK\",\"neden\":\"koruma: yetkili onayladı: Reach ×4\",\"online\":false,\"ip\":\"78.180.12.4\",\"son\":" + (t - 900000)
 			+ ",\"bulgular\":[{\"zaman\":" + (t - 900000) + ",\"seviye\":\"YUKSEK\",\"kaynak\":\"koruma\",\"detay\":\"yetkili onayladı (arda): Vuruş mesafesi (Reach) ×4\",\"eski\":false}]}]}");
+	}
+
+	/** Yalnızca geliştirme ortamı: örnek yasak (kanıt, onay ve itirazla). */
+	public static void devYasakOrnek() {
+		long t = System.currentTimeMillis();
+		al("{\"t\":\"yasaklar\",\"yasaklar\":[{\"id\":\"aB3dE9xQ\",\"ana\":\"CtrlAltDefeate\",\"adlar\":[\"ctrlaltdefeate\",\"yanhesap01\"],\"ipler\":[\"88.230.149.252\"],"
+			+ "\"cihaz\":3,\"damga\":1,\"sebep\":\"Hile (Reach)\",\"yetkili\":\"arda\",\"vaka\":\"311W2\",\"zaman\":" + (t - 7200000) + ","
+			+ "\"gecmis\":[\"20.11.2026 05:30 yasaklandı: CtrlAltDefeate — Hile (Reach) (arda, vaka 311W2)\",\"20.11.2026 06:10 yan hesap yakalandı: yanhesap01 (cihaz izi)\"],"
+			+ "\"kanit\":{\"guven\":95,\"karar\":\"HILE\",\"tur\":\"Reach\",\"ozet\":\"Oyuncu 5+ blok mesafeden defalarca vurdu.\",\"gerekce\":\"Ping 11 ms ve TPS 20 iken 13 kez 5.14-5.47 blok; gecikmeyle açıklanamaz.\","
+			+ "\"not\":\"arkadaş testi\",\"dunya\":\"world\",\"konum\":\"12, 64, -30\",\"istemci\":\"fabric\",\"ping\":11,\"tps\":20.0,\"puan\":40.9,\"vakaBas\":" + (t - 7300000) + ",\"vakaBit\":" + (t - 7290000) + ","
+			+ "\"kontroller\":[\"Vuruş mesafesi (Reach) ×13 — en yüksek: 5.47 blok (sınır 3.92) hedef arda\"],"
+			+ "\"satirlar\":[\"05:22:12 Vuruş mesafesi (Reach): 5.14 blok (sınır 3.92) [ping 11 ms, TPS 20.0]\",\"05:22:14 Vuruş mesafesi (Reach): 5.47 blok (sınır 3.92) [ping 11 ms, TPS 20.0]\"]},"
+			+ "\"onaylar\":[{\"ad\":\"yetkili1\",\"rol\":\"ÜST YETKİLİ\",\"zaman\":" + (t - 600000) + "}],"
+			+ "\"talepler\":[{\"id\":\"q1w2e3\",\"zaman\":" + (t - 1200000) + ",\"hesap\":\"CtrlAltDefeate\",\"mesaj\":\"Hile kullanmadım, o gün arkadaşımla test yapıyorduk. Lütfen yasağı kaldırın.\",\"durum\":\"BEKLIYOR\",\"islemYapan\":\"\",\"islemNeden\":\"\",\"islemZaman\":0}]}]}");
 	}
 
 	public static List<JsonObject> oyuncular() {
@@ -70,7 +91,9 @@ public final class RiskHud {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			liste = List.of();
 			ham = List.of();
+			yasaklar = List.of();
 			surum++;
+			yasakSurum++;
 		});
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
 			Identifier.fromNamespaceAndPath(CevherClientMod.MOD_ID, "risk"),
@@ -80,6 +103,17 @@ public final class RiskHud {
 	private static void al(String metin) {
 		try {
 			JsonElement e = JsonParser.parseString(metin);
+			if (e.isJsonObject() && "yasaklar".equals(str(e.getAsJsonObject(), "t")) && e.getAsJsonObject().has("yasaklar")) {
+				List<JsonObject> y = new ArrayList<>();
+				for (JsonElement x : e.getAsJsonObject().getAsJsonArray("yasaklar")) {
+					if (x.isJsonObject()) {
+						y.add(x.getAsJsonObject());
+					}
+				}
+				yasaklar = List.copyOf(y);
+				yasakSurum++;
+				return;
+			}
 			if (!e.isJsonObject() || !"liste".equals(str(e.getAsJsonObject(), "t"))) {
 				return;
 			}

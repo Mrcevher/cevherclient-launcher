@@ -154,6 +154,11 @@ final class AuthHttpServer {
 				send(ex, 200, plugin.modDogrulama().politika());
 				return;
 			}
+			// Sitenin yasak itiraz formu: tarayıcıdan gelir, yalnızca izinli site kökenlerine CORS açılır.
+			if (path.equals("/api/yasak/itiraz")) {
+				itiraz(ex, client);
+				return;
+			}
 			if (!ex.getRequestMethod().equals("POST")) {
 				send(ex, 405, error("METHOD_NOT_ALLOWED"));
 				return;
@@ -183,16 +188,18 @@ final class AuthHttpServer {
 				case "/api/store/buy" -> sendResult(ex, bridge.buy(str(body, "token"), str(body, "productId")));
 				case "/api/internal/check" -> internalCheck(ex, body, client);
 				case "/api/internal/block" -> internalBlock(ex, body, client);
-				case "/api/internal/ban", "/api/internal/unban" -> {
+				case "/api/internal/ban", "/api/internal/yasaklar", "/api/internal/yasak-islem" -> {
 					if (!internalAuthorized(ex, body, client) || plugin.kaliciYasak() == null) {
 						send(ex, 403, error("FORBIDDEN"));
-					} else {
-						if (path.endsWith("/ban")) {
-							plugin.kaliciYasak().lobidenYasak(body);
-						} else {
-							plugin.kaliciYasak().lobidenKaldir(body);
-						}
+					} else if (path.endsWith("/ban")) {
+						plugin.kaliciYasak().lobidenYasak(body);
 						send(ex, 200, ok());
+					} else if (path.endsWith("/yasaklar")) {
+						send(ex, 200, plugin.kaliciYasak().lobiListesi());
+					} else {
+						JsonObject o = ok();
+						o.addProperty("mesaj", plugin.kaliciYasak().lobiIslem(body));
+						send(ex, 200, o);
 					}
 				}
 				default -> send(ex, 404, error("NOT_FOUND"));
@@ -231,6 +238,94 @@ final class AuthHttpServer {
 			o.add("risk", plugin.riskTakip().disaAktar(name));
 		}
 		send(ex, 200, o);
+	}
+
+	/** IP başına itiraz denemeleri (yanlış şifre + gönderim); sitenin formuna spam'i sınırlar. */
+	private final Map<String, java.util.Deque<Long>> itirazIp = new ConcurrentHashMap<>();
+
+	/**
+	 * Site → yasak itirazı. {"username","password","mesaj"} gönderir; {"islem":"durum"} ile yalnızca durumu sorar.
+	 * Yalnızca config'deki {@code kalici-yasak.itiraz-originler} kökenlerinden gelen tarayıcı isteklerine CORS açılır.
+	 */
+	private void itiraz(HttpExchange ex, Client client) throws IOException {
+		String origin = ex.getRequestHeaders().getFirst("Origin");
+		java.util.List<String> izinli = plugin.getConfig().getStringList("kalici-yasak.itiraz-originler");
+		boolean kokenTamam = origin != null && izinli.stream().anyMatch(o -> o.equalsIgnoreCase(origin));
+		if (kokenTamam) {
+			ex.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
+			ex.getResponseHeaders().set("Vary", "Origin");
+			ex.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
+			ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+			ex.getResponseHeaders().set("Access-Control-Max-Age", "600");
+		}
+		if (ex.getRequestMethod().equals("OPTIONS")) {
+			ex.sendResponseHeaders(kokenTamam ? 204 : 403, -1);
+			return;
+		}
+		if (!ex.getRequestMethod().equals("POST")) {
+			send(ex, 405, error("METHOD_NOT_ALLOWED"));
+			return;
+		}
+		if (origin != null && !kokenTamam) {
+			send(ex, 403, error("FORBIDDEN_ORIGIN"));
+			return;
+		}
+		String contentType = ex.getRequestHeaders().getFirst("Content-Type");
+		if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("application/json")) {
+			send(ex, 415, error("BAD_REQUEST"));
+			return;
+		}
+		// IP başına 10 dakikada en fazla 8 istek
+		java.util.Deque<Long> d = itirazIp.computeIfAbsent(client.ip(), k -> new java.util.ArrayDeque<>());
+		synchronized (d) {
+			long sinir = System.currentTimeMillis() - 600_000L;
+			while (!d.isEmpty() && d.peekFirst() < sinir) d.pollFirst();
+			if (d.size() >= 8) {
+				send(ex, 429, error("TOO_MANY_ATTEMPTS"));
+				return;
+			}
+			d.addLast(System.currentTimeMillis());
+		}
+		JsonObject body = readBody(ex);
+		if (body == null) {
+			send(ex, 400, error("BAD_REQUEST"));
+			return;
+		}
+		String username = str(body, "username");
+		String password = str(body, "password");
+		if (username == null || !USERNAME.matcher(username).matches() || password == null || plugin.kaliciYasak() == null) {
+			send(ex, 400, error("BAD_REQUEST"));
+			return;
+		}
+		AccountStore.Account account = plugin.accounts().get(username);
+		boolean valid = account != null && Passwords.verify(password, account.passwordHash);
+		if (!valid && account == null) {
+			Passwords.verify(password, DUMMY_HASH);
+		}
+		if (!valid) {
+			AccountStore.Account site = loginViaSite(username, password, account, client);
+			valid = site != null;
+		}
+		if (!valid) {
+			send(ex, 401, error("WRONG_CREDENTIALS"));
+			return;
+		}
+		KaliciYasak y = plugin.kaliciYasak();
+		if ("durum".equals(str(body, "islem"))) {
+			JsonObject o = ok();
+			o.add("durum", y.durum(username));
+			send(ex, 200, o);
+			return;
+		}
+		String mesaj = str(body, "mesaj");
+		if (mesaj == null || mesaj.isBlank() || mesaj.length() < 10) {
+			send(ex, 400, error("MESSAGE_TOO_SHORT"));
+			return;
+		}
+		String sonuc = y.talepEkle(username, mesaj.strip());
+		JsonObject o = "OK".equals(sonuc) ? ok() : error(sonuc);
+		o.add("durum", y.durum(username));
+		send(ex, "OK".equals(sonuc) ? 200 : "YASAK_YOK".equals(sonuc) ? 404 : 409, o);
 	}
 
 	/** Yalnızca aynı makineden, aracısız (tünel başlığı olmayan) ve doğru ortak sırla gelen iç istekler. */

@@ -61,6 +61,7 @@ public final class VakaMerkezi {
 				if (net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment() && vakalar.isEmpty()) {
 					ornekYukle(); // yalnızca geliştirme ortamında: ekranı sunucusuz denemek için
 					net.cevherclient.client.risk.RiskHud.devOrnek();
+					net.cevherclient.client.risk.RiskHud.devYasakOrnek();
 				}
 				mc.setScreen(new VakaEkrani(null));
 			}

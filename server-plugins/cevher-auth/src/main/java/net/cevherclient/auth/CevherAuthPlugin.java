@@ -245,10 +245,23 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	 * kalıcı yasaklar; ağın giriş kapısına (lobi) da bildirir. Dönüş: kısa özet.
 	 */
 	public String disYasakla(String ad, String ip, String sebep, String yetkili, String vaka) {
+		return disYasaklaDetay(ad, ip, sebep, yetkili, vaka, null);
+	}
+
+	/** {@link #disYasakla} + vaka kanıtı (JSON: guven, karar, tur, ozet, gerekce, kontroller[], satirlar[] ...). */
+	public String disYasaklaDetay(String ad, String ip, String sebep, String yetkili, String vaka, String kanitJson) {
 		if (kaliciYasak == null) {
 			return "kalıcı yasak sistemi kapalı";
 		}
-		KaliciYasak.Kayit k = kaliciYasak.yasakla(ad, ip, null, null, sebep, yetkili, vaka, true);
+		KaliciYasak.Kanit kanit = null;
+		if (kanitJson != null && !kanitJson.isBlank()) {
+			try {
+				kanit = JsonFile.GSON.fromJson(kanitJson, KaliciYasak.Kanit.class);
+			} catch (RuntimeException e) {
+				getLogger().warning("Yasak kanıtı okunamadı: " + e.getMessage());
+			}
+		}
+		KaliciYasak.Kayit k = kaliciYasak.yasakla(ad, ip, null, null, sebep, yetkili, vaka, kanit, null, true);
 		return k.adlar.size() + " hesap, " + k.ipler.size() + " IP, " + k.cihazlar.size() + " cihaz izi (kayıt " + k.id + ")";
 	}
 

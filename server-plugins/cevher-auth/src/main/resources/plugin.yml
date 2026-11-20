@@ -16,6 +16,13 @@ permissions:
   cevherauth.risk:
     description: Risk listesini (sağ üst ekran ve sohbet uyarıları) görür
     default: op
+  # Kalıcı yasak kaldırma iki onay ister: bir kurucu + bir üst yetkili (ya da ikinci bir kurucu).
+  cevherauth.yasak.kurucu:
+    description: Yasak kaldırmayı kurucu olarak onaylar, itiraz reddeder
+    default: false
+  cevherauth.yasak.ustyetkili:
+    description: Yasak kaldırmayı üst yetkili olarak onaylar, itiraz reddeder
+    default: false
   # Lobi rolünde oyuncunun giriş durumu (TAB gibi eklentilerin koşulları için; CevherAuth verir).
   cevherauth.bekliyor:
     description: Henüz giriş yapmadı

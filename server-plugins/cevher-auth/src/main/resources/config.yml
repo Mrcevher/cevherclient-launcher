@@ -245,6 +245,12 @@ kalici-yasak:
   ip: true
   # Yasaklı IP'den/bilgisayardan gelen başka hesaplar da yasağa eklensin mi
   bagli-hesaplar: true
+  # Yasak ekranında gösterilen itiraz adresi (boşsa gösterilmez)
+  itiraz-adresi: "cevhercraft.com/ban-itiraz"
+  # Sitenin itiraz formunun API'ye istek atabileceği kökenler (tarayıcı CORS)
+  itiraz-originler:
+    - "https://cevhercraft.com"
+    - "https://www.cevhercraft.com"
 
 messages:
   kalici-yasak: "&c&lSunucudan kalıcı olarak yasaklandın.\n&7Sebep: &f%sebep%\n&7Tarih: &f%tarih%\n&8Kayıt: %id%"

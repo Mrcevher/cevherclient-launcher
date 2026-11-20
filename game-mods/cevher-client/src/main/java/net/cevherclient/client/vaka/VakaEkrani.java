@@ -19,6 +19,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -66,12 +67,16 @@ public final class VakaEkrani extends Screen {
 		}
 	}
 
-	private enum Sekme { HILE, RISK }
+	private enum Sekme { HILE, RISK, YASAK }
+
+	/** Onay kutusunun hangi iş için açıldığı. */
+	private enum OnayTur { VAKA, RISK, KALDIR, RED }
 
 	/** Sekme ve "görüldü" bilgisi ekran kapanıp açılınca da korunur (oturum boyunca). */
 	private static Sekme sonSekme = Sekme.HILE;
 	private static final Set<String> GORULEN_VAKA = new HashSet<>();
 	private static final Set<String> GORULEN_RISK = new HashSet<>();
+	private static final Set<String> GORULEN_YASAK = new HashSet<>();
 
 	private final Screen onceki;
 	private final Gorunum gor = Gorunum.al();
@@ -81,7 +86,11 @@ public final class VakaEkrani extends Screen {
 	private List<JsonObject> riskler = List.of();
 	private int riskSecili;
 	private int riskSurum = -1;
-	private boolean onayRisk;
+	private List<JsonObject> yasaklar = List.of();
+	private int yasakSecili;
+	private int yasakSurum = -1;
+	private OnayTur onayTur = OnayTur.VAKA;
+	private EditBox nedenKutu;
 	private float listeKaydir;
 	private float detayKaydir;
 	private int gorulenSurum = -1;
@@ -106,6 +115,59 @@ public final class VakaEkrani extends Screen {
 	protected void init() {
 		yenile(true);
 		yenileRisk();
+		yenileYasak();
+	}
+
+	private void yenileYasak() {
+		String id = str(yasakSec(), "id");
+		yasaklar = RiskHud.yasaklar();
+		yasakSurum = RiskHud.yasakSurum;
+		int yeni = Math.min(Math.max(0, yasakSecili), Math.max(0, yasaklar.size() - 1));
+		for (int i = 0; i < yasaklar.size(); i++) {
+			if (str(yasaklar.get(i), "id").equals(id)) {
+				yeni = i;
+				break;
+			}
+		}
+		yasakSecili = yasaklar.isEmpty() ? -1 : yeni;
+		if (sekme == Sekme.YASAK) {
+			detayAnahtar = "";
+		}
+		if (onayVaka != null && (onayTur == OnayTur.KALDIR || onayTur == OnayTur.RED)
+				&& yasaklar.stream().noneMatch(y -> str(y, "id").equals(str(onayVaka, "id")))) {
+			modalKapat(); // yasak bu arada kaldırıldı
+		}
+	}
+
+	private JsonObject yasakSec() {
+		return yasakSecili >= 0 && yasakSecili < yasaklar.size() ? yasaklar.get(yasakSecili) : null;
+	}
+
+	/** Bir yasaktaki "görülmemiş" anahtarlar: yasağın kendisi + bekleyen her itiraz. */
+	private static List<String> yasakAnahtarlari(JsonObject y) {
+		List<String> l = new ArrayList<>();
+		l.add(VakaMerkezi.str(y, "id"));
+		if (y.has("talepler") && y.get("talepler").isJsonArray()) {
+			for (JsonElement e : y.getAsJsonArray("talepler")) {
+				if (e.isJsonObject() && "BEKLIYOR".equals(VakaMerkezi.str(e.getAsJsonObject(), "durum"))) {
+					l.add(VakaMerkezi.str(y, "id") + ":" + VakaMerkezi.str(e.getAsJsonObject(), "id"));
+				}
+			}
+		}
+		return l;
+	}
+
+	private static int bekleyenTalep(JsonObject y) {
+		return yasakAnahtarlari(y).size() - 1;
+	}
+
+	private void modalKapat() {
+		modal = Modal.YOK;
+		onayVaka = null;
+		if (nedenKutu != null) {
+			removeWidget(nedenKutu);
+			nedenKutu = null;
+		}
 	}
 
 	private void yenileRisk() {
@@ -130,25 +192,37 @@ public final class VakaEkrani extends Screen {
 	}
 
 	private List<JsonObject> aktif() {
-		return sekme == Sekme.HILE ? vakalar : riskler;
+		return switch (sekme) {
+			case HILE -> vakalar;
+			case RISK -> riskler;
+			case YASAK -> yasaklar;
+		};
 	}
 
 	private int aktifSecili() {
-		return sekme == Sekme.HILE ? secili : riskSecili;
+		return switch (sekme) {
+			case HILE -> secili;
+			case RISK -> riskSecili;
+			case YASAK -> yasakSecili;
+		};
 	}
 
 	private JsonObject aktifSec() {
-		return sekme == Sekme.HILE ? sec() : riskSec();
+		return switch (sekme) {
+			case HILE -> sec();
+			case RISK -> riskSec();
+			case YASAK -> yasakSec();
+		};
 	}
 
 	private void seciliYap(int i) {
 		if (i == aktifSecili()) {
 			return;
 		}
-		if (sekme == Sekme.HILE) {
-			secili = i;
-		} else {
-			riskSecili = i;
+		switch (sekme) {
+			case HILE -> secili = i;
+			case RISK -> riskSecili = i;
+			case YASAK -> yasakSecili = i;
 		}
 		detayKaydir = 0;
 	}
@@ -170,9 +244,15 @@ public final class VakaEkrani extends Screen {
 			for (JsonObject v : vakalar) {
 				n += GORULEN_VAKA.contains(str(v, "id")) ? 0 : 1;
 			}
-		} else {
+		} else if (s == Sekme.RISK) {
 			for (JsonObject o : riskler) {
 				n += GORULEN_RISK.contains(RiskHud.anahtar(o)) ? 0 : 1;
+			}
+		} else {
+			for (JsonObject y : yasaklar) {
+				for (String a : yasakAnahtarlari(y)) {
+					n += GORULEN_YASAK.contains(a) ? 0 : 1;
+				}
 			}
 		}
 		return n;
@@ -196,9 +276,8 @@ public final class VakaEkrani extends Screen {
 		}
 		secili = vakalar.isEmpty() ? -1 : yeni;
 		detayAnahtar = "";
-		if (onayVaka != null && !onayRisk && vakalar.stream().noneMatch(v -> str(v, "id").equals(str(onayVaka, "id")))) {
-			modal = Modal.YOK; // vaka bu arada başka bir yetkili tarafından karara bağlandı
-			onayVaka = null;
+		if (onayVaka != null && onayTur == OnayTur.VAKA && vakalar.stream().noneMatch(v -> str(v, "id").equals(str(onayVaka, "id")))) {
+			modalKapat(); // vaka bu arada başka bir yetkili tarafından karara bağlandı
 		}
 	}
 
@@ -377,11 +456,16 @@ public final class VakaEkrani extends Screen {
 		if (RiskHud.surum != riskSurum) {
 			yenileRisk();
 		}
+		if (RiskHud.yasakSurum != yasakSurum) {
+			yenileYasak();
+		}
 		// Açık sekmedeki kayıtlar görülmüş sayılır; diğer sekmede yeni kayıt varsa rozet çıkar.
 		if (sekme == Sekme.HILE) {
 			vakalar.forEach(v -> GORULEN_VAKA.add(str(v, "id")));
-		} else {
+		} else if (sekme == Sekme.RISK) {
 			riskler.forEach(o -> GORULEN_RISK.add(RiskHud.anahtar(o)));
+		} else {
+			yasaklar.forEach(y -> GORULEN_YASAK.addAll(yasakAnahtarlari(y)));
 		}
 		super.render(g, mouseX, mouseY, partialTick);
 		dugmeler.clear();
@@ -405,6 +489,9 @@ public final class VakaEkrani extends Screen {
 				gorunumCiz(g);
 			}
 			dugmeleriCiz(g, mouseX, mouseY, ilk);
+			if (nedenKutu != null && modal == Modal.ONAY) {
+				nedenKutu.render(g, mouseX, mouseY, partialTick);
+			}
 		}
 		tostCiz(g);
 	}
@@ -413,18 +500,40 @@ public final class VakaEkrani extends Screen {
 		g.fillGradient(0, 0, width, 24, alfa(0x18070A, (int) (gor.panel * 230)), alfa(0x0D0E14, (int) (gor.panel * 140)));
 		g.fill(0, 24, width, 25, alfa(VURGU, 0xB0));
 		int sag = width - M;
-		int sagKenar = sag - 47 - 74 - 6;
 		float sc = Math.min(1.3f, s() * 1.1f);
+		float tsc = Math.min(1.15f, s());
 		int x = M + 2;
-		// Dar ekranda başlık yazısı yerine yalnızca simge
-		Component baslik = Component.literal(width >= 520 ? "⚠ KORUMA" : "⚠").withStyle(ChatFormatting.BOLD);
-		yaz(g, baslik, x, (24 - font.lineHeight * sc) / 2f + 1, BEYAZ, sc, true);
-		x += (int) Math.ceil(font.width(baslik) * sc) + 10;
-		x = sekmeCiz(g, mx, my, x, sagKenar, Sekme.HILE, "Hile vakaları", vakalar.size(), VURGU);
-		sekmeCiz(g, mx, my, x + 4, sagKenar, Sekme.RISK, "Karantina & risk", riskler.size(), TURUNCU);
+		int[] sayilar = {vakalar.size(), riskler.size(), yasaklar.size()};
+		String[] uzun = {"Hile vakaları", "Karantina & risk", "Yasaklar"};
+		String[] kisa = {"Vakalar", "Risk", "Yasak"};
+		// Sığma hesabı: önce uzun adlar + "Görünüm"; sığmazsa kısa adlar; yine sığmazsa "Görünüm" simgeye döner.
+		int uzunW = 0, kisaW = 0;
+		for (int i = 0; i < 3; i++) {
+			uzunW += gen(uzun[i] + "  " + sayilar[i], tsc) + 16 + 22 + 4;
+			kisaW += gen(kisa[i] + "  " + sayilar[i], tsc) + 16 + 22 + 4;
+		}
+		Component baslik = Component.literal("⚠ KORUMA").withStyle(ChatFormatting.BOLD);
+		int baslikW = (int) Math.ceil(font.width(baslik) * sc) + 10;
+		int simgeW = (int) Math.ceil(font.width("⚠") * sc) + 10;
+		int sagGenis = 47 + 74 + 6, sagDar = 47 + 26 + 6;
+		boolean basTam = x + baslikW + uzunW <= sag - sagGenis;
+		boolean adUzun = basTam || x + simgeW + uzunW <= sag - sagGenis;
+		boolean gorunumTam = adUzun || x + simgeW + kisaW <= sag - sagGenis;
+		int sagKenar = sag - (gorunumTam ? sagGenis : sagDar);
+		Component b = basTam ? baslik : Component.literal("⚠").withStyle(ChatFormatting.BOLD);
+		yaz(g, b, x, (24 - font.lineHeight * sc) / 2f + 1, BEYAZ, sc, true);
+		x += basTam ? baslikW : simgeW;
+		String[] ad = adUzun ? uzun : kisa;
+		x = sekmeCiz(g, mx, my, x, sagKenar, Sekme.HILE, ad[0], sayilar[0], VURGU);
+		x = sekmeCiz(g, mx, my, x + 4, sagKenar, Sekme.RISK, ad[1], sayilar[1], TURUNCU);
+		sekmeCiz(g, mx, my, x + 4, sagKenar, Sekme.YASAK, ad[2], sayilar[2], 0xFFB794F6);
 		dugme(sag - 22, 4, 22, 16, "A+", MAVI, gor.yazi < 2.0f, () -> yaziDegistir(0.125f));
 		dugme(sag - 47, 4, 22, 16, "A−", MAVI, gor.yazi > 0.75f, () -> yaziDegistir(-0.125f));
-		dugme(sag - 47 - 74, 4, 70, 16, "Görünüm", MAVI, true, () -> modal = Modal.GORUNUM);
+		if (gorunumTam) {
+			dugme(sag - 47 - 74, 4, 70, 16, "Görünüm", MAVI, true, () -> modal = Modal.GORUNUM);
+		} else {
+			dugme(sag - 47 - 26, 4, 22, 16, "⚙", MAVI, true, () -> modal = Modal.GORUNUM);
+		}
 	}
 
 	/** Üst çubukta bir sekme; görülmemiş kayıt varsa kırmızı rozet. Sağ kenarını döndürür. */
@@ -472,11 +581,18 @@ public final class VakaEkrani extends Screen {
 		float sc = s();
 		List<JsonObject> l0 = aktif();
 		if (l0.isEmpty()) {
-			boolean hile = sekme == Sekme.HILE;
-			yaz(g, hile ? "Bekleyen vaka yok." : "Riskli oyuncu yok.", x1 + 8, y1 + 10, GRI, sc, true);
-			List<FormattedCharSequence> l = font.split(Component.literal(hile
-					? "Karara bağlananlar sunucuda plugins/CevherKoruma/arsiv/ klasöründe."
-					: "Launcher karantinası, hile istemcisi, IP engeli ve Vulcan bulguları burada listelenir."),
+			String bos = switch (sekme) {
+				case HILE -> "Bekleyen vaka yok.";
+				case RISK -> "Riskli oyuncu yok.";
+				case YASAK -> "Kalıcı yasak yok.";
+			};
+			String acik = switch (sekme) {
+				case HILE -> "Karara bağlananlar sunucuda plugins/CevherKoruma/arsiv/ klasöründe.";
+				case RISK -> "Launcher karantinası, hile istemcisi, IP engeli ve Vulcan bulguları burada listelenir.";
+				case YASAK -> "Kalıcı yasaklananlar, kanıtları, kaldırma onayları ve siteden gelen itirazlar burada listelenir.";
+			};
+			yaz(g, bos, x1 + 8, y1 + 10, GRI, sc, true);
+			List<FormattedCharSequence> l = font.split(Component.literal(acik),
 				(int) ((x2 - x1 - 16) / sc));
 			for (int i = 0; i < l.size(); i++) {
 				yaz(g, l.get(i), x1 + 8, y1 + 12 + (i + 1) * satirH(), SOLUK, sc);
@@ -496,10 +612,10 @@ public final class VakaEkrani extends Screen {
 			}
 			JsonObject v = l0.get(i);
 			boolean ustte = mx >= x1 && mx < x2 && my >= Math.max(y, y1) && my < Math.min(y + kh, y2);
-			if (sekme == Sekme.HILE) {
-				vakaKarti(g, v, x1 + 4, x2 - 4, y, kh, i == sec, ustte, sc);
-			} else {
-				riskKarti(g, v, x1 + 4, x2 - 4, y, kh, i == sec, ustte, sc);
+			switch (sekme) {
+				case HILE -> vakaKarti(g, v, x1 + 4, x2 - 4, y, kh, i == sec, ustte, sc);
+				case RISK -> riskKarti(g, v, x1 + 4, x2 - 4, y, kh, i == sec, ustte, sc);
+				case YASAK -> yasakKarti(g, v, x1 + 4, x2 - 4, y, kh, i == sec, ustte, sc);
 			}
 		}
 		g.disableScissor();
@@ -599,13 +715,18 @@ public final class VakaEkrani extends Screen {
 		cerceve(g, x1, y1, x2, y2, CERCEVE);
 		JsonObject v = aktifSec();
 		if (v == null) {
-			yaz(g, sekme == Sekme.HILE ? "Soldan bir vaka seç." : "Soldan bir oyuncu seç.", x1 + 12, y1 + 12, GRI, s(), true);
+			yaz(g, sekme == Sekme.HILE ? "Soldan bir vaka seç." : sekme == Sekme.RISK ? "Soldan bir oyuncu seç." : "Soldan bir yasak seç.",
+				x1 + 12, y1 + 12, GRI, s(), true);
 			return;
 		}
 		int w = x2 - x1 - 24;
 		String anahtar = sekme + "|" + str(v, "id") + str(v, "ad") + "|" + w + "|" + gor.yazi + "|" + v.hashCode();
 		if (!anahtar.equals(detayAnahtar)) {
-			detay = sekme == Sekme.HILE ? detayKur(v, w) : riskDetayKur(v, w);
+			detay = switch (sekme) {
+				case HILE -> detayKur(v, w);
+				case RISK -> riskDetayKur(v, w);
+				case YASAK -> yasakDetayKur(v, w);
+			};
 			detayAnahtar = anahtar;
 			detayYukseklik = 0;
 			for (Oge o : detay) {
@@ -643,7 +764,7 @@ public final class VakaEkrani extends Screen {
 		boolean kisa = gen("Oyuncuya ışınlan", dsc) > bw - 8;
 		dugme(x, y, bw, h, kisa ? "Yasakla" : "Kalıcı yasakla", VURGU, var, () -> {
 			onayVaka = riskSec();
-			onayRisk = true;
+			onayTur = OnayTur.RISK;
 			modal = Modal.ONAY;
 		});
 		dugme(x + bw + 4, y, bw, h, kisa ? "Kaydı sil" : "Risk kaydını sil", GRI, var, () -> {
@@ -775,6 +896,10 @@ public final class VakaEkrani extends Screen {
 			riskAltBar(g);
 			return;
 		}
+		if (sekme == Sekme.YASAK) {
+			yasakAltBar(g);
+			return;
+		}
 		JsonObject v = sec();
 		boolean var = v != null;
 		int y = height - 28, h = 22;
@@ -790,7 +915,7 @@ public final class VakaEkrani extends Screen {
 		boolean kisa = gw[2] < 108;
 		dugme(x, y, gw[0], h, "✔ Hileydi", VURGU, var, () -> {
 			onayVaka = sec();
-			onayRisk = false;
+			onayTur = OnayTur.VAKA;
 			modal = Modal.ONAY;
 		});
 		dugme(x + gw[0] + bosluk, y, gw[1], h, kisa ? "✖ Yanlış" : "✖ Yanlış alarm", YESIL, var, () -> {
@@ -1019,10 +1144,330 @@ public final class VakaEkrani extends Screen {
 
 	// ── onay kutusu ────────────────────────────────────────────────────────────
 
+	// ── yasaklar sekmesi ───────────────────────────────────────────────────────
+
+	private static final int MOR = 0xFFB794F6;
+
+	private static List<String> diziStr(JsonObject o, String k) {
+		List<String> l = new ArrayList<>();
+		if (o != null && o.has(k) && o.get(k).isJsonArray()) {
+			for (JsonElement e : o.getAsJsonArray(k)) {
+				if (e.isJsonPrimitive()) {
+					l.add(e.getAsString());
+				}
+			}
+		}
+		return l;
+	}
+
+	private static List<JsonObject> diziObj(JsonObject o, String k) {
+		List<JsonObject> l = new ArrayList<>();
+		if (o != null && o.has(k) && o.get(k).isJsonArray()) {
+			for (JsonElement e : o.getAsJsonArray(k)) {
+				if (e.isJsonObject()) {
+					l.add(e.getAsJsonObject());
+				}
+			}
+		}
+		return l;
+	}
+
+	private static long uzun(JsonObject o, String k) {
+		try {
+			return o != null && o.has(k) ? o.get(k).getAsLong() : 0;
+		} catch (RuntimeException e) {
+			return 0;
+		}
+	}
+
+	private static String tarih(long ms) {
+		return ms <= 0 ? "?" : SAAT.format(Instant.ofEpochMilli(ms));
+	}
+
+	private void yasakKarti(GuiGraphics g, JsonObject y, int kx1, int kx2, int yy, int kh, boolean secik, boolean ustte, float sc) {
+		int talep = bekleyenTalep(y);
+		int renk = talep > 0 ? TURUNCU : MOR;
+		kutu(g, kx1, yy, kx2, yy + kh, secik ? alfa(renk, 0x40) : ustte ? 0x28FFFFFF : 0x14FFFFFF);
+		if (secik) {
+			cerceve(g, kx1, yy, kx2, yy + kh, alfa(renk, 0xC0));
+		}
+		g.fill(kx1, yy + 1, kx1 + 3, yy + kh - 1, renk);
+		float rs = sc * 0.8f;
+		int hesap = diziStr(y, "adlar").size();
+		String rozet = talep > 0 ? "İTİRAZ" : hesap + " hesap";
+		int rw = gen(rozet, rs) + 8;
+		hap(g, rozet, kx2 - 4 - rw, yy + 4, talep > 0 ? TURUNCU : MOR, rs);
+		String ad = sigdir(str(y, "ana"), kx2 - kx1 - rw - 26, sc);
+		yaz(g, Component.literal(ad).withStyle(ChatFormatting.BOLD), kx1 + 8, yy + 5, BEYAZ, sc, true);
+		String alt = tarih(uzun(y, "zaman")) + " · " + str(y, "sebep");
+		yaz(g, sigdir(alt, kx2 - kx1 - 14, sc * 0.9f), kx1 + 8, yy + 7 + font.lineHeight * sc, GRI, sc * 0.9f, false);
+	}
+
+	private List<Oge> yasakDetayKur(JsonObject y, int w) {
+		List<Oge> l = new ArrayList<>();
+		float sc = s();
+		float bs = sc * 1.6f;
+		int bh = (int) Math.ceil(font.lineHeight * bs) + 6;
+		Component adC = Component.literal(str(y, "ana")).withStyle(ChatFormatting.BOLD);
+		l.add(new Oge(bh, (g, x, yy, ww) -> yaz(g, adC, x, yy, BEYAZ, bs, true)));
+		List<String> adlar = diziStr(y, "adlar");
+		List<String> ipler = diziStr(y, "ipler");
+		JsonObject kanit = y.has("kanit") && y.get("kanit").isJsonObject() ? y.getAsJsonObject("kanit") : null;
+		int guven = kanit != null && kanit.has("guven") ? kanit.get("guven").getAsInt() : -1;
+		List<String> haplar = new ArrayList<>();
+		haplar.add("KALICI YASAK");
+		haplar.add(adlar.size() + " hesap");
+		haplar.add(ipler.size() + " IP");
+		haplar.add(str(y, "cihaz") + " cihaz izi");
+		if (guven >= 0) {
+			haplar.add("hile %" + guven);
+		}
+		cipEkle(l, haplar, w, sc * 0.9f);
+		bosluk(l, 2);
+
+		bolum(l, "YASAK", 0xFFFF8A8A, w);
+		satir(l, "Sebep", str(y, "sebep"), w, sc);
+		satir(l, "Yasaklayan", str(y, "yetkili"), w, sc);
+		satir(l, "Tarih", tarih(uzun(y, "zaman")), w, sc);
+		if (!str(y, "vaka").isEmpty()) {
+			satir(l, "Vaka", str(y, "vaka"), w, sc);
+		}
+		satir(l, "Kayıt no", str(y, "id"), w, sc);
+
+		bolum(l, "HESAPLAR (" + adlar.size() + ")", MAVI, w);
+		metin(l, String.join(", ", adlar), BEYAZ, w, sc);
+		metin(l, "Aynı bilgisayardan ya da IP'den sonradan giren hesaplar otomatik eklenir.", SOLUK, w, sc * 0.85f);
+		bolum(l, "IP ADRESLERİ (" + ipler.size() + ")", MAVI, w);
+		metin(l, ipler.isEmpty() ? "—" : String.join(", ", ipler), BEYAZ, w, sc);
+		bolum(l, "BİLGİSAYAR", MAVI, w);
+		metin(l, str(y, "cihaz") + " cihaz izi · " + str(y, "damga") + " yasak damgası", BEYAZ, w, sc);
+
+		if (kanit != null) {
+			bolum(l, "KANIT", TURUNCU, w);
+			if (guven >= 0) {
+				int renk = guven >= 85 ? VURGU : guven >= 60 ? TURUNCU : 0xFFFFFF55;
+				metin(l, "Yapay zekâ: " + kararYazi(str(kanit, "karar")) + " — %" + guven + " oranında hile tespit edildi", BEYAZ, w, sc);
+				l.add(new Oge(10, (g, x, yy, ww) -> {
+					int by = yy + 1;
+					int bw = Math.min(ww, 320);
+					kutu(g, x, by, x + bw, by + 6, 0x30FFFFFF);
+					kutu(g, x, by, x + Math.max(3, bw * guven / 100), by + 6, renk);
+				}));
+			}
+			if (!str(kanit, "tur").isEmpty()) {
+				satir(l, "Hile türü", str(kanit, "tur"), w, sc);
+			}
+			if (!str(kanit, "ozet").isEmpty()) {
+				metin(l, str(kanit, "ozet"), BEYAZ, w, sc);
+			}
+			if (!str(kanit, "gerekce").isEmpty()) {
+				metin(l, str(kanit, "gerekce"), GRI, w, sc);
+			}
+			if (!str(kanit, "not").isEmpty()) {
+				satir(l, "Yetkili notu", str(kanit, "not"), w, sc);
+			}
+			List<String> ciplerK = new ArrayList<>();
+			if (uzun(kanit, "vakaBas") > 0) {
+				ciplerK.add("Vaka " + tarih(uzun(kanit, "vakaBas")));
+			}
+			ciplerK.add("Ping " + str(kanit, "ping") + " ms");
+			ciplerK.add("TPS " + str(kanit, "tps"));
+			ciplerK.add("Puan " + str(kanit, "puan"));
+			if (!str(kanit, "dunya").isEmpty()) {
+				ciplerK.add(str(kanit, "dunya") + " " + str(kanit, "konum"));
+			}
+			if (!str(kanit, "istemci").isEmpty()) {
+				ciplerK.add("İstemci " + str(kanit, "istemci"));
+			}
+			cipEkle(l, ciplerK, w, sc * 0.9f);
+			List<String> kontroller = diziStr(kanit, "kontroller");
+			if (!kontroller.isEmpty()) {
+				metin(l, "Ne yaptı:", TURUNCU, w, sc);
+				for (String k : kontroller) {
+					metin(l, "• " + k, 0xFFE0E0E0, w - 8, sc * 0.95f, 8);
+				}
+			}
+			List<String> zc = diziStr(kanit, "satirlar");
+			if (!zc.isEmpty()) {
+				metin(l, "Zaman çizelgesi:", MOR, w, sc);
+				for (String z : zc) {
+					metin(l, z, 0xFFC8CCD4, w - 8, sc * 0.85f, 8);
+				}
+			}
+		} else {
+			bolum(l, "KANIT", TURUNCU, w);
+			metin(l, "Bu yasak vaka ekranı dışından verildi (komutla ya da karantina sekmesinden); yapay zekâ kanıtı yok.", SOLUK, w, sc);
+		}
+
+		List<JsonObject> onaylar = diziObj(y, "onaylar");
+		bolum(l, "YASAK KALDIRMA (" + onaylar.size() + "/2 ONAY)", YESIL, w);
+		if (onaylar.isEmpty()) {
+			metin(l, "Henüz onay yok. Yasak; bir kurucu ve bir üst yetkili (ya da ikinci bir kurucu) onaylayınca kalkar.", GRI, w, sc);
+		} else {
+			for (JsonObject o : onaylar) {
+				metin(l, "✔ " + str(o, "ad") + " (" + str(o, "rol") + ") — " + tarih(uzun(o, "zaman")), YESIL, w, sc);
+			}
+			boolean kurucu = onaylar.stream().anyMatch(o -> "KURUCU".equals(str(o, "rol")));
+			metin(l, kurucu ? "İkinci bir üst yetkili ya da kurucu onayı bekleniyor." : "Bir kurucu onayı bekleniyor.", TURUNCU, w, sc);
+		}
+
+		List<JsonObject> talepler = diziObj(y, "talepler");
+		bolum(l, "İTİRAZ TALEPLERİ (" + talepler.size() + ")", TURUNCU, w);
+		if (talepler.isEmpty()) {
+			metin(l, "Siteden gelen itiraz yok.", SOLUK, w, sc);
+		}
+		for (int i = talepler.size() - 1; i >= 0; i--) {
+			JsonObject t = talepler.get(i);
+			String d = str(t, "durum");
+			int dr = "BEKLIYOR".equals(d) ? TURUNCU : "KABUL".equals(d) ? YESIL : VURGU;
+			String dy = "BEKLIYOR".equals(d) ? "BEKLİYOR" : "KABUL".equals(d) ? "KABUL EDİLDİ" : "REDDEDİLDİ";
+			int lh = satirH();
+			String ust = tarih(uzun(t, "zaman")) + " · " + str(t, "hesap");
+			l.add(new Oge(lh + 4, (g, x, yy, ww) -> {
+				int hx = x + hap(g, dy, x, yy, dr, sc * 0.9f) + 6;
+				yaz(g, ust, hx, yy + 2, GRI, sc * 0.9f, false);
+			}));
+			metin(l, "“" + str(t, "mesaj") + "”", BEYAZ, w - 8, sc, 8);
+			if (!str(t, "islemYapan").isEmpty()) {
+				metin(l, ("REDDEDILDI".equals(d) ? "Reddeden: " : "Onaylayanlar: ") + str(t, "islemYapan")
+					+ (str(t, "islemNeden").isEmpty() ? "" : " — " + str(t, "islemNeden")), SOLUK, w - 8, sc * 0.9f, 8);
+			}
+			bosluk(l, 4);
+		}
+
+		List<String> gecmis = diziStr(y, "gecmis");
+		if (!gecmis.isEmpty()) {
+			bolum(l, "GEÇMİŞ", GRI, w);
+			for (int i = gecmis.size() - 1; i >= 0; i--) {
+				metin(l, "• " + gecmis.get(i), 0xFFB8BCC4, w - 8, sc * 0.85f, 8);
+			}
+		}
+		bosluk(l, 10);
+		return l;
+	}
+
+	/** "Etiket: değer" satırı (etiket soluk, değer beyaz). */
+	private void satir(List<Oge> l, String etiket, String deger, int w, float sc) {
+		String t = etiket + ": " + deger;
+		int lh = (int) Math.ceil(font.lineHeight * sc) + 2;
+		List<FormattedCharSequence> p = font.split(Component.literal(t), (int) (w / sc));
+		for (int i = 0; i < p.size(); i++) {
+			FormattedCharSequence s = p.get(i);
+			boolean ilk = i == 0;
+			l.add(new Oge(lh, (g, x, y, ww) -> {
+				if (ilk) {
+					yaz(g, etiket + ":", x, y, GRI, sc, false);
+					yaz(g, sigdir(deger, ww - gen(etiket + ": ", sc), sc), x + gen(etiket + ": ", sc), y, BEYAZ, sc, true);
+				} else {
+					yaz(g, s, x, y, BEYAZ, sc);
+				}
+			}));
+			if (ilk) {
+				break; // değer tek satırda sığdırılır
+			}
+		}
+	}
+
+	private void yasakAltBar(GuiGraphics g) {
+		JsonObject y = yasakSec();
+		boolean var = y != null;
+		int talep = var ? bekleyenTalep(y) : 0;
+		int yy = height - 28, h = 22;
+		int x = detayX();
+		int sag = width - M;
+		int bw = Math.min(150, Math.max(60, (sag - x - 8) / 3));
+		float dsc = Math.min(s(), 1.25f);
+		boolean kisa = gen("Kaldırmayı onayla", dsc) > bw - 8;
+		dugme(x, yy, bw, h, kisa ? "Onayla" : "Kaldırmayı onayla", YESIL, var, () -> {
+			onayVaka = yasakSec();
+			onayTur = OnayTur.KALDIR;
+			modal = Modal.ONAY;
+		});
+		dugme(x + bw + 4, yy, bw, h, talep > 0 ? (kisa ? "Reddet" : "İtirazı reddet") : (kisa ? "İtiraz yok" : "Bekleyen itiraz yok"), VURGU, talep > 0, () -> {
+			onayVaka = yasakSec();
+			onayTur = OnayTur.RED;
+			modal = Modal.ONAY;
+		});
+		yaz(g, sigdir("Tab: sekme · ↑↓: seç · ESC: kapat", listeW() - 4, 0.85f), M + 2, height - 20, SOLUK, 0.85f, false);
+	}
+
+	/** Yasak kaldırma onayı / itiraz reddi kutusu. */
+	private void yasakOnayCiz(GuiGraphics g) {
+		JsonObject y = onayVaka;
+		float sc = Math.min(s(), 1.4f);
+		boolean kaldir = onayTur == OnayTur.KALDIR;
+		String ad = str(y, "ana");
+		int renk = kaldir ? YESIL : VURGU;
+		List<String[]> satirlar = new ArrayList<>();
+		if (kaldir) {
+			int n = diziObj(y, "onaylar").size();
+			satirlar.add(new String[] {ad + " yasağının kaldırılmasını onaylıyor musun?", "B"});
+			satirlar.add(new String[] {"Şu an " + n + "/2 onay var. Yasak; bir kurucu ve bir üst yetkili (ya da ikinci bir kurucu) onaylayınca kalkar.", "G"});
+			satirlar.add(new String[] {"Onayın sunucuda adınla kaydedilir. Yetkin yoksa (kurucu / üst yetkili) sunucu reddeder.", "S"});
+		} else {
+			satirlar.add(new String[] {ad + " için bekleyen itiraz reddedilecek.", "B"});
+			satirlar.add(new String[] {"Reddetme nedeni (isteğe bağlı) oyuncunun sitesinde görünür:", "G"});
+		}
+		int bw = Math.min(width - 40, (int) (380 * sc));
+		List<FormattedCharSequence> cizgiler = new ArrayList<>();
+		List<Integer> renkler = new ArrayList<>();
+		for (String[] s : satirlar) {
+			int r = "B".equals(s[1]) ? BEYAZ : "G".equals(s[1]) ? 0xFFD0D4DC : GRI;
+			for (FormattedCharSequence p : font.split(Component.literal(s[0]), (int) ((bw - 28) / sc))) {
+				cizgiler.add(p);
+				renkler.add(r);
+			}
+		}
+		int lh = (int) Math.ceil(font.lineHeight * sc) + 2;
+		int kutuH = kaldir ? 0 : 26;
+		int bh = 34 + cizgiler.size() * lh + kutuH + 44;
+		int x1 = (width - bw) / 2, y1 = (height - bh) / 2;
+		kutu(g, x1, y1, x1 + bw, y1 + bh, 0xF0121218);
+		cerceve(g, x1, y1, x1 + bw, y1 + bh, alfa(renk, 0xD0));
+		g.fill(x1 + 1, y1 + 1, x1 + bw - 1, y1 + 26, alfa(renk, 0x40));
+		yaz(g, Component.literal(kaldir ? "✔ YASAK KALDIRMA ONAYI" : "✖ İTİRAZI REDDET").withStyle(ChatFormatting.BOLD), x1 + 12,
+			y1 + (26 - font.lineHeight * sc) / 2f + 1, renk, sc, true);
+		int yy = y1 + 34;
+		for (int i = 0; i < cizgiler.size(); i++) {
+			yaz(g, cizgiler.get(i), x1 + 14, yy, renkler.get(i), sc);
+			yy += lh;
+		}
+		if (!kaldir) {
+			if (nedenKutu == null) {
+				nedenKutu = new EditBox(font, x1 + 14, yy + 2, bw - 28, 18, Component.literal("Neden"));
+				nedenKutu.setMaxLength(200);
+				addWidget(nedenKutu);
+				setFocused(nedenKutu);
+			}
+			nedenKutu.setX(x1 + 14);
+			nedenKutu.setY(yy + 2);
+			nedenKutu.setWidth(bw - 28);
+		}
+		int dy = y1 + bh - 32;
+		int dw = (bw - 36) / 2;
+		String id = str(y, "id");
+		dugme(x1 + 12, dy, dw, 22, kaldir ? "Onayla" : "Reddet", renk, true, () -> {
+			if (kaldir) {
+				komut("cevherauth yasakonay " + id, false);
+				tost(ad + ": kaldırma onayın gönderildi", YESIL);
+			} else {
+				String neden = nedenKutu == null ? "" : nedenKutu.getValue().strip();
+				komut("cevherauth talepred " + id + (neden.isEmpty() ? "" : " " + neden), false);
+				tost(ad + ": itiraz reddedildi", VURGU);
+			}
+			modalKapat();
+		});
+		dugme(x1 + bw - 12 - dw, dy, dw, 22, "İptal", GRI, true, this::modalKapat);
+	}
+
 	private void onayCiz(GuiGraphics g) {
 		JsonObject v = onayVaka;
 		if (v == null) {
-			modal = Modal.YOK;
+			modalKapat();
+			return;
+		}
+		if (onayTur == OnayTur.KALDIR || onayTur == OnayTur.RED) {
+			yasakOnayCiz(g);
 			return;
 		}
 		float sc = Math.min(s(), 1.4f);
@@ -1036,7 +1481,7 @@ public final class VakaEkrani extends Screen {
 		satirlar.add(new String[] {"•  Bilgisayarı: cihaz izi + bilgisayarına yazılan yasak damgası", "G"});
 		satirlar.add(new String[] {"•  Aynı bilgisayardan veya IP'den girecek başka hesaplar da otomatik yasaklanır", "G"});
 		satirlar.add(new String[] {"", "S"});
-		if (onayRisk) {
+		if (onayTur == OnayTur.RISK) {
 			satirlar.add(new String[] {"Sebep: " + kaynakYazi(str(v, "neden")), "S"});
 			satirlar.add(new String[] {"Geri almak için: /cevherauth yasakkaldir " + ad, "S"});
 		} else {
@@ -1079,7 +1524,7 @@ public final class VakaEkrani extends Screen {
 		}
 		int dy = y1 + bh - 32;
 		int dw = (bw - 36) / 2;
-		boolean risk = onayRisk;
+		boolean risk = onayTur == OnayTur.RISK;
 		dugme(x1 + 12, dy, dw, 22, test ? "Onayla — Arşivle" : "Onayla — Yasakla", VURGU, true, () -> {
 			if (risk) {
 				String sebep = kaynakYazi(str(v, "neden"));
@@ -1299,12 +1744,11 @@ public final class VakaEkrani extends Screen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		if (event.key() == GLFW.GLFW_KEY_ESCAPE && modal != Modal.YOK) {
-			modal = Modal.YOK;
-			onayVaka = null;
+			modalKapat();
 			return true;
 		}
 		if (modal == Modal.YOK && event.key() == GLFW.GLFW_KEY_TAB) {
-			sekmeYap(sekme == Sekme.HILE ? Sekme.RISK : Sekme.HILE);
+			sekmeYap(Sekme.values()[(sekme.ordinal() + 1) % Sekme.values().length]);
 			return true;
 		}
 		if (modal == Modal.YOK && !aktif().isEmpty()) {
