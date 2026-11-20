@@ -31,14 +31,47 @@ public final class RiskHud {
 	private static final int MAX_GENISLIK = 230;
 
 	private static volatile List<Satir> liste = List.of();
+	/** Sunucudan gelen ham oyuncu kayıtları (vaka ekranının "Karantina & risk" sekmesi için). */
+	private static volatile List<JsonObject> ham = List.of();
+	/** Liste her değiştiğinde artar. */
+	public static volatile int surum;
 
 	private RiskHud() {
+	}
+
+	/** Yalnızca geliştirme ortamı: vaka ekranının karantina sekmesini sunucusuz denemek için örnek liste. */
+	public static void devOrnek() {
+		long t = System.currentTimeMillis();
+		al("{\"t\":\"liste\",\"oyuncular\":[{\"ad\":\"Gladiator\",\"seviye\":\"KRITIK\",\"neden\":\"lobi:launcher-karantina: opsec.jar — hile kelimesi\",\"online\":true,"
+			+ "\"ip\":\"78.180.12.4\",\"son\":" + t + ",\"bulgular\":[{\"zaman\":" + (t - 60000) + ",\"seviye\":\"KRITIK\",\"kaynak\":\"lobi:launcher-karantina\","
+			+ "\"detay\":\"opsec-1.21.jar — bilinmeyen jar, içinde 'killaura' sınıfı\",\"eski\":false},{\"zaman\":" + (t - 3600000) + ",\"seviye\":\"DUSUK\","
+			+ "\"kaynak\":\"ayni-ip\",\"detay\":\"Kral34 (YÜKSEK) ile aynı IP\",\"eski\":true}]},"
+			+ "{\"ad\":\"Kral34\",\"seviye\":\"YUKSEK\",\"neden\":\"koruma: yetkili onayladı: Reach ×4\",\"online\":false,\"ip\":\"78.180.12.4\",\"son\":" + (t - 900000)
+			+ ",\"bulgular\":[{\"zaman\":" + (t - 900000) + ",\"seviye\":\"YUKSEK\",\"kaynak\":\"koruma\",\"detay\":\"yetkili onayladı (arda): Vuruş mesafesi (Reach) ×4\",\"eski\":false}]}]}");
+	}
+
+	public static List<JsonObject> oyuncular() {
+		return ham;
+	}
+
+	/** Bir kaydın "yeni bulgu" anahtarı: ad + en son bulgunun zamanı (ya da seviye). */
+	public static String anahtar(JsonObject o) {
+		String z = "";
+		if (o.has("bulgular") && o.get("bulgular").isJsonArray() && !o.getAsJsonArray("bulgular").isEmpty()) {
+			JsonElement b = o.getAsJsonArray("bulgular").get(0);
+			z = b.isJsonObject() ? String.valueOf(str(b.getAsJsonObject(), "zaman")) : "";
+		}
+		return str(o, "ad") + "|" + str(o, "seviye") + "|" + z;
 	}
 
 	public static void init() {
 		PayloadTypeRegistry.playS2C().register(RiskPayload.TYPE, RiskPayload.CODEC);
 		ClientPlayNetworking.registerGlobalReceiver(RiskPayload.TYPE, (payload, context) -> al(payload.text()));
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> liste = List.of());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			liste = List.of();
+			ham = List.of();
+			surum++;
+		});
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
 			Identifier.fromNamespaceAndPath(CevherClientMod.MOD_ID, "risk"),
 			(graphics, delta) -> render(graphics, Minecraft.getInstance()));
@@ -51,6 +84,7 @@ public final class RiskHud {
 				return;
 			}
 			List<Satir> yeni = new ArrayList<>();
+			List<JsonObject> yeniHam = new ArrayList<>();
 			for (JsonElement x : e.getAsJsonObject().getAsJsonArray("oyuncular")) {
 				if (!x.isJsonObject() || yeni.size() >= 20) {
 					continue;
@@ -62,8 +96,11 @@ public final class RiskHud {
 				}
 				yeni.add(new Satir(ad, String.valueOf(str(o, "seviye")), String.valueOf(str(o, "neden")),
 					o.has("online") && o.get("online").getAsBoolean()));
+				yeniHam.add(o);
 			}
 			liste = List.copyOf(yeni);
+			ham = List.copyOf(yeniHam);
+			surum++;
 		} catch (RuntimeException ex) {
 			CevherClientMod.LOGGER.warn("Risk listesi okunamadı: {}", ex.toString());
 		}

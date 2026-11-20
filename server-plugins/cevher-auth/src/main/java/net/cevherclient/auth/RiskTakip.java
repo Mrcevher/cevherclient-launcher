@@ -488,6 +488,24 @@ final class RiskTakip implements Listener {
 			o.addProperty("seviye", s.name());
 			o.addProperty("neden", en == null ? "" : kisalt(en.kaynak() + ": " + en.detay(), 70));
 			o.addProperty("online", online != null);
+			// Vaka ekranındaki "Karantina & risk" sekmesi için ayrıntı (eski modlar yok sayar)
+			o.addProperty("ip", k.ip == null ? "" : k.ip);
+			o.addProperty("son", k.sonGorulme);
+			JsonArray bul = new JsonArray();
+			synchronized (k) {
+				List<Bulgu> l = new ArrayList<>(k.bulgular);
+				for (int i = l.size() - 1; i >= 0 && bul.size() < 8; i--) {
+					Bulgu b = l.get(i);
+					JsonObject j = new JsonObject();
+					j.addProperty("zaman", b.zaman());
+					j.addProperty("seviye", b.seviye().name());
+					j.addProperty("kaynak", b.kaynak());
+					j.addProperty("detay", kisalt(b.detay(), 200));
+					j.addProperty("eski", b.zaman() < sinir);
+					bul.add(j);
+				}
+			}
+			o.add("bulgular", bul);
 			satirlar.add(o);
 		}
 		satirlar.sort(Comparator.<JsonObject>comparingInt(o -> -Seviye.bul(o.get("seviye").getAsString()).ordinal())
