@@ -60,6 +60,7 @@ final class JoinListener implements Listener {
 		boolean checkIp = plugin.getConfig().getBoolean("check-ip", true);
 
 		SessionStore.TicketLookup found = plugin.sessions().findTicket(name, ip, checkIp);
+		String sorguModlar = null;
 		switch (found.check()) {
 			case OK -> {
 				if (plugin.getConfig().getBoolean("require-proof", true)) {
@@ -83,6 +84,7 @@ final class JoinListener implements Listener {
 							plugin.message(proof == Proof.NONE ? "outdated-launcher" : "no-ticket"));
 						return;
 					}
+					sorguModlar = pr.mods();
 					// Bilet sahibinin oyunu: yüklü mod listesi izinli mi? (Lobide de reddedilir;
 					// aksi hâlde yasaklı modla gelen oyuncuya şifre sorulup içeri alınırdı.)
 					String red = plugin.modDogrulama().kontrol(name, ip, pr.mods());
@@ -103,6 +105,10 @@ final class JoinListener implements Listener {
 				// Launcher'da doğrulanmış oyuncu: oyunda şifre sorulmaz.
 				if (lobby != null) {
 					lobby.markLauncherVerified(name, ip);
+				}
+				// Oyun içi sorgu (OyunSorgu) aynı bilet sırrıyla imzalanır; sır lobide saklanır.
+				if (sorguModlar != null || plugin.getConfig().getBoolean("require-proof", true)) {
+					plugin.oyunSorgu().biletKaydet(name, found.ticket().secret(), sorguModlar);
 				}
 			}
 			case WRONG_NAME -> {

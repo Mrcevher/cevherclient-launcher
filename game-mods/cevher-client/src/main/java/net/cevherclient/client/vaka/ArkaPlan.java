@@ -75,7 +75,14 @@ final class ArkaPlan {
 		return s.endsWith(".mp4") || s.endsWith(".m4v") || s.endsWith(".mov");
 	}
 
-	/** Ayardaki dosyayı (değiştiyse) yükler. */
+	/** Wallpaper Engine bağlıysa duvar kağıdının adı ve ne kullanıldığı; değilse boş. */
+	static String bilgi() {
+		return bilgi;
+	}
+
+	private static String bilgi = "";
+
+	/** Ayardaki dosyayı (değiştiyse) yükler. {@link WallpaperEngine#SECIM} ise masaüstündeki duvar kağıdını bulur. */
 	static void hazirla(String yol) {
 		if (yol.equals(yukluYol)) {
 			return;
@@ -83,16 +90,43 @@ final class ArkaPlan {
 		birak();
 		yukluYol = yol;
 		hata = "";
+		bilgi = "";
 		if (yol.isEmpty()) {
 			return;
 		}
-		File f = new File(yol);
-		if (!f.isFile()) {
-			hata = "Dosya bulunamadı: " + f.getName();
+		if (WallpaperEngine.SECIM.equals(yol)) {
+			WallpaperEngine.Sonuc s = WallpaperEngine.aktif();
+			if (s.adaylar().isEmpty()) {
+				hata = s.hata();
+				return;
+			}
+			String ilkHata = "";
+			for (File f : s.adaylar()) {
+				if (dosyaYukle(f, yol)) {
+					boolean vid = video(f.getName());
+					bilgi = s.ad() + (vid ? " (video)" : " (" + (s.tur().equals("video") ? "video açılamadı, " : "") + "önizleme)");
+					hata = "";
+					return;
+				}
+				if (ilkHata.isEmpty()) {
+					ilkHata = hata;
+				}
+			}
+			hata = "Wallpaper Engine: " + ilkHata;
 			return;
 		}
+		dosyaYukle(new File(yol), yol);
+	}
+
+	/** Tek dosyayı yükler; başarısızsa {@link #hata} dolar ve false döner. */
+	private static boolean dosyaYukle(File f, String yol) {
+		if (!f.isFile()) {
+			hata = "Dosya bulunamadı: " + f.getName();
+			return false;
+		}
+		String yol0 = f.getPath();
 		try {
-			String s = yol.toLowerCase(Locale.ROOT);
+			String s = yol0.toLowerCase(Locale.ROOT);
 			if (video(s)) {
 				videoBaslat(f);
 			} else if (s.endsWith(".gif")) {
@@ -101,18 +135,22 @@ final class ArkaPlan {
 				BufferedImage r = ImageIO.read(f);
 				if (r == null) {
 					hata = "Bu resim biçimi okunamadı (PNG, JPG, BMP veya GIF kullan)";
-					return;
+					return false;
 				}
 				r = olcekle(r, MAX_RESIM);
 				dokuKur(r.getWidth(), r.getHeight());
 				int[] p = r.getRGB(0, 0, w, h, null, 0, w);
 				yukle(p);
 			}
+			return doku != null;
 		} catch (Throwable e) {
 			hata = "Açılamadı: " + e.getClass().getSimpleName() + (e.getMessage() == null ? "" : " — " + e.getMessage());
 			CevherClientMod.LOGGER.warn("Vaka arka planı yüklenemedi ({}): {}", f.getName(), e.toString());
+			String b = bilgi;
 			birak();
 			yukluYol = yol;
+			bilgi = b;
+			return false;
 		}
 	}
 

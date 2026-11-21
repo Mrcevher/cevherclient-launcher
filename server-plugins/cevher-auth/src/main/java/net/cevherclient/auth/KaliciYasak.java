@@ -114,6 +114,11 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		Kanit kanit;
 		List<Onay> onaylar = new ArrayList<>();
 		List<Talep> talepler = new ArrayList<>();
+		/**
+		 * Yetkili bu yasak hakkında karar verdi (itiraz / kaldırma reddedildi): yasak sürer ama vaka ekranının "Yasaklar"
+		 * listesinden düşer. Yeni itiraz ya da yeni kaldırma onayı gelince yeniden görünür.
+		 */
+		boolean islendi;
 		/** Yalnızca kapıda: lobiye henüz ulaşmamış yerel kayıt (eşitlemede silinmez). */
 		transient long yerelZaman;
 	}
@@ -361,6 +366,7 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		o.rol = rol;
 		o.zaman = System.currentTimeMillis();
 		k.onaylar.add(o);
+		k.islendi = false;
 		k.gecmis.add(simdi() + " yasak kaldırma onayı: " + ad + " (" + rol + ")");
 		boolean kurucuVar = k.onaylar.stream().anyMatch(x -> ROL_KURUCU.equals(x.rol));
 		if (k.onaylar.size() >= 2 && kurucuVar) {
@@ -400,9 +406,14 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		cevap.accept(talepReddetYerel(hedef, talepId, ad, neden));
 	}
 
+	/**
+	 * Yetkilinin "Reddet" kararı: bekleyen itiraz varsa reddedilir (oyuncu 24 saat yeni itiraz açamaz), verilmiş kaldırma
+	 * onayları sıfırlanır ve yasak vaka ekranındaki listeden düşer (yasak sürer).
+	 */
 	private synchronized String talepReddetYerel(String hedef, String talepId, String ad, String neden) {
 		Kayit k = bulAdVeyaIp(hedef);
 		if (k == null) return "Böyle bir yasak yok: " + hedef;
+		String nd = neden == null ? "" : neden.length() > 200 ? neden.substring(0, 200) : neden;
 		Talep t = null;
 		for (int i = k.talepler.size() - 1; i >= 0; i--) {
 			Talep x = k.talepler.get(i);
@@ -411,14 +422,21 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 				break;
 			}
 		}
-		if (t == null) return "Bu yasakta bekleyen itiraz talebi yok.";
-		t.durum = "REDDEDILDI";
-		t.islemYapan = ad;
-		t.islemNeden = neden == null ? "" : neden.length() > 200 ? neden.substring(0, 200) : neden;
-		t.islemZaman = System.currentTimeMillis();
-		k.gecmis.add(simdi() + " itiraz talebi reddedildi: " + ad + (t.islemNeden.isEmpty() ? "" : " — " + t.islemNeden));
+		if (t != null) {
+			t.durum = "REDDEDILDI";
+			t.islemYapan = ad;
+			t.islemNeden = nd;
+			t.islemZaman = System.currentTimeMillis();
+			k.gecmis.add(simdi() + " itiraz talebi reddedildi: " + ad + (nd.isEmpty() ? "" : " — " + nd));
+		} else {
+			k.gecmis.add(simdi() + " yasak kaldırma reddedildi: " + ad + (nd.isEmpty() ? "" : " — " + nd));
+		}
+		int onaySayisi = k.onaylar.size();
+		k.onaylar.clear();
+		k.islendi = true;
 		kaydet();
-		return k.ana + " için itiraz talebi reddedildi.";
+		return k.ana + (t != null ? " için itiraz reddedildi (24 saat yeni itiraz açamaz)" : " için kaldırma reddedildi, yasak sürüyor")
+			+ (onaySayisi > 0 ? "; " + onaySayisi + " kaldırma onayı sıfırlandı." : ".");
 	}
 
 	/** Site → lobi: yasaklı hesabın itiraz talebi. Dönüş: durum kodu. */
@@ -428,7 +446,12 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		for (Talep t : k.talepler) {
 			if ("BEKLIYOR".equals(t.durum)) return "ZATEN_BEKLIYOR";
 		}
-		long son24 = k.talepler.stream().filter(t -> t.zaman > System.currentTimeMillis() - 86_400_000L).count();
+		long simdi = System.currentTimeMillis();
+		// Reddedilen itirazdan sonra 24 saat yeni itiraz açılamaz (site "COK_SIK" mesajını gösterir).
+		for (Talep t : k.talepler) {
+			if ("REDDEDILDI".equals(t.durum) && t.islemZaman > simdi - 86_400_000L) return "COK_SIK";
+		}
+		long son24 = k.talepler.stream().filter(t -> t.zaman > simdi - 86_400_000L).count();
 		if (son24 >= 2) return "COK_SIK";
 		Talep t = new Talep();
 		t.id = Passwords.randomToken().substring(0, 6);
@@ -436,6 +459,7 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		t.hesap = hesap;
 		t.mesaj = mesaj.length() > 1000 ? mesaj.substring(0, 1000) : mesaj;
 		k.talepler.add(t);
+		k.islendi = false;
 		while (k.talepler.size() > 20) k.talepler.remove(0);
 		k.gecmis.add(simdi() + " siteden itiraz talebi geldi (" + hesap + ")");
 		kaydet();
@@ -619,6 +643,7 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		l.sort((x, y) -> Long.compare(y.zaman, x.zaman));
 		int boyut = 0;
 		for (Kayit k : l) {
+			if (k.islendi) continue; // karar verilmiş yasak ekranda gösterilmez (yasak sürer)
 			JsonObject o = new JsonObject();
 			o.addProperty("id", k.id);
 			o.addProperty("ana", k.ana);
@@ -626,7 +651,7 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 			k.adlar.forEach(adlar::add);
 			o.add("adlar", adlar);
 			JsonArray ipler = new JsonArray();
-			k.ipler.forEach(ipler::add);
+			k.ipler.forEach(ip -> ipler.add(ipGizle(ip)));
 			o.add("ipler", ipler);
 			o.addProperty("cihaz", k.cihazlar.size());
 			o.addProperty("damga", k.damgalar.size());
@@ -657,6 +682,18 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		m.addProperty("t", "yasaklar");
 		m.add("yasaklar", arr);
 		return m;
+	}
+
+	/** Ekranda IP'nin yalnızca ilk bölümü görünür: 176.42.242.198 → 176.xxx.xxx.xxx */
+	static String ipGizle(String ip) {
+		if (ip == null || ip.isEmpty()) return "";
+		char ayrac = ip.indexOf('.') >= 0 ? '.' : ':';
+		int i = ip.indexOf(ayrac);
+		if (i <= 0) return ip.length() <= 3 ? ip : ip.substring(0, 3) + "xxxxx";
+		StringBuilder sb = new StringBuilder(ip.substring(0, i));
+		int parca = ayrac == '.' ? 3 : 2;
+		for (int n = 0; n < parca; n++) sb.append(ayrac).append("xxx");
+		return sb.toString();
 	}
 
 	private void opGonder(Player p) {

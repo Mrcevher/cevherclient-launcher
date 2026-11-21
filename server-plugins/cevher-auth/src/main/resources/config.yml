@@ -189,7 +189,7 @@ guvenlik:
 mod-dogrulama:
   enabled: true
   # Mod listesi göndermeyen (eski launcher) oyuncu reddedilsin mi? Herkes 5.0.5+'a geçince true yapın.
-  liste-zorunlu: false
+  liste-zorunlu: true
   hash-kontrol: true
   # Hash'i hiçbir listede olmayan jar: REDDET | KAYDET (yalnızca konsola yazar, girişe izin verir)
   bilinmeyen: REDDET
@@ -199,6 +199,9 @@ mod-dogrulama:
   modrinth-erisilemezse: REDDET
   # Oyuna -javaagent ile kod enjekte edilmişse reddet.
   agent-reddet: true
+  # Oyun -XX:+DisableAttachMechanism olmadan (sonradan agent bağlanabilir hâlde) açılmışsa reddet.
+  # Launcher 5.3.0+ bu bayrağı ekler; herkes güncelleyince true yapın.
+  attach-engeli-zorunlu: false
   # Bu klasörlerdeki jar'ların hash'i izinlidir. Launcher'ın kendi modları (cevher-session/client/ui):
   # her launcher sürümü yayınlanınca resources/mods içindeki jar'ları buraya kopyalayıp /cevherauth reload.
   jar-klasorleri:
@@ -240,6 +243,26 @@ risk-takibi:
 
 # Kalıcı yasak (CevherKoruma "Hileydi → Onayla" ve /cevherauth yasakla). Yasak hesap adı, IP, Cevherclient'ın
 # gönderdiği cihaz izi (bilgisayar kimliği) ve bilgisayara yazılan damga ile eşleşir; eşleşen yeni hesap/IP yasağa eklenir.
+# Oyun içi istemci sorgusu (oturum modu 1.2+ / launcher 5.3.0+): oyuncu oyundayken rastgele aralıklarla
+# imzalı bir durum ister. Sahte/bozuk yanıt ya da oyun sırasında agent / hile sınıfı görülürse oyuncu atılır
+# ve risk listesine KRİTİK yazılır. Kapı sunucusu yanıtı lobiye doğrulatır.
+oyun-sorgu:
+  acik: true
+  ilk-saniye: 25
+  aralik-min-saniye: 180
+  aralik-max-saniye: 480
+  hatada-at: true
+  # Girişte sorgu desteği bildirip sonra üst üste yanıt vermeyen istemci (yanitsiz-sinir kez) atılsın mı?
+  yanitsiz-at: false
+  yanitsiz-sinir: 3
+
+# Kapı (arka sunucular): lobide oyunda şifreyle giren (launcher'sız, mod denetiminden geçmemiş) oyuncu
+# arka sunuculara geçebilsin mi? sadece-launcher açıkken yalnızca launcher biletiyle gelenler geçer.
+kapi:
+  sadece-launcher: false
+  # Launcher'sız da geçebilecek adlar (ör. geliştirme istemcisiyle giren yetkili). Şifre yine gerekir.
+  launchersiz-izinli: []
+
 kalici-yasak:
   # IP de yasaklansın mı (aynı internetteki herkes etkilenir; mobil/paylaşımlı IP'de dikkat)
   ip: true
@@ -253,6 +276,8 @@ kalici-yasak:
     - "https://www.cevhercraft.com"
 
 messages:
+  gate-launcher: "&cBu sunucuya yalnızca &fCevherclient launcher &cile girilebilir.\n&7İndir: &fcevhercraft.com"
+  sorgu-hata: "&cİstemci doğrulaması başarısız.\n&7Oyunu kapatıp &fCevherclient launcher &7ile yeniden gir."
   kalici-yasak: "&c&lSunucudan kalıcı olarak yasaklandın.\n&7Sebep: &f%sebep%\n&7Tarih: &f%tarih%\n&8Kayıt: %id%"
   lockdown: "&cHesap sistemi şu an çalışmıyor.\n&7Lütfen yöneticiye haber ver."
   no-ticket: "&cBu sunucuya yalnızca &bCevherclient&c ile girilebilir.\n&7Launcher'ı aç, hesabınla giriş yap ve &fOyna&7'ya bas."

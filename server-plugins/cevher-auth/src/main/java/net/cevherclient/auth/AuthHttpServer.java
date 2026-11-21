@@ -188,6 +188,16 @@ final class AuthHttpServer {
 				case "/api/store/buy" -> sendResult(ex, bridge.buy(str(body, "token"), str(body, "productId")));
 				case "/api/internal/check" -> internalCheck(ex, body, client);
 				case "/api/internal/block" -> internalBlock(ex, body, client);
+				case "/api/internal/sorgu" -> {
+					// Kapı sunucusu oyun içi sorgu yanıtını lobideki bilet sırrıyla doğrulatır (bkz. OyunSorgu).
+					if (!internalAuthorized(ex, body, client)) {
+						send(ex, 403, error("FORBIDDEN"));
+					} else {
+						JsonObject o = plugin.oyunSorgu().httpDogrula(body);
+						o.addProperty("ok", true);
+						send(ex, 200, o);
+					}
+				}
 				case "/api/internal/ban", "/api/internal/yasaklar", "/api/internal/yasak-islem" -> {
 					if (!internalAuthorized(ex, body, client) || plugin.kaliciYasak() == null) {
 						send(ex, 403, error("FORBIDDEN"));
@@ -233,7 +243,15 @@ final class AuthHttpServer {
 		String name = str(body, "name");
 		String ip = str(body, "ip");
 		JsonObject o = ok();
-		o.addProperty("authorized", name != null && ip != null && lobby.isAuthorized(name, ip));
+		boolean yetkili = name != null && ip != null && lobby.isAuthorized(name, ip);
+		// kapi.sadece-launcher: lobide oyunda şifreyle giren (launcher'sız, mod denetiminden geçmemiş) istemci
+		// arka sunuculara geçemez. kapi.launchersiz-izinli listesindeki adlar (yetkililer) hariç.
+		if (yetkili && plugin.getConfig().getBoolean("kapi.sadece-launcher", false) && !lobby.viaLauncher(name)
+			&& plugin.getConfig().getStringList("kapi.launchersiz-izinli").stream().noneMatch(name::equalsIgnoreCase)) {
+			yetkili = false;
+			o.addProperty("neden", "launcher");
+		}
+		o.addProperty("authorized", yetkili);
 		if (name != null) {
 			o.add("risk", plugin.riskTakip().disaAktar(name));
 		}

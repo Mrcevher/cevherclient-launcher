@@ -44,6 +44,8 @@ import org.slf4j.LoggerFactory;
 public final class JoinProof {
 	private static final Logger LOG = LoggerFactory.getLogger("cevher_session");
 	private static final String KEY_PREFIX = "cevherauth:proof/";
+	private static final String SORGU_PREFIX = "cevherauth:sorgu/";
+	private static final String SORGU_BAGLAM = "cevherauth-sorgu-v1|";
 	private static final String CONTEXT_V2 = "cevherauth-proof-v2|";
 	/** Cookie yanıtı en fazla 5120 bayt; HMAC ve önek için pay bırakılır. */
 	private static final int MAX_MODS_BYTES = 4800;
@@ -92,6 +94,9 @@ public final class JoinProof {
 	public static byte[] respond(String cookieKey) {
 		String s = secret;
 		String name = username;
+		if (s != null && name != null && cookieKey != null && cookieKey.startsWith(SORGU_PREFIX)) {
+			return sorguYanit(s, name, cookieKey.substring(SORGU_PREFIX.length()));
+		}
 		if (s == null || name == null || cookieKey == null || !cookieKey.startsWith(KEY_PREFIX)) {
 			return null;
 		}
@@ -112,6 +117,31 @@ public final class JoinProof {
 			return out;
 		} catch (GeneralSecurityException e) {
 			LOG.error("HmacSHA256 kullanılamıyor", e);
+			return null;
+		}
+	}
+
+	/**
+	 * Oyun içi sorgu (CevherAuth 1.9+ OyunSorgu): {@code [0x01][HMAC(sır, "cevherauth-sorgu-v1|nonce|ad|durum")][durum]}.
+	 * Durum: {@code m=<giriş mod listesinin sha1'i>} ve {@link Bekci#durum()} bayrakları.
+	 */
+	private static byte[] sorguYanit(String s, String name, String nonce) {
+		if (!NONCE.matcher(nonce).matches()) {
+			return null;
+		}
+		try {
+			String durum = "m=" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-1").digest(modList().getBytes(StandardCharsets.UTF_8)))
+				+ Bekci.durum();
+			Mac mac = Mac.getInstance("HmacSHA256");
+			mac.init(new SecretKeySpec(s.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+			byte[] sig = mac.doFinal((SORGU_BAGLAM + nonce + "|" + name.toLowerCase(Locale.ROOT) + "|" + durum).getBytes(StandardCharsets.UTF_8));
+			byte[] d = durum.getBytes(StandardCharsets.UTF_8);
+			byte[] out = new byte[1 + sig.length + d.length];
+			out[0] = 1;
+			System.arraycopy(sig, 0, out, 1, sig.length);
+			System.arraycopy(d, 0, out, 1 + sig.length, d.length);
+			return out;
+		} catch (GeneralSecurityException e) {
 			return null;
 		}
 	}
@@ -139,7 +169,7 @@ public final class JoinProof {
 			mods.add(new String[] {id.replaceAll("[,@!]", ""), hashOf(m)});
 		}
 		mods.sort((a, b) -> a[1].compareTo(b[1]));
-		List<String> flags = new ArrayList<>();
+		List<String> flags = new ArrayList<>(Bekci.bayraklar());
 		for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
 			String a = arg.toLowerCase(Locale.ROOT);
 			if (a.startsWith("-javaagent") || a.startsWith("-agentlib") || a.startsWith("-agentpath")) {

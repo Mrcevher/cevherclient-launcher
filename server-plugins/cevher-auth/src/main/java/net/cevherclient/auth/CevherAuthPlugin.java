@@ -41,6 +41,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	private LobbyLogin lobbyLogin;
 	private Guvenlik guvenlik;
 	private ModDogrulama modDogrulama;
+	private OyunSorgu oyunSorgu;
 	private RiskTakip riskTakip;
 	private KaliciYasak kaliciYasak;
 	/** Op adları (küçük harf); HTTP iş parçacığından okunduğu için ana iş parçacığında yenilenir. */
@@ -68,6 +69,8 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		kaliciYasak = new KaliciYasak(this);
 		getServer().getPluginManager().registerEvents(kaliciYasak, this);
 		modDogrulama = new ModDogrulama(this);
+		oyunSorgu = new OyunSorgu(this);
+		getServer().getPluginManager().registerEvents(oyunSorgu, this);
 
 		if (role.equals("gate")) {
 			enableGate();
@@ -161,6 +164,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 					reloadConfig();
 					guvenlik.yenile();
 					modDogrulama.yenile();
+					oyunSorgu.yenile();
 					riskTakip.yenile();
 					sender.sendMessage("§aCevherAuth (kapı) ayarları yeniden yüklendi.");
 				} else if (AdminCommand.engelKomutu(this, sender, args)) {
@@ -283,6 +287,10 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		return out;
 	}
 
+	OyunSorgu oyunSorgu() {
+		return oyunSorgu;
+	}
+
 	ModDogrulama modDogrulama() {
 		return modDogrulama;
 	}
@@ -362,6 +370,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		reloadConfig();
 		guvenlik.yenile();
 		modDogrulama.yenile();
+		oyunSorgu.yenile();
 		riskTakip.yenile();
 		refreshTrustedProxies();
 		refreshPlayedNames();

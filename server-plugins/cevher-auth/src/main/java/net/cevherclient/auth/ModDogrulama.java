@@ -64,7 +64,7 @@ final class ModDogrulama {
 	}
 
 	private record Ayar(boolean acik, boolean listeZorunlu, boolean kaydet, boolean hashKontrol, Bilinmeyen bilinmeyen,
-		boolean modrinth, boolean modrinthYoksaGecir, boolean agentReddet, Set<String> izinliHash, Set<String> yasakliHash,
+		boolean modrinth, boolean modrinthYoksaGecir, boolean agentReddet, boolean attachZorunlu, Set<String> izinliHash, Set<String> yasakliHash,
 		Set<String> yasakliProje, Set<String> yasakliId, Set<String> hileKelimeleri) {
 	}
 
@@ -108,6 +108,7 @@ final class ModDogrulama {
 			c.getBoolean("modrinth-kontrol", true),
 			"GECIR".equalsIgnoreCase(c.getString("modrinth-erisilemezse", "REDDET")),
 			c.getBoolean("agent-reddet", true),
+			c.getBoolean("attach-engeli-zorunlu", false),
 			Set.copyOf(izinli),
 			kucuk(c.getStringList("yasakli-hashler")),
 			kucuk(c.getStringList("yasakli-projeler")),
@@ -230,6 +231,7 @@ final class ModDogrulama {
 		}
 
 		List<Girdi> girdiler = new ArrayList<>();
+		Set<String> bayraklar = new HashSet<>();
 		for (String raw : modlar.split(",")) {
 			String e = raw.trim().toLowerCase(Locale.ROOT);
 			if (e.isEmpty()) {
@@ -239,6 +241,18 @@ final class ModDogrulama {
 				if (a.agentReddet()) {
 					return red(ad, ip, "java agent", "oyuna Java agent eklenmiş");
 				}
+				continue;
+			}
+			if (e.startsWith("!sinif:")) {
+				// Oturum modu (1.2+) bilinen bir hile istemcisinin ana sınıfını sınıf yolunda buldu.
+				return kritik(ad, ip, e.substring(7), "bilinen hile istemcisinin sınıfı yüklü");
+			}
+			if (e.startsWith("!")) {
+				return red(ad, ip, "istemci", "oturum modu şüpheli durum bildirdi (" + e + ")");
+			}
+			if (e.startsWith("+")) {
+				// Oturum modu 1.2+ yetenek bayrakları: +sorgu (oyun içi sorgu), +noattach (agent engeli açık).
+				bayraklar.add(e);
 				continue;
 			}
 			if (e.startsWith("…+")) {
@@ -254,6 +268,9 @@ final class ModDogrulama {
 				return kritik(ad, ip, id, "yasaklı mod kimliği");
 			}
 			girdiler.add(new Girdi(id, hash));
+		}
+		if (a.attachZorunlu() && !bayraklar.contains("+noattach")) {
+			return red(ad, ip, "launcher eski", "agent engeli (-XX:+DisableAttachMechanism) yok; launcher güncellenmeli");
 		}
 		if (!a.hashKontrol()) {
 			return null;

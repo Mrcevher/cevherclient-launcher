@@ -58,6 +58,15 @@ final class GateListener implements Listener {
 			if (response.statusCode() == 403) {
 				plugin.getLogger().severe("Lobi API'si kapı sorgusunu reddetti: network.secret iki sunucuda aynı mı?");
 			}
+			if (json.has("neden") && "launcher".equals(json.get("neden").getAsString())) {
+				// Lobide oyunda şifreyle giriş yaptı ama kapı yalnızca launcher'la gelenleri alıyor (kapi.sadece-launcher).
+				plugin.getLogger().info(name + " launcher'sız (oyunda şifreyle) geldi (" + ip + "), kapıdan geçirilmedi");
+				String raw = plugin.getConfig().getString("messages.gate-launcher",
+					"&cBu sunucuya yalnızca &fCevherclient launcher &cile girilebilir.\n&7İndir: &fcevhercraft.com");
+				event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+					net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(raw));
+				return;
+			}
 			plugin.getLogger().info(name + " lobide giriş yapmadan bağlanmaya çalıştı (" + ip + "), reddedildi");
 			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.message("gate-denied"));
 		} catch (InterruptedException e) {

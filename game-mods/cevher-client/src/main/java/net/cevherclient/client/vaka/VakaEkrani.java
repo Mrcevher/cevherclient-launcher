@@ -120,6 +120,9 @@ public final class VakaEkrani extends Screen {
 
 	private void yenileYasak() {
 		String id = str(yasakSec(), "id");
+		if (yasakSurum >= 0 && yasakSurum != RiskHud.yasakSurum) {
+			ONAYLADIM.clear(); // sunucudan yeni liste geldi: onay durumu artık listede
+		}
 		yasaklar = RiskHud.yasaklar();
 		yasakSurum = RiskHud.yasakSurum;
 		int yeni = Math.min(Math.max(0, yasakSecili), Math.max(0, yasaklar.size() - 1));
@@ -297,6 +300,43 @@ public final class VakaEkrani extends Screen {
 		long ms = o.has("bas") && o.has("bit") ? Math.max(0, o.get("bit").getAsLong() - o.get("bas").getAsLong()) : 0;
 		long s = ms / 1000;
 		return String.format("%02d:%02d", s / 60, s % 60);
+	}
+
+	/** Ekranda IP'nin yalnızca ilk bölümü görünür: 176.42.242.198 → 176.xxx.xxx.xxx */
+	static String ipGizle(String ip) {
+		if (ip == null || ip.isEmpty()) {
+			return "";
+		}
+		char ayrac = ip.indexOf('.') >= 0 ? '.' : ':';
+		int i = ip.indexOf(ayrac);
+		if (i <= 0) {
+			return ip.length() <= 3 ? ip : ip.substring(0, 3) + "xxxxx";
+		}
+		StringBuilder sb = new StringBuilder(ip.substring(0, i));
+		for (int n = 0, parca = ayrac == '.' ? 3 : 2; n < parca; n++) {
+			sb.append(ayrac).append("xxx");
+		}
+		return sb.toString();
+	}
+
+	/** Bu oturumda kaldırma onayı gönderdiğim yasaklar (sunucu listesi gelene kadar düğme yine tıklanmasın). */
+	private static final java.util.Map<String, Long> ONAYLADIM = new java.util.HashMap<>();
+
+	private String benimAdim() {
+		return minecraft != null ? minecraft.getUser().getName() : "";
+	}
+
+	/** Bu yasağın kaldırılmasını zaten onayladım mı? */
+	private boolean onayVerdim(JsonObject y) {
+		if (y == null) {
+			return false;
+		}
+		Long gonderim = ONAYLADIM.get(str(y, "id"));
+		if (gonderim != null && Util.getMillis() - gonderim < 20_000L) {
+			return true; // sunucunun güncel listesi gelene kadar
+		}
+		String ben = benimAdim();
+		return diziObj(y, "onaylar").stream().anyMatch(o -> str(o, "ad").equalsIgnoreCase(ben));
 	}
 
 	private void komut(String k, boolean kapat) {
@@ -589,7 +629,7 @@ public final class VakaEkrani extends Screen {
 			String acik = switch (sekme) {
 				case HILE -> "Karara bağlananlar sunucuda plugins/CevherKoruma/arsiv/ klasöründe.";
 				case RISK -> "Launcher karantinası, hile istemcisi, IP engeli ve Vulcan bulguları burada listelenir.";
-				case YASAK -> "Kalıcı yasaklananlar, kanıtları, kaldırma onayları ve siteden gelen itirazlar burada listelenir.";
+				case YASAK -> "Kalıcı yasaklananlar, kanıtları, kaldırma onayları ve siteden gelen itirazlar burada listelenir. Karar verilen (kaldırılan ya da reddedilen) yasaklar listeden düşer.";
 			};
 			yaz(g, bos, x1 + 8, y1 + 10, GRI, sc, true);
 			List<FormattedCharSequence> l = font.split(Component.literal(acik),
@@ -813,7 +853,7 @@ public final class VakaEkrani extends Screen {
 		}
 		List<String> cipler = new ArrayList<>();
 		if (!str(o, "ip").isEmpty()) {
-			cipler.add("IP " + str(o, "ip"));
+			cipler.add("IP " + ipGizle(str(o, "ip")));
 		}
 		if (o.has("son") && o.get("son").getAsLong() > 0) {
 			cipler.add("Son görülme " + SAAT.format(Instant.ofEpochMilli(o.get("son").getAsLong())));
@@ -991,7 +1031,7 @@ public final class VakaEkrani extends Screen {
 		cipler.add("İstemci " + str(v, "istemci"));
 		cipler.add(str(v, "dunya") + " " + str(v, "konum"));
 		if (!str(v, "ip").isEmpty()) {
-			cipler.add("IP " + str(v, "ip"));
+			cipler.add("IP " + ipGizle(str(v, "ip")));
 		}
 		float cs = sc * 0.9f;
 		int chH = (int) Math.ceil(font.lineHeight * cs) + 6;
@@ -1238,7 +1278,7 @@ public final class VakaEkrani extends Screen {
 		metin(l, String.join(", ", adlar), BEYAZ, w, sc);
 		metin(l, "Aynı bilgisayardan ya da IP'den sonradan giren hesaplar otomatik eklenir.", SOLUK, w, sc * 0.85f);
 		bolum(l, "IP ADRESLERİ (" + ipler.size() + ")", MAVI, w);
-		metin(l, ipler.isEmpty() ? "—" : String.join(", ", ipler), BEYAZ, w, sc);
+		metin(l, ipler.isEmpty() ? "—" : String.join(", ", ipler.stream().map(VakaEkrani::ipGizle).toList()), BEYAZ, w, sc);
 		bolum(l, "BİLGİSAYAR", MAVI, w);
 		metin(l, str(y, "cihaz") + " cihaz izi · " + str(y, "damga") + " yasak damgası", BEYAZ, w, sc);
 
@@ -1310,6 +1350,9 @@ public final class VakaEkrani extends Screen {
 			boolean kurucu = onaylar.stream().anyMatch(o -> "KURUCU".equals(str(o, "rol")));
 			metin(l, kurucu ? "İkinci bir üst yetkili ya da kurucu onayı bekleniyor." : "Bir kurucu onayı bekleniyor.", TURUNCU, w, sc);
 		}
+		if (onayVerdim(y)) {
+			metin(l, "Zaten onay verdiniz. Diğer yetkilinin onayı bekleniyor.", MAVI, w, sc);
+		}
 
 		List<JsonObject> talepler = diziObj(y, "talepler");
 		bolum(l, "İTİRAZ TALEPLERİ (" + talepler.size() + ")", TURUNCU, w);
@@ -1377,13 +1420,16 @@ public final class VakaEkrani extends Screen {
 		int sag = width - M;
 		int bw = Math.min(150, Math.max(60, (sag - x - 8) / 3));
 		float dsc = Math.min(s(), 1.25f);
-		boolean kisa = gen("Kaldırmayı onayla", dsc) > bw - 8;
-		dugme(x, yy, bw, h, kisa ? "Onayla" : "Kaldırmayı onayla", YESIL, var, () -> {
+		boolean kisa = gen("Zaten onay verdiniz", dsc) > bw - 8;
+		boolean verdim = onayVerdim(y);
+		String onayYazi = verdim ? (kisa ? "Onay verildi" : "Zaten onay verdiniz") : (kisa ? "Onayla" : "Kaldırmayı onayla");
+		dugme(x, yy, bw, h, onayYazi, YESIL, var && !verdim, () -> {
 			onayVaka = yasakSec();
 			onayTur = OnayTur.KALDIR;
 			modal = Modal.ONAY;
 		});
-		dugme(x + bw + 4, yy, bw, h, talep > 0 ? (kisa ? "Reddet" : "İtirazı reddet") : (kisa ? "İtiraz yok" : "Bekleyen itiraz yok"), VURGU, talep > 0, () -> {
+		// Reddet: itiraz varsa onu reddeder (24 saat yeni itiraz açılamaz); yoksa kaldırmayı reddeder. Yasak sürer, listeden düşer.
+		dugme(x + bw + 4, yy, bw, h, kisa ? "Reddet" : talep > 0 ? "İtirazı reddet" : "Kaldırmayı reddet", VURGU, var, () -> {
 			onayVaka = yasakSec();
 			onayTur = OnayTur.RED;
 			modal = Modal.ONAY;
@@ -1404,9 +1450,14 @@ public final class VakaEkrani extends Screen {
 			satirlar.add(new String[] {ad + " yasağının kaldırılmasını onaylıyor musun?", "B"});
 			satirlar.add(new String[] {"Şu an " + n + "/2 onay var. Yasak; bir kurucu ve bir üst yetkili (ya da ikinci bir kurucu) onaylayınca kalkar.", "G"});
 			satirlar.add(new String[] {"Onayın sunucuda adınla kaydedilir. Yetkin yoksa (kurucu / üst yetkili) sunucu reddeder.", "S"});
-		} else {
+		} else if (bekleyenTalep(y) > 0) {
 			satirlar.add(new String[] {ad + " için bekleyen itiraz reddedilecek.", "B"});
+			satirlar.add(new String[] {"Yasak sürer ve bu listeden kalkar. Oyuncu 24 saat boyunca yeni itiraz açamaz; verilmiş kaldırma onayları sıfırlanır.", "G"});
 			satirlar.add(new String[] {"Reddetme nedeni (isteğe bağlı) oyuncunun sitesinde görünür:", "G"});
+		} else {
+			satirlar.add(new String[] {ad + " yasağının kaldırılması reddedilecek.", "B"});
+			satirlar.add(new String[] {"Yasak sürer ve bu listeden kalkar; verilmiş kaldırma onayları sıfırlanır. Oyuncu siteden itiraz ederse yeniden görünür.", "G"});
+			satirlar.add(new String[] {"Neden (isteğe bağlı, geçmişe yazılır):", "G"});
 		}
 		int bw = Math.min(width - 40, (int) (380 * sc));
 		List<FormattedCharSequence> cizgiler = new ArrayList<>();
@@ -1446,14 +1497,18 @@ public final class VakaEkrani extends Screen {
 		int dy = y1 + bh - 32;
 		int dw = (bw - 36) / 2;
 		String id = str(y, "id");
-		dugme(x1 + 12, dy, dw, 22, kaldir ? "Onayla" : "Reddet", renk, true, () -> {
+		boolean verdim = kaldir && onayVerdim(y);
+		dugme(x1 + 12, dy, dw, 22, verdim ? "Zaten onay verdiniz" : kaldir ? "Onayla" : "Reddet", renk, !verdim, () -> {
 			if (kaldir) {
+				ONAYLADIM.put(id, Util.getMillis());
+				detayAnahtar = "";
 				komut("cevherauth yasakonay " + id, false);
 				tost(ad + ": kaldırma onayın gönderildi", YESIL);
 			} else {
+				boolean itiraz = bekleyenTalep(y) > 0;
 				String neden = nedenKutu == null ? "" : nedenKutu.getValue().strip();
 				komut("cevherauth talepred " + id + (neden.isEmpty() ? "" : " " + neden), false);
-				tost(ad + ": itiraz reddedildi", VURGU);
+				tost(ad + (itiraz ? ": itiraz reddedildi (24 saat yeni itiraz yok)" : ": kaldırma reddedildi"), VURGU);
 			}
 			modalKapat();
 		});
@@ -1473,7 +1528,7 @@ public final class VakaEkrani extends Screen {
 		float sc = Math.min(s(), 1.4f);
 		boolean test = v.has("test") && v.get("test").getAsBoolean();
 		String ad = str(v, "ad");
-		String ip = str(v, "ip").isEmpty() ? "bilinmiyor" : str(v, "ip");
+		String ip = str(v, "ip").isEmpty() ? "bilinmiyor" : ipGizle(str(v, "ip"));
 		List<String[]> satirlar = new ArrayList<>();
 		satirlar.add(new String[] {ad + " sunucudan KALICI olarak yasaklanacak:", "B"});
 		satirlar.add(new String[] {"•  Hesabı: " + ad, "G"});
@@ -1552,19 +1607,24 @@ public final class VakaEkrani extends Screen {
 		float sc = Math.min(s(), 1.3f);
 		int lh = (int) Math.ceil(font.lineHeight * sc) + 2;
 		int bw = Math.min(width - 40, (int) (360 * sc));
-		int bh = 34 + lh * 3 + 30 + 3 * (lh + 12) + 50;
+		int bh = 34 + lh * 3 + 30 + 26 + 3 * (lh + 12) + 50;
 		int x1 = (width - bw) / 2, y1 = (height - bh) / 2;
 		kutu(g, x1, y1, x1 + bw, y1 + bh, 0xF0121218);
 		cerceve(g, x1, y1, x1 + bw, y1 + bh, alfa(MAVI, 0xC0));
 		g.fill(x1 + 1, y1 + 1, x1 + bw - 1, y1 + 26, alfa(MAVI, 0x30));
 		yaz(g, Component.literal("GÖRÜNÜM").withStyle(ChatFormatting.BOLD), x1 + 12, y1 + (26 - font.lineHeight * sc) / 2f + 1, MAVI, sc, true);
 		int y = y1 + 34;
-		String dosya = gor.arkaplan.isEmpty() ? "Yok (oyunun bulanık görüntüsü)" : Path.of(gor.arkaplan).getFileName().toString();
+		boolean we = WallpaperEngine.SECIM.equals(gor.arkaplan);
+		String dosya = gor.arkaplan.isEmpty() ? "Yok (oyunun bulanık görüntüsü)"
+			: we ? "Wallpaper Engine" + (ArkaPlan.bilgi().isEmpty() ? "" : " — " + ArkaPlan.bilgi())
+			: Path.of(gor.arkaplan).getFileName().toString();
 		yaz(g, "Arka plan: " + sigdir(dosya, bw - 100, sc), x1 + 14, y, BEYAZ, sc, true);
 		y += lh;
 		String hata = ArkaPlan.hata();
+		String ipucu = we ? "Masaüstünde seçili duvar kağıdı; menü her açılışta yeniden okunur"
+			: "PNG, JPG, BMP, GIF (hareketli) veya MP4/MOV video (H.264, sessiz)";
 		yaz(g, dosyaSeciliyor ? "Dosya seçme penceresi açık…" : !hata.isEmpty() ? sigdir(hata, bw - 28, sc * 0.9f)
-			: "PNG, JPG, BMP, GIF (hareketli) veya MP4/MOV video (H.264, sessiz)", x1 + 14, y, !hata.isEmpty() ? TURUNCU : SOLUK, sc * 0.9f, false);
+			: sigdir(ipucu, bw - 28, sc * 0.9f), x1 + 14, y, !hata.isEmpty() ? TURUNCU : SOLUK, sc * 0.9f, false);
 		y += lh + 4;
 		int dw = (bw - 36) / 2;
 		dugme(x1 + 12, y, dw, 20, "Fotoğraf / video seç…", MAVI, !dosyaSeciliyor, this::dosyaSec);
@@ -1573,6 +1633,19 @@ public final class VakaEkrani extends Screen {
 			gor.kaydet();
 			medyaTemizle(null);
 			tost("Arka plan kaldırıldı", GRI);
+		});
+		y += 26;
+		dugme(x1 + 12, y, bw - 24, 20, we ? "Wallpaper Engine'i yeniden oku" : "Wallpaper Engine'e bağla", MAVI, !dosyaSeciliyor, () -> {
+			gor.arkaplan = WallpaperEngine.SECIM;
+			gor.kaydet();
+			medyaTemizle(null);
+			ArkaPlan.birak();
+			ArkaPlan.hazirla(WallpaperEngine.SECIM);
+			if (ArkaPlan.var()) {
+				tost("Wallpaper Engine'e bağlandı: " + ArkaPlan.bilgi(), MAVI);
+			} else {
+				tost(ArkaPlan.hata().isEmpty() ? "Wallpaper Engine duvar kağıdı yüklenemedi" : ArkaPlan.hata(), TURUNCU);
+			}
 		});
 		y += 30;
 		y = ayar(g, x1, y, bw, sc, "Arka plan karartma", "%" + Math.round(gor.karartma * 100), gor.karartma > 0f, gor.karartma < 0.9f,

@@ -20,6 +20,9 @@ const INSTALLED_NAME = 'cevherclient-session.jar'
 /** Modu etkinleştiren JVM özelliği; başka launcher'larda mod hiçbir şey yapmaz. */
 const ENABLE_ARG = '-Dcevherclient.exitOnLeave=true'
 
+/** Çalışan oyuna sonradan Java agent bağlanmasını (dinamik attach) kapatır. */
+const NO_ATTACH_ARG = '-XX:+DisableAttachMechanism'
+
 /**
  * Bilet sırrının oyuna teslim edildiği dosya (instance/.cevher/, modpack override'ları buraya
  * yazamaz). Oyun açılırken mod okuyup hemen siler; launcher da oyun kapanınca siler. Sır komut
@@ -69,5 +72,7 @@ export async function prepareSessionMod(server: ServerProfile, gamePath: string)
 
   await mkdir(modsDir, { recursive: true })
   await copyFile(source, target)
-  return [ENABLE_ARG]
+  // Oyun açıldıktan sonra JVM'e dışarıdan agent bağlanamasın (hile enjektörleri Attach API'yi kullanır).
+  // Oturum modu bu bayrağın varlığını sunucuya bildirir; yoksa CevherAuth girişi reddeder.
+  return [ENABLE_ARG, NO_ATTACH_ARG]
 }

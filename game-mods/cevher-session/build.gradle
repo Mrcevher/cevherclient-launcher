@@ -1,3 +1,15 @@
+// Karartma (ProGuard): oturum modu sınıf/metot adları anlamsızlaştırılır; hile yazarının modu okuyup
+// sorgu yanıtını taklit etmesi zorlaşır. Mixin sınıfları ve giriş noktası adları korunur (Fabric/Mixin
+// bunları adlarıyla bulur). Yalnızca zorlaştırır; asıl karar sunucudadır.
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.guardsquare:proguard-gradle:7.6.1'
+	}
+}
+
 // Cevherclient oturum modu — yalnızca istemci tarafı, Fabric API gerektirmez (sadece mixin).
 plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
@@ -47,3 +59,33 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
 }
+
+// remapJar çıktısı karartılır ve aynı adla build/libs'e geri yazılır (scripts/build-session-mod.mjs onu kopyalar).
+tasks.register('karart', proguard.gradle.ProGuardTask) {
+	dependsOn remapJar
+	def girdi = remapJar.archiveFile.get().asFile
+	def ara = layout.buildDirectory.file("karart/acik.jar").get().asFile
+	def cikti = layout.buildDirectory.file("karart/kapali.jar").get().asFile
+	doFirst {
+		ara.parentFile.mkdirs()
+		java.nio.file.Files.copy(girdi.toPath(), ara.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+	}
+	injars ara
+	outjars cikti
+	libraryjars "${System.getProperty('java.home')}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+	libraryjars "${System.getProperty('java.home')}/jmods/java.management.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+	dontshrink
+	dontoptimize
+	ignorewarnings
+	dontwarn
+	dontnote
+	keepattributes '*Annotation*,Signature,InnerClasses,EnclosingMethod,Exceptions'
+	keep 'class net.cevherclient.session.mixin.** { *; }'
+	keep 'class net.cevherclient.session.CevherSessionInit { public <init>(); public void onInitializeClient(); }'
+	repackageclasses 'net.cevherclient.session.x'
+	overloadaggressively
+	doLast {
+		java.nio.file.Files.copy(cikti.toPath(), girdi.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+	}
+}
+build.dependsOn karart

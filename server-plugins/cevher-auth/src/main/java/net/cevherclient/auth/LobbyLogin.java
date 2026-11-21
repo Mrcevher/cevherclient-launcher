@@ -140,6 +140,12 @@ final class LobbyLogin implements Listener {
 		return a != null && a.name().equals(name) && a.ip().equals(ip);
 	}
 
+	/** Lobide giriş yapmış oyuncu launcher biletiyle mi geldi (oyunda şifreyle değil)? */
+	boolean viaLauncher(String name) {
+		Authorized a = authorized.get(AccountStore.key(name));
+		return a != null && a.viaLauncher();
+	}
+
 	boolean isPending(Player player) {
 		return pending.containsKey(player.getUniqueId());
 	}
