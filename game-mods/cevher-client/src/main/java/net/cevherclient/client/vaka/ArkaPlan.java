@@ -205,7 +205,7 @@ final class ArkaPlan {
 		doku.upload();
 	}
 
-	/** Görüntüyü ekrana oranını bozmadan sığdırarak çizer. */
+	/** Görüntüyü oranını bozmadan ekranı kaplayacak biçimde (kenarlar kırpılabilir) çizer. */
 	static void ciz(GuiGraphics g, int sw, int sh) {
 		if (doku == null) {
 			return;
@@ -227,8 +227,8 @@ final class ArkaPlan {
 			sonVideoYukleme = System.nanoTime();
 			yukle(videoKare);
 		}
-		// Ekrana sığdır (kırpma yok): kaynak oranı farklıysa kenarlarda karartma görünür.
-		float s = Math.min(sw / (float) w, sh / (float) h);
+		// Ekranı tamamen kapla (tam ekran): kaynak oranı farklıysa taşan kenarlar kırpılır, boşluk kalmaz.
+		float s = Math.max(sw / (float) w, sh / (float) h);
 		float x = (sw - w * s) / 2f;
 		float y = (sh - h * s) / 2f;
 		g.pose().pushMatrix();
