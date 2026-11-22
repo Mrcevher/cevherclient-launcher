@@ -1,6 +1,8 @@
 package net.cevherclient.client.vaka;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -180,7 +182,12 @@ final class ArkaPlan {
 	private static void dokuKur(int gw, int gh) {
 		w = gw;
 		h = gh;
-		doku = new DynamicTexture(() -> "cevherclient vaka arka planı", new NativeImage(w, h, false));
+		// Varsayılan örnekleme "en yakın komşu"dur (piksel piksel görünür); büyütmede yumuşak olsun diye doğrusal süzgeç.
+		doku = new DynamicTexture(() -> "cevherclient vaka arka planı", new NativeImage(w, h, false)) {
+			{
+				this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
+			}
+		};
 		Minecraft.getInstance().getTextureManager().register(ID, doku);
 	}
 
@@ -198,7 +205,7 @@ final class ArkaPlan {
 		doku.upload();
 	}
 
-	/** Ekranı "kaplayacak" biçimde (kenarlar taşabilir) çizer. */
+	/** Görüntüyü ekrana oranını bozmadan sığdırarak çizer. */
 	static void ciz(GuiGraphics g, int sw, int sh) {
 		if (doku == null) {
 			return;
@@ -220,7 +227,8 @@ final class ArkaPlan {
 			sonVideoYukleme = System.nanoTime();
 			yukle(videoKare);
 		}
-		float s = Math.max(sw / (float) w, sh / (float) h);
+		// Ekrana sığdır (kırpma yok): kaynak oranı farklıysa kenarlarda karartma görünür.
+		float s = Math.min(sw / (float) w, sh / (float) h);
 		float x = (sw - w * s) / 2f;
 		float y = (sh - h * s) / 2f;
 		g.pose().pushMatrix();
