@@ -326,6 +326,12 @@ public final class VakaEkrani extends Screen {
 		return minecraft != null ? minecraft.getUser().getName() : "";
 	}
 
+	/** Sunucu yasak yetkim olmadığını bildirdiyse true (onay/red düğmeleri kapatılır). */
+	private static boolean yetkisiz() {
+		String rol = RiskHud.yasakRol;
+		return rol != null && rol.isEmpty();
+	}
+
 	/** Bu yasağın kaldırılmasını zaten onayladım mı? */
 	private boolean onayVerdim(JsonObject y) {
 		if (y == null) {
@@ -1350,7 +1356,9 @@ public final class VakaEkrani extends Screen {
 			boolean kurucu = onaylar.stream().anyMatch(o -> "KURUCU".equals(str(o, "rol")));
 			metin(l, kurucu ? "İkinci bir üst yetkili ya da kurucu onayı bekleniyor." : "Bir kurucu onayı bekleniyor.", TURUNCU, w, sc);
 		}
-		if (onayVerdim(y)) {
+		if (yetkisiz()) {
+			metin(l, "Bu hesabın yasak onayı / reddi yetkisi yok (kurucu ya da üst yetkili olmalı).", TURUNCU, w, sc);
+		} else if (onayVerdim(y)) {
 			metin(l, "Zaten onay verdiniz. Diğer yetkilinin onayı bekleniyor.", MAVI, w, sc);
 		}
 
@@ -1422,14 +1430,16 @@ public final class VakaEkrani extends Screen {
 		float dsc = Math.min(s(), 1.25f);
 		boolean kisa = gen("Zaten onay verdiniz", dsc) > bw - 8;
 		boolean verdim = onayVerdim(y);
-		String onayYazi = verdim ? (kisa ? "Onay verildi" : "Zaten onay verdiniz") : (kisa ? "Onayla" : "Kaldırmayı onayla");
-		dugme(x, yy, bw, h, onayYazi, YESIL, var && !verdim, () -> {
+		boolean yetkisiz = yetkisiz();
+		String onayYazi = yetkisiz ? (kisa ? "Yetkin yok" : "Onay yetkin yok")
+			: verdim ? (kisa ? "Onay verildi" : "Zaten onay verdiniz") : (kisa ? "Onayla" : "Kaldırmayı onayla");
+		dugme(x, yy, bw, h, onayYazi, YESIL, var && !verdim && !yetkisiz, () -> {
 			onayVaka = yasakSec();
 			onayTur = OnayTur.KALDIR;
 			modal = Modal.ONAY;
 		});
 		// Reddet: itiraz varsa onu reddeder (24 saat yeni itiraz açılamaz); yoksa kaldırmayı reddeder. Yasak sürer, listeden düşer.
-		dugme(x + bw + 4, yy, bw, h, kisa ? "Reddet" : talep > 0 ? "İtirazı reddet" : "Kaldırmayı reddet", VURGU, var, () -> {
+		dugme(x + bw + 4, yy, bw, h, kisa ? "Reddet" : talep > 0 ? "İtirazı reddet" : "Kaldırmayı reddet", VURGU, var && !yetkisiz, () -> {
 			onayVaka = yasakSec();
 			onayTur = OnayTur.RED;
 			modal = Modal.ONAY;

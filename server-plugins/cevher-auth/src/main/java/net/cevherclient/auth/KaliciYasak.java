@@ -698,7 +698,15 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 
 	private void opGonder(Player p) {
 		if (!p.isOnline() || !RiskTakip.yetkili(p) || !p.getListeningPluginChannels().contains(RiskTakip.KANAL)) return;
-		p.sendPluginMessage(plugin, RiskTakip.KANAL, opJson().toString().getBytes(StandardCharsets.UTF_8));
+		p.sendPluginMessage(plugin, RiskTakip.KANAL, kisiyeJson(p, opJson().toString()));
+	}
+
+	/** Listeye alıcının yasak yetkisini ("rol": KURUCU / UST_YETKILI / boş) ekler; mod onay düğmesini ona göre gösterir. */
+	private byte[] kisiyeJson(Player p, String json) {
+		String rol = rol(p);
+		int son = json.lastIndexOf('}');
+		String s = son < 0 ? json : json.substring(0, son) + ",\"rol\":\"" + (rol == null ? "" : rol) + "\"}";
+		return s.getBytes(StandardCharsets.UTF_8);
 	}
 
 	/** Liste değiştiyse tüm çevrimiçi OP'lere gönder (ana iş parçacığı). */
@@ -707,10 +715,9 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 			String json = opJson().toString();
 			if (json.equals(sonOpJson)) return;
 			sonOpJson = json;
-			byte[] b = json.getBytes(StandardCharsets.UTF_8);
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				if (RiskTakip.yetkili(p) && p.getListeningPluginChannels().contains(RiskTakip.KANAL)) {
-					p.sendPluginMessage(plugin, RiskTakip.KANAL, b);
+					p.sendPluginMessage(plugin, RiskTakip.KANAL, kisiyeJson(p, json));
 				}
 			}
 		});

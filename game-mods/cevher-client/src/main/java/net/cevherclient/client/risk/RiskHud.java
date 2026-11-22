@@ -38,6 +38,8 @@ public final class RiskHud {
 	/** Kalıcı yasaklar (CevherAuth {"t":"yasaklar"}); vaka ekranının "Yasaklar" sekmesi. */
 	private static volatile List<JsonObject> yasaklar = List.of();
 	public static volatile int yasakSurum;
+	/** Sunucunun bildirdiği yasak yetkim: KURUCU / ÜST YETKİLİ; boş = yetkim yok; null = sunucu bildirmedi (eski sürüm). */
+	public static volatile String yasakRol;
 
 	public static List<JsonObject> yasaklar() {
 		return yasaklar;
@@ -111,6 +113,7 @@ public final class RiskHud {
 					}
 				}
 				yasaklar = List.copyOf(y);
+				yasakRol = e.getAsJsonObject().has("rol") ? str(e.getAsJsonObject(), "rol") : null;
 				yasakSurum++;
 				return;
 			}
