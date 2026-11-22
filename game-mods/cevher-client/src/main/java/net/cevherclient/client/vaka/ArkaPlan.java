@@ -40,6 +40,9 @@ final class ArkaPlan {
 	private static final int MAX_RESIM = 1920;
 	private static final int MAX_HAREKET = 960;
 	private static final int MAX_GIF_KARE = 400;
+	/** Hareketli arka planın en yüksek kare hızı; bu değerin üstü hem çözmede hem GPU yüklemesinde atlanır. */
+	private static final int HEDEF_FPS = 60;
+	private static final long KARE_NS = 1_000_000_000L / HEDEF_FPS;
 
 	private static String yukluYol = "";
 	private static DynamicTexture doku;
@@ -58,6 +61,7 @@ final class ArkaPlan {
 	private static volatile int[] videoKare;
 	private static volatile int videoNo;
 	private static int yuklenenNo = -1;
+	private static long sonVideoYukleme;
 
 	private ArkaPlan() {
 	}
@@ -210,8 +214,10 @@ final class ArkaPlan {
 				sonGifKare = k;
 				yukle(gifKareler.get(k));
 			}
-		} else if (videoKare != null && videoNo != yuklenenNo) {
+		} else if (videoKare != null && videoNo != yuklenenNo && System.nanoTime() - sonVideoYukleme >= KARE_NS) {
+			// Render thread'i kare başına en fazla HEDEF_FPS kez yüklesin (piksel yazımı + GPU aktarımı pahalı).
 			yuklenenNo = videoNo;
+			sonVideoYukleme = System.nanoTime();
 			yukle(videoKare);
 		}
 		float s = Math.max(sw / (float) w, sh / (float) h);
@@ -374,8 +380,8 @@ final class ArkaPlan {
 				} catch (Exception ignored) {
 					// varsayılan 30
 				}
-				long kareMs = Math.max(15, Math.round(1000 / Math.max(1, Math.min(60, fps))));
-				long sonraki = System.currentTimeMillis();
+				long kareNs = Math.max(KARE_NS, Math.round(1_000_000_000d / Math.max(1, Math.min(HEDEF_FPS, fps))));
+				long sonraki = System.nanoTime();
 				Picture p;
 				while (!videoDur && (p = grab.getNativeFrame()) != null) {
 					int[] k = kareCevir(p, boyut);
@@ -383,12 +389,12 @@ final class ArkaPlan {
 						videoKare = k;
 						videoNo++;
 					}
-					sonraki += kareMs;
-					long bekle = sonraki - System.currentTimeMillis();
-					if (bekle > 0) {
-						Thread.sleep(bekle);
-					} else if (bekle < -1000) {
-						sonraki = System.currentTimeMillis(); // çözme yetişemiyor: geride kalma
+					sonraki += kareNs;
+					long bekleNs = sonraki - System.nanoTime();
+					if (bekleNs > 0) {
+						Thread.sleep(bekleNs / 1_000_000L, (int) (bekleNs % 1_000_000L));
+					} else if (bekleNs < -1_000_000_000L) {
+						sonraki = System.nanoTime(); // çözme yetişemiyor: geride kalma
 					}
 				}
 			} catch (InterruptedException e) {

@@ -1,7 +1,7 @@
 {
   "name": "cevherclient",
   "productName": "Cevherclient",
-  "version": "5.3.0",
+  "version": "5.3.1",
   "description": "Cevherclient — kendi sunucumuz için özel Minecraft Java Edition launcher'ı",
   "main": "./out/main/index.js",
   "author": "Cevherclient",
