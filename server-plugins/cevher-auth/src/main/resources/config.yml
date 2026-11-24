@@ -175,7 +175,7 @@ guvenlik:
     # Client brand bunlardan birini içeriyorsa.
     brand: [autismclient, xynisclient, meteor, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze]
     # Kayıtlı kanalın namespace'i (":" öncesi) bunlardan biriyse.
-    kanallar: [autismclient, xynisclient, meteor-client, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze]
+    kanallar: [autismclient, xynisclient, meteor-client, wurst, liquidbounce, aristois, bleachhack, thunderhack, rusherhack, boze, nutclient]
     # Custom click (dialog) kimliğinin namespace'i bunlardan biriyse.
     custom-click: [autismclient, xynisclient]
 
