@@ -265,8 +265,13 @@ final class RiskTakip implements Listener {
 				case "HIGH" -> Seviye.YUKSEK;
 				default -> reason != null && reason.startsWith("Doğrulanamadı") ? Seviye.DUSUK : Seviye.ORTA;
 			};
+			String sha1 = str(o, "sha1");
+			if (sha1 != null && !sha1.matches("[0-9a-fA-F]{40}")) {
+				sha1 = null; // istemciden gelir: yalnızca geçerli SHA-1 yazılır
+			}
 			String jar = (modId != null && !modId.isEmpty() ? modId : "?") + " [" + kisalt(name, 60) + "]";
-			ekle(ad, ip, s, "launcher-karantina", jar + " — " + kisalt(reason, 140));
+			ekle(ad, ip, s, "launcher-karantina", jar + (sha1 != null ? " sha1=" + sha1.toLowerCase() : "") + " — " + kisalt(reason, 140));
+			plugin.getLogger().info("[KARANTINA] " + ad + " (" + ip + ") " + jar + " sha1=" + (sha1 != null ? sha1.toLowerCase() : "?"));
 		}
 	}
 

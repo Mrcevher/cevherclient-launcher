@@ -119,6 +119,8 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		 * listesinden düşer. Yeni itiraz ya da yeni kaldırma onayı gelince yeniden görünür.
 		 */
 		boolean islendi;
+		/** Yasak anında kaydın hesaplarında görülen Modrinth projeleri (projeId → modId; gömülü modlar hariç). Lobide doldurulur. */
+		Map<String, String> modProjeleri;
 		/** Yalnızca kapıda: lobiye henüz ulaşmamış yerel kayıt (eşitlemede silinmez). */
 		transient long yerelZaman;
 	}
@@ -272,6 +274,14 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 						k.gecmis.add(simdi() + " aynı bilgisayarda görülen hesap eklendi: " + e.getKey());
 					}
 				}
+			}
+		}
+		// Lobi: yasaklananın Modrinth projelerini kayda ekle ve proje yasağı önerilerini yeniden hesapla.
+		if (!plugin.isGate() && plugin.modIstatistik() != null) {
+			try {
+				plugin.modIstatistik().yasakEklendi(k, kayitlar);
+			} catch (RuntimeException e) {
+				plugin.getLogger().warning("Proje önerisi hesaplanamadı: " + e);
 			}
 		}
 		kaydet();
@@ -795,6 +805,7 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 			if (t != null || r.statusCode() != 200) return;
 			try {
 				JsonObject j = JsonParser.parseString(r.body()).getAsJsonObject();
+				if (plugin.modIstatistik() != null) plugin.modIstatistik().kapiGuncelle(j);
 				List<Kayit> lobi = JsonFile.GSON.fromJson(j.get("yasaklar"), new TypeToken<List<Kayit>>() { }.getType());
 				if (lobi == null) return;
 				synchronized (this) {
@@ -847,7 +858,26 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		JsonObject o = new JsonObject();
 		o.addProperty("ok", true);
 		o.add("yasaklar", JsonFile.GSON.toJsonTree(new ArrayList<>(kayitlar)));
+		if (plugin.modIstatistik() != null) plugin.modIstatistik().lobiJson(o);
 		return o;
+	}
+
+	/** Proje önerisi kararı (yasakla | yoksay | izin). Kapıdaysa lobiye iletilir (rol kapıda izinden belirlenir). */
+	void projeKarar(String islem, String proje, String ad, String rol, Consumer<String> cevap) {
+		if (rol == null) {
+			cevap.accept("Yetkin yok (üst yetkili veya kurucu olmalısın).");
+			return;
+		}
+		if (plugin.isGate()) {
+			JsonObject o = new JsonObject();
+			o.addProperty("islem", "proje-" + islem);
+			o.addProperty("hedef", proje);
+			o.addProperty("ad", ad);
+			o.addProperty("rol", rol);
+			lobiyeGonder("/api/internal/yasak-islem", o, cevap);
+			return;
+		}
+		cevap.accept(plugin.modIstatistik().kararYerel(islem, proje, ad, rol));
 	}
 
 	/** Kapıdan gelen onay / red / kaldır işlemi; dönüş kullanıcıya gösterilecek mesaj. */
@@ -861,6 +891,8 @@ final class KaliciYasak implements Listener, PluginMessageListener {
 		return switch (islem == null ? "" : islem) {
 			case "onay" -> rol == null ? "Yetki yok." : onaylaYerel(hedef, ad, rol);
 			case "red" -> rol == null ? "Yetki yok." : talepReddetYerel(hedef, str(b, "talep"), ad, str(b, "neden"));
+			case "proje-yasakla", "proje-yoksay", "proje-izin" -> rol == null || plugin.modIstatistik() == null ? "Yetki yok."
+				: plugin.modIstatistik().kararYerel(islem.substring(6), hedef, ad, rol);
 			case "kaldir" -> {
 				if (!"CONSOLE".equals(ad)) yield "Yalnızca konsol doğrudan kaldırabilir.";
 				Kayit k = bulAdVeyaIp(hedef);

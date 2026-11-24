@@ -41,6 +41,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 	private LobbyLogin lobbyLogin;
 	private Guvenlik guvenlik;
 	private ModDogrulama modDogrulama;
+	private ModIstatistik modIstatistik;
 	private OyunSorgu oyunSorgu;
 	private RiskTakip riskTakip;
 	private KaliciYasak kaliciYasak;
@@ -68,6 +69,7 @@ public final class CevherAuthPlugin extends JavaPlugin {
 		riskTakip.baslat();
 		kaliciYasak = new KaliciYasak(this);
 		getServer().getPluginManager().registerEvents(kaliciYasak, this);
+		modIstatistik = new ModIstatistik(this);
 		modDogrulama = new ModDogrulama(this);
 		oyunSorgu = new OyunSorgu(this);
 		getServer().getPluginManager().registerEvents(oyunSorgu, this);
@@ -195,6 +197,9 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		if (modIstatistik != null) {
+			modIstatistik.kapat();
+		}
 		if (riskTakip != null) {
 			riskTakip.durdur();
 		}
@@ -242,6 +247,10 @@ public final class CevherAuthPlugin extends JavaPlugin {
 
 	KaliciYasak kaliciYasak() {
 		return kaliciYasak;
+	}
+
+	ModIstatistik modIstatistik() {
+		return modIstatistik;
 	}
 
 	/**

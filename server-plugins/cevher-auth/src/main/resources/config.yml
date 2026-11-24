@@ -212,6 +212,15 @@ mod-dogrulama:
   yasakli-hashler: []
   # Modrinth proje kimlikleri (ör. "XeEZ3fK2"): hash'i Modrinth'te olsa da reddedilir.
   yasakli-projeler: []
+  # Onaylı hilecilerden Modrinth proje yasağı önerisi (2.3.0). Yalnızca lobide hesaplanır; yetkili onaylamadan
+  # hiçbir proje yasaklanmaz (/cevherauth projeler | projeyasakla | projeyoksay | projeizin). Launcher'a gömülü
+  # modlar (izinli-hashler, jar-klasorleri, modpack-dosyalari) sayılmaz.
+  proje-onerisi:
+    acik: true
+    min-hileci: 2       # projeyi içeren en az bu kadar farklı yasak kaydı (yan hesaplar tek kişi)
+    min-taban: 20       # oranın anlamlı olması için en az bu kadar yasaksız oyuncu listesi
+    max-oran: 0.05      # yasaksız oyuncuların en fazla bu kadarında olmalı
+    taban-gun: 90       # taban çizgisine sayılan en eski görülme (gün)
   # Her oyuncunun mod listesi (değiştiğinde) konsola yazılsın.
   kaydet: true
   # Mod kimliği yasağı (kimlik değiştirilebildiği için yalnızca ek önlem; asıl koruma hash'tir).

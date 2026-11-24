@@ -295,15 +295,20 @@ final class ModDogrulama {
 		if (!bilinmeyen.isEmpty() && a.modrinth()) {
 			modrinthErisildi = modrinthSor(bilinmeyen);
 		}
+		// Proje önerisi için oyuncunun Modrinth projeleri (projeId → modId). Launcher'a gömülü modlar (izinli hash,
+		// jar-klasorleri, modpack-dosyalari) aşağıdaki "izinli" atlamasıyla hiç girmez.
+		Map<String, String> projeler = new java.util.LinkedHashMap<>();
+		ModIstatistik ist = plugin.modIstatistik();
 		for (Girdi g : girdiler) {
 			if (!SHA1.matcher(g.hash()).matches() || a.izinliHash().contains(g.hash())) {
 				continue;
 			}
 			String proje = modrinthCache.get(g.hash());
 			if (proje != null) {
-				if (a.yasakliProje().contains(proje.toLowerCase(Locale.ROOT))) {
+				if (a.yasakliProje().contains(proje.toLowerCase(Locale.ROOT)) || (ist != null && ist.yasakli(proje))) {
 					return red(ad, ip, ad(g), "yasaklı Modrinth projesi " + proje);
 				}
+				projeler.putIfAbsent(proje, g.id());
 				continue;
 			}
 			List<String> kelimeler = kelimeler(a, g.id());
@@ -326,6 +331,10 @@ final class ModDogrulama {
 				return red(ad, ip, ad(g), "hash hiçbir listede yok (değiştirilmiş / yeniden adlandırılmış / tanınmayan jar) " + g.hash());
 			}
 			plugin.getLogger().warning(ad + " (" + ip + ") tanınmayan jar: " + ad(g) + " " + g.hash() + " (bilinmeyen: KAYDET, geçirildi)");
+		}
+		// Giriş kabul edildi: taban çizgisine (ve ileride yasak kaydına) bu oyuncunun Modrinth projelerini yaz.
+		if (ist != null) {
+			ist.girisKaydet(ad, projeler);
 		}
 		return null;
 	}

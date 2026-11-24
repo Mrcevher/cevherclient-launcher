@@ -95,7 +95,7 @@ final class AdminCommand implements TabExecutor {
 				case "engeller", "engelkaldir" -> {
 					return engelKomutu(plugin, sender, args);
 				}
-				case "yasaklar", "yasakla", "yasakkaldir", "yasak", "yasakonay", "talepred" -> {
+				case "yasaklar", "yasakla", "yasakkaldir", "yasak", "yasakonay", "talepred", "projeler", "projeyasakla", "projeyoksay", "projeizin" -> {
 					return yasakKomutu(plugin, sender, args);
 				}
 				case "risk", "risktemizle" -> {
@@ -222,6 +222,25 @@ final class AdminCommand implements TabExecutor {
 				String neden = args.length > 2 ? String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)) : "";
 				y.talepReddet(args[1], null, sender.getName(), KaliciYasak.rol(sender), neden, m -> sender.sendMessage("§e[Yasak] " + m));
 			}
+			case "projeler" -> {
+				if (plugin.modIstatistik() == null || !ModIstatistik.yetkili(sender)) {
+					sender.sendMessage("§cYetkin yok (üst yetkili veya kurucu olmalısın).");
+					return true;
+				}
+				plugin.modIstatistik().listele(sender);
+			}
+			case "projeyasakla", "projeyoksay", "projeizin" -> {
+				if (args.length < 2) {
+					sender.sendMessage("§cKullanım: /cevherauth " + args[0].toLowerCase(java.util.Locale.ROOT) + " <modrinth-proje-kimliği>");
+					return true;
+				}
+				String islem = switch (args[0].toLowerCase(java.util.Locale.ROOT)) {
+					case "projeyasakla" -> "yasakla";
+					case "projeyoksay" -> "yoksay";
+					default -> "izin";
+				};
+				y.projeKarar(islem, args[1], sender.getName(), KaliciYasak.rol(sender), m -> sender.sendMessage("§e[Yasak] " + m));
+			}
 			default -> {
 				return false;
 			}
@@ -232,7 +251,7 @@ final class AdminCommand implements TabExecutor {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
-			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir", "risk", "risktemizle", "yasaklar", "yasak", "yasakla", "yasakkaldir", "yasakonay", "talepred").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+			return Stream.of("liste", "sil", "sifre", "kayit", "reload", "engeller", "engelkaldir", "risk", "risktemizle", "yasaklar", "yasak", "yasakla", "yasakkaldir", "yasakonay", "talepred", "projeler", "projeyasakla", "projeyoksay", "projeizin").filter(s -> s.startsWith(args[0].toLowerCase())).toList();
 		}
 		if (args.length == 2 && (args[0].equalsIgnoreCase("sil") || args[0].equalsIgnoreCase("sifre"))) {
 			return plugin.accounts().all().stream().map(a -> a.username)
