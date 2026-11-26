@@ -805,7 +805,7 @@ public final class VakaEkrani extends Screen {
 		int y = height - 28, h = 22;
 		int x = detayX();
 		int sag = width - M;
-		int bw = Math.min(130, Math.max(60, (sag - x - 8) / 3));
+		int bw = Math.min(130, Math.max(52, (sag - x - 12) / 4));
 		float dsc = Math.min(s(), 1.25f);
 		boolean kisa = gen("Oyuncuya ışınlan", dsc) > bw - 8;
 		dugme(x, y, bw, h, kisa ? "Yasakla" : "Kalıcı yasakla", VURGU, var, () -> {
@@ -813,7 +813,14 @@ public final class VakaEkrani extends Screen {
 			onayTur = OnayTur.RISK;
 			modal = Modal.ONAY;
 		});
-		dugme(x + bw + 4, y, bw, h, kisa ? "Kaydı sil" : "Risk kaydını sil", GRI, var, () -> {
+		dugme(x + bw + 4, y, bw, h, kisa ? "★ Öğret" : "★ Yasaksız öğret", MOR, var, () -> {
+			JsonObject r = riskSec();
+			if (r != null) {
+				komut("hilevaka geri " + str(r, "ad") + " hile", false);
+				tost(str(r, "ad") + ": hileydi olarak öğretiliyor (oyuncunun açık vakası yoksa sunucu bildirir)", MOR);
+			}
+		});
+		dugme(x + 2 * (bw + 4), y, bw, h, kisa ? "Kaydı sil" : "Risk kaydını sil", GRI, var, () -> {
 			JsonObject r = riskSec();
 			if (r != null) {
 				komut("cevherauth risktemizle " + str(r, "ad"), false);
@@ -952,33 +959,41 @@ public final class VakaEkrani extends Screen {
 		int x = detayX();
 		int sag = width - M;
 		int bosluk = 4;
-		int[] gw = {104, 112, 112, 130};
-		boolean genis = sag - x >= gw[0] + gw[1] + gw[2] + gw[3] + 3 * bosluk + 16;
+		// 0 Hileydi · 1 Sadece öğret · 2 Yanlış alarm · (sağda) 3 Işınlan · 4 Yeniden incelet
+		int[] gw = {100, 118, 108, 112, 130};
+		boolean genis = sag - x >= gw[0] + gw[1] + gw[2] + gw[3] + gw[4] + 4 * bosluk + 16;
 		if (!genis) {
-			int esit = Math.max(40, (sag - x - 3 * bosluk) / 4);
-			gw = new int[] {esit, esit, esit, esit};
+			int esit = Math.max(36, (sag - x - 4 * bosluk) / 5);
+			gw = new int[] {esit, esit, esit, esit, esit};
 		}
-		boolean kisa = gw[2] < 108;
+		boolean kisa = gw[3] < 108;
 		dugme(x, y, gw[0], h, "✔ Hileydi", VURGU, var, () -> {
 			onayVaka = sec();
 			onayTur = OnayTur.VAKA;
 			modal = Modal.ONAY;
 		});
-		dugme(x + gw[0] + bosluk, y, gw[1], h, kisa ? "✖ Yanlış" : "✖ Yanlış alarm", YESIL, var, () -> {
+		dugme(x + gw[0] + bosluk, y, gw[1], h, kisa ? "★ Öğret" : "★ Yasaksız öğret", MOR, var, () -> {
+			JsonObject o = sec();
+			if (o != null) {
+				komut("hilevaka geri " + str(o, "id") + " hile", false);
+				tost(str(o, "ad") + ": hileydi olarak öğretildi, yasak uygulanmadı", MOR);
+			}
+		});
+		dugme(x + gw[0] + gw[1] + 2 * bosluk, y, gw[2], h, kisa ? "✖ Yanlış" : "✖ Yanlış alarm", YESIL, var, () -> {
 			JsonObject o = sec();
 			if (o != null) {
 				komut("hilevaka geri " + str(o, "id") + " temiz", false);
 				tost(str(o, "ad") + ": yanlış alarm olarak arşivlendi", YESIL);
 			}
 		});
-		dugme(sag - gw[3], y, gw[3], h, kisa ? "Yeniden incelet" : "LLM'e yeniden incelet", MAVI, var, () -> {
+		dugme(sag - gw[4], y, gw[4], h, kisa ? "Yeniden incelet" : "LLM'e yeniden incelet", MAVI, var, () -> {
 			JsonObject o = sec();
 			if (o != null) {
 				komut("hilevaka incele " + str(o, "id"), false);
 				tost("Vaka yeniden yapay zekâya gönderildi", MAVI);
 			}
 		});
-		dugme(sag - gw[3] - bosluk - gw[2], y, gw[2], h, kisa ? "Işınlan" : "Oyuncuya ışınlan", MAVI, var, () -> {
+		dugme(sag - gw[4] - bosluk - gw[3], y, gw[3], h, kisa ? "Işınlan" : "Oyuncuya ışınlan", MAVI, var, () -> {
 			JsonObject o = sec();
 			if (o != null) {
 				komut("tp " + str(o, "ad"), true);
@@ -1097,16 +1112,26 @@ public final class VakaEkrani extends Screen {
 			for (JsonElement x : v.getAsJsonArray("kontroller")) {
 				JsonObject c = x.getAsJsonObject();
 				int sayi = intDeger(c, "sayi");
-				l.add(new Oge(lh + 5, (g, gx, y, ww) -> {
-					String et = str(c, "etiket");
-					yaz(g, Component.literal(et).withStyle(ChatFormatting.BOLD), gx, y, BEYAZ, sc, true);
+				// Etiket + sayı tek satırda (kalın yazı gerçek genişlikle ölçülür, sığmazsa kısaltılır); çubuk AYRI satırda,
+				// böylece uzun etiketlerde çubuk ve yazı üst üste binmez.
+				l.add(new Oge(lh, (g, gx, y, ww) -> {
 					String n = "×" + sayi;
-					int nx = gx + gen(et, sc) + 10;
+					int nw = gen(n, sc);
+					int enFazla = Math.max(20, ww - nw - 14);
+					String et = str(c, "etiket");
+					Component etC = Component.literal(et).withStyle(ChatFormatting.BOLD);
+					while (et.length() > 4 && (int) Math.ceil(font.width(etC) * sc) > enFazla) {
+						et = et.substring(0, et.length() - 2);
+						etC = Component.literal(et + "…").withStyle(ChatFormatting.BOLD);
+					}
+					yaz(g, etC, gx, y, BEYAZ, sc, true);
+					int nx = gx + (int) Math.ceil(font.width(etC) * sc) + 10;
 					yaz(g, n, nx, y, TURUNCU, sc, true);
-					int bx = nx + gen(n, sc) + 8;
-					int bw = Math.max(20, Math.min(160, ww - (bx - gx)));
-					kutu(g, bx, y + 2, bx + bw, y + 2 + Math.max(4, lh - 6), 0x24FFFFFF);
-					kutu(g, bx, y + 2, bx + Math.max(3, bw * sayi / tepe), y + 2 + Math.max(4, lh - 6), alfa(TURUNCU, 0xC0));
+				}));
+				l.add(new Oge(7, (g, gx, y, ww) -> {
+					int bw = Math.max(40, Math.min(220, ww - 10));
+					kutu(g, gx, y + 1, gx + bw, y + 5, 0x24FFFFFF);
+					kutu(g, gx, y + 1, gx + Math.max(3, bw * sayi / tepe), y + 5, alfa(TURUNCU, 0xC0));
 				}));
 				metin(l, "en yüksek: " + str(c, "enYuksek"), GRI, w - 10, sc * 0.9f, 10);
 			}
