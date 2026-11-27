@@ -61,6 +61,7 @@ public final class CevherClientMod implements ClientModInitializer {
 		Keys.register();
 		CosmeticNet.init();
 		SinifNet.init();
+		net.cevherclient.client.duello.DuelloNet.init();
 		RiskHud.init();
 		VakaMerkezi.init();
 		net.cevherclient.client.cihaz.CihazIzi.init();

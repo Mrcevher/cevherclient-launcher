@@ -554,3 +554,17 @@ Yapılandırma: [`electron-builder.yml`](electron-builder.yml).
 Electron 44 · electron-vite 6 · Vite 8 · React 19 · TypeScript 5.9 · Tailwind CSS 4 ·
 Framer Motion · Zustand · react-i18next · react-markdown + remark-gfm ·
 Inter ve Rajdhani (OFL, `@fontsource` ile yerel olarak paketlenir).
+
+---
+
+## SAO düellosu (istemci modu + CevherDuello eklentisi)
+
+Sunucuda CevherDuello eklentisi varsa mod `cevherclient:duello` kanalını kaydeder; sunucu modlu oyuncuya sandık menüsü, boss çubuğu ve başlık yerine
+SAO düello penceresi, HUD (iki HP çubuğu, süre) ve "DUEL!!" / "WINNER" / "LOSE" afişi gösterir. Modsuz oyuncular sandık menüsüyle devam eder.
+
+| Yön | Gövde (düz UTF-8 JSON) |
+|---|---|
+| Sunucu → istemci | `{"t":"istek","ad":..,"sn":..}`, `{"t":"durum","faz":"hazirlik\|dovus","kalan":..,"mod":..,"rakip":..,"hp":0..1}`, `{"t":"bitis","s":"zafer\|yenilgi\|berabere\|iptal","kazanan":..}` |
+| İstemci → sunucu | `{"t":"kabul","ad":..,"mod":"ilk\|yari\|tam"}`, `{"t":"reddet","ad":..}`, `{"t":"teslim"}` |
+
+İstemci yalnızca "şu isteği şu modla kabul ediyorum" der; kimlik, sonuç ve hasar kararı sunucudadır (komutla aynı doğrulama, 8 KB / 512 bayt sınırı, hız sınırı).
