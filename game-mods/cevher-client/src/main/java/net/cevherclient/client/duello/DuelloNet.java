@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
@@ -45,6 +46,7 @@ public final class DuelloNet {
 	// Düello durumu (yalnızca render thread'inde dokunulur).
 	private static String faz = "";
 	private static int kalanSn;
+	private static int hazirlikToplam = 30;
 	private static long kalanAt;
 	private static String mod = "";
 	private static String rakip = "";
@@ -250,6 +252,62 @@ public final class DuelloNet {
 		}
 	}
 
+	private static void yuz(GuiGraphics g, Minecraft mc, String ad, float x, float y, float boy) {
+		var baglanti = mc.getConnection();
+		var bilgi = baglanti == null ? null : baglanti.getPlayerInfo(ad);
+		Sao.rect(g, x - 1, y - 1, boy + 2, boy + 2, 0xFF3A3C3B);
+		if (bilgi != null) {
+			PlayerFaceRenderer.draw(g, bilgi.getSkin(), (int) x, (int) y, (int) boy);
+		} else {
+			Sao.rect(g, x, y, boy, boy, 0xFF7A5A3A);
+		}
+	}
+
+	private static void elmas(GuiGraphics g, float cx, float cy, int r, int renk) {
+		for (int i = -r; i <= r; i++) {
+			int w = 2 * (r - Math.abs(i)) + 1;
+			Sao.rect(g, cx - w / 2f, cy + i, w, 1, renk);
+		}
+	}
+
+	/** Hazırlık: büyük DÜELLO başlığı, VS paneli ve dairesel geri sayım (videodaki SAO düello ekranı). */
+	private static void hazirlikPaneli(GuiGraphics g, Minecraft mc, float cx, long simdi, int kalan) {
+		float giris = Sao.easeOut(Sao.progress(simdi - kalanAt + (hazirlikToplam - kalanSn) * 1000L, 0, 350));
+		Sao.alpha = Math.max(0.05f, giris);
+		Sao.centered(g, "DÜELLO", cx, 8, 22f, 0xFFFFFFFF);
+		float pw = 210, ph = 26, px = cx - pw / 2, py = 40;
+		Sao.rect(g, px, py, pw, ph, 0xC8EEEEEE);
+		Sao.rect(g, px, py, pw, 1, 0xFFFFFFFF);
+		String ben = mc.player.getName().getString();
+		yuz(g, mc, ben, px + 6, py + 5, 16);
+		Sao.text(g, Sao.fit(ben, 70, 6.5f), px + 26, py + 9, 6.5f, Sao.TEXT);
+		String r = Sao.fit(rakip, 70, 6.5f);
+		yuz(g, mc, rakip, px + pw - 22, py + 5, 16);
+		Sao.text(g, r, px + pw - 26 - Sao.textWidth(r, 6.5f), py + 9, 6.5f, Sao.TEXT);
+		elmas(g, cx, py + ph / 2f, 10, 0xFFE8605A);
+		Sao.centered(g, "VS", cx, py + 9, 5.5f, 0xFFFFFFFF);
+		if (!mod.isEmpty()) {
+			Sao.centered(g, modEtiketi(mod), cx, py + ph + 4, 5f, 0xFFFFFFFF);
+		}
+
+		// dairesel geri sayım
+		float dy = py + ph + 42, rad = 22;
+		Sao.disk(g, cx, dy, rad * 2 + 4, 0x70BFE3FF);
+		Sao.disk(g, cx, dy, rad * 2 - 8, 0x90FFFFFF);
+		int tik = 40;
+		float oran = Math.max(0f, Math.min(1f, (kalanSn - (simdi - kalanAt) / 1000f) / hazirlikToplam));
+		var pose = g.pose();
+		for (int i = 0; i < tik; i++) {
+			boolean yanik = i < Math.ceil(oran * tik);
+			pose.pushMatrix();
+			pose.translate(cx, dy);
+			pose.rotate((float) (i * 2 * Math.PI / tik));
+			Sao.rect(g, -0.5f, -rad - 4, 1, 4, yanik ? (kalan <= 5 ? KIRMIZI : 0xFFFFFFFF) : 0x60FFFFFF);
+			pose.popMatrix();
+		}
+		Sao.centered(g, (kalan < 10 ? "0" : "") + kalan, cx, dy - 6, 12f, kalan <= 5 ? KIRMIZI : 0xFFFFFFFF);
+	}
+
 	private static void render(GuiGraphics g, Minecraft mc) {
 		if (mc.player == null || mc.options.hideGui) {
 			return;
@@ -262,7 +320,10 @@ public final class DuelloNet {
 			long simdi = Util.getMillis();
 			float cx = sw / 2f;
 
-			if (!faz.isEmpty()) {
+			if (faz.equals("hazirlik")) {
+				int kalan = (int) Math.max(0, kalanSn - (simdi - kalanAt) / 1000);
+				hazirlikPaneli(g, mc, cx, simdi, kalan);
+			} else if (!faz.isEmpty()) {
 				float ben = mc.player.getMaxHealth() <= 0 ? 0f : mc.player.getHealth() / mc.player.getMaxHealth();
 				float bw = 110;
 				float y = 16;
@@ -271,7 +332,7 @@ public final class DuelloNet {
 
 				// orta kutu: süre ve evre
 				Sao.rect(g, cx - 30, 6, 60, 20, 0xB0E2E2E2);
-				Sao.centered(g, faz.equals("hazirlik") ? "HAZIRLIK" : "DUEL", cx, 8, 4.5f, Sao.MUTED);
+				Sao.centered(g, "DUEL", cx, 8, 4.5f, Sao.MUTED);
 				Sao.centered(g, sure, cx, 15, 7.5f, kalan <= 10 ? KIRMIZI : Sao.TEXT);
 
 				// sol: ben, sağ: rakip (can ortaya doğru dolu, dışarı doğru azalır)
@@ -282,10 +343,6 @@ public final class DuelloNet {
 				Sao.text(g, r, cx + 36 + bw - Sao.textWidth(r, 5.5f), 6, 5.5f, 0xFFFFFFFF);
 				if (!mod.isEmpty()) {
 					Sao.centered(g, modEtiketi(mod), cx, 30, 4.8f, 0xFFFFFFFF);
-				}
-				if (faz.equals("hazirlik") && kalan <= 5 && kalan > 0) {
-					Sao.alpha = 1f;
-					Sao.centered(g, String.valueOf(kalan), cx, sh * 0.30f, 30f, Sao.ACCENT);
 				}
 			}
 

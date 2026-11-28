@@ -68,7 +68,7 @@ public final class DuelloEkrani extends Screen {
 	}
 
 	private boolean reddetUstunde(float mx, float my) {
-		return Sao.inside(mx, my, WX + WW - 94, WY + WH - 28, 80, 20);
+		return Sao.inside(mx, my, WX + WW - 54 - 12, WY + WH - 30, 24, 24);
 	}
 
 	@Override
@@ -134,11 +134,17 @@ public final class DuelloEkrani extends Screen {
 		Sao.rect(g, WX + 14, WY + WH - 18, 170 * oran, 4, Sao.ACCENT);
 
 		boolean red = reddetUstunde(mx, my);
-		Sao.rect(g, WX + WW - 94, WY + WH - 28, 80, 20, red ? Sao.CELL_HOVER : Sao.CELL_BG);
-		if (red) {
-			Sao.outline(g, WX + WW - 94, WY + WH - 28, 80, 20, Sao.ACCENT);
+		float rx = WX + WW - 54, ry = WY + WH - 18;
+		Sao.disk(g, rx, ry, 23, red ? 0xFFFFFFFF : 0xFFE6E6E6);
+		Sao.disk(g, rx, ry, 17, red ? 0xFFEF5A58 : 0xFFD9453A);
+		var pz = g.pose();
+		for (int sg = -1; sg <= 1; sg += 2) {
+			pz.pushMatrix();
+			pz.translate(rx, ry);
+			pz.rotate((float) (sg * Math.PI / 4));
+			Sao.rect(g, -1f, -6, 2, 12, 0xFFFFFFFF);
+			pz.popMatrix();
 		}
-		Sao.centered(g, "Reddet", WX + WW - 54, WY + WH - 21, 6.5f, red ? Sao.ICON : Sao.TEXT);
 	}
 
 	@Override
