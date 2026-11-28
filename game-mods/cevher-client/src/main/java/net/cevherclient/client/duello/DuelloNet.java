@@ -323,27 +323,6 @@ public final class DuelloNet {
 			if (faz.equals("hazirlik")) {
 				int kalan = (int) Math.max(0, kalanSn - (simdi - kalanAt) / 1000);
 				hazirlikPaneli(g, mc, cx, simdi, kalan);
-			} else if (!faz.isEmpty()) {
-				float ben = mc.player.getMaxHealth() <= 0 ? 0f : mc.player.getHealth() / mc.player.getMaxHealth();
-				float bw = 110;
-				float y = 16;
-				int kalan = (int) Math.max(0, kalanSn - (simdi - kalanAt) / 1000);
-				String sure = (kalan / 60) + ":" + (kalan % 60 < 10 ? "0" : "") + (kalan % 60);
-
-				// orta kutu: süre ve evre
-				Sao.rect(g, cx - 30, 6, 60, 20, 0xB0E2E2E2);
-				Sao.centered(g, "DUEL", cx, 8, 4.5f, Sao.MUTED);
-				Sao.centered(g, sure, cx, 15, 7.5f, kalan <= 10 ? KIRMIZI : Sao.TEXT);
-
-				// sol: ben, sağ: rakip (can ortaya doğru dolu, dışarı doğru azalır)
-				cubuk(g, cx - 36 - bw, y, bw, 7, ben, true);
-				cubuk(g, cx + 36, y, bw, 7, rakipCan, false);
-				Sao.text(g, mc.player.getName().getString(), cx - 36 - bw, 6, 5.5f, 0xFFFFFFFF);
-				String r = Sao.fit(rakip, bw, 5.5f);
-				Sao.text(g, r, cx + 36 + bw - Sao.textWidth(r, 5.5f), 6, 5.5f, 0xFFFFFFFF);
-				if (!mod.isEmpty()) {
-					Sao.centered(g, modEtiketi(mod), cx, 30, 4.8f, 0xFFFFFFFF);
-				}
 			}
 
 			if (!bannerMetin.isEmpty()) {
